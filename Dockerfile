@@ -46,9 +46,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
 
 COPY --from=deps --chown=10001:10001 /app/node_modules ./node_modules
-COPY --chown=10001:10001 package.json bun.lock ./
+COPY --chown=10001:10001 package.json bun.lock tsconfig.json ./
 COPY --chown=10001:10001 app ./app
-COPY --chown=10001:10001 server.js ./
+COPY --chown=10001:10001 server.ts ./
 
 RUN find /app/app/ecloud_engine -name '__pycache__' -type d -prune -exec rm -rf {} + || true && \
     chown -R 10001:10001 /app && \
@@ -61,4 +61,4 @@ EXPOSE 8571
 VOLUME ["/app/data"]
 
 ENTRYPOINT ["/usr/local/bin/bun"]
-CMD ["/app/server.js"]
+CMD ["/app/server.ts"]

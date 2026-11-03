@@ -33,7 +33,7 @@ const MUTATIONS = [
   {
     id: 'M1',
     name: '暗线A/字段漂移：把 sign 的映射改回错误的 features.sign',
-    file: 'app/lib/task_switch.js',
+    file: 'app/lib/task_switch.ts',
     from: "sign: 'autoSign'",
     to: "sign: 'sign'",
     replaceAll: false,
@@ -41,7 +41,7 @@ const MUTATIONS = [
   {
     id: 'M2',
     name: '暗线A/原始直读：保活闸门退回 d.keepaliveEnabled === false',
-    file: 'app/ctyun_client.js',
+    file: 'app/ctyun_client.ts',
     from: "if (!this.resolveTask('keepAlive', d).enabled) continue; // 统一入口：账号级/(该机)独立保活开关",
     to: "if (d.keepaliveEnabled === false) continue;",
     replaceAll: false,
@@ -49,7 +49,7 @@ const MUTATIONS = [
   {
     id: 'M3',
     name: '暗线A/调度器直读：打卡闸门退回 acc.features?.autoSign !== false',
-    file: 'app/tasks/scheduler.js',
+    file: 'app/tasks/scheduler.ts',
     from: "this.taskGate(acc, 'sign')",
     to: 'acc.features?.autoSign !== false',
     replaceAll: true,
@@ -57,7 +57,7 @@ const MUTATIONS = [
   {
     id: 'M4',
     name: '调度器死锁(#32)：把 isRunning 复位改名，脱离 finally 约束',
-    file: 'app/tasks/scheduler.js',
+    file: 'app/tasks/scheduler.ts',
     from: 'this.isRunning = false;',
     to: 'this.isRunningResetByMutation = false;',
     replaceAll: true,
@@ -65,7 +65,7 @@ const MUTATIONS = [
   {
     id: 'M5',
     name: 'AI对话卡死(#35)：移除主动超时 AbortSignal.timeout',
-    file: 'app/tasks/native_tasks.js',
+    file: 'app/tasks/native_tasks.ts',
     from: 'AbortSignal.timeout(',
     to: 'noActiveTimeoutSignal(',
     replaceAll: true,
@@ -73,7 +73,7 @@ const MUTATIONS = [
   {
     id: 'M6',
     name: '暗线C/虚报成功：把打卡待确认态 pendingVerify 改名（模拟未确认即报完成）',
-    file: 'app/tasks/native_tasks.js',
+    file: 'app/tasks/native_tasks.ts',
     from: 'pendingVerify',
     to: 'pendConfirmState',
     replaceAll: true,
@@ -94,7 +94,7 @@ const MUTATIONS = [
   {
     id: 'M8',
     name: '脏手段复活：把硬编码第三方 SC 客户端 ID 注入 cag_boot.js（伪造官方身份）',
-    file: 'app/ydpc/cag_boot.js',
+    file: 'app/ydpc/cag_boot.ts',
     from: "'use strict';",
     to: "'use strict';\nconst FORGED_SC_CLIENT_ID = 'sc-user-5e38ece5';",
     replaceAll: false,
@@ -103,7 +103,7 @@ const MUTATIONS = [
   {
     id: 'M9',
     name: '脏手段复活：在 cag_boot.js 关闭 TLS 证书校验（rejectUnauthorized:false）',
-    file: 'app/ydpc/cag_boot.js',
+    file: 'app/ydpc/cag_boot.ts',
     from: "'use strict';",
     to: "'use strict';\n// mutation\nconst BAD = { rejectUnauthorized: false };",
     replaceAll: false,
@@ -120,7 +120,7 @@ const MUTATIONS = [
   {
     id: 'M11',
     name: '根因复发：账号级摘要退回固定文案「保活巡检待命中」（运行时不刷新）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "    if (vms.length === 0) return '名下暂未发现云电脑';",
     to: "    if (vms.length >= 0) return '保活巡检待命中';",
     replaceAll: false,
@@ -128,7 +128,7 @@ const MUTATIONS = [
   {
     id: 'M12',
     name: '多机失明：describeVmKeepAlive 不再区分单机保活开关（全部按"已开启"渲染）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "    const keepaliveOn = !vm || vm.keepaliveEnabled !== false;",
     to: '    const keepaliveOn = true;',
     replaceAll: false,
@@ -139,7 +139,7 @@ const MUTATIONS = [
     // 该账号下所有主机静默 >12 小时，云电脑被平台自动关机。
     id: 'M13',
     name: '【真实事故】核验看门狗常量被改名 → 启动期 ReferenceError（保活静默停摆）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: 'const EFFECT_VERIFY_INTERVAL_MS = Math.max(',
     to: 'const EFFECT_VERIFY_INTERVAL_MS_RENAMED = Math.max(',
     replaceAll: false,
@@ -149,7 +149,7 @@ const MUTATIONS = [
     // 回到 undici 默认 300s：一次"连上但不回包"就让整账号保活静默停摆 20~30 分钟。
     id: 'M14',
     name: '【真实事故】soho_client 丢掉主动超时（回到 undici 默认 300s）',
-    file: 'app/ydpc/soho_client.js',
+    file: 'app/ydpc/soho_client.ts',
     from: 'signal: AbortSignal.timeout(timeoutMs)',
     to: 'signal: undefined',
     replaceAll: false,
@@ -163,7 +163,7 @@ const MUTATIONS = [
     // 组 12/10 的「差异合并必须泛化保留 `_` 前缀本机状态」断言必须因此变红。
     id: 'M15',
     name: '【真实故障】refreshVms 合并丢掉 `_` 前缀泛化保留（去重标记每轮被清空 → 关机提示刷屏）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '          for (const k of Object.keys(old)) {\n' +
           "            if (k.startsWith('_') && old[k] !== undefined) vm[k] = old[k];\n" +
           '          }\n',
@@ -188,7 +188,7 @@ const MUTATIONS = [
     // 组 14 的「三平台保活不重叠」断言必须因此变红。
     id: 'M17',
     name: '三平台重叠：ecloud 桥接层改为复用移动爱家 ydpc 保活实现',
-    file: 'app/ecloud/ecloud_engine.js',
+    file: 'app/ecloud/ecloud_engine.ts',
     from: "'use strict';",
     to: "'use strict';\nconst { YdpcClient } = require('../ydpc/ydpc_client.js'); // mutation",
     replaceAll: false,
@@ -199,7 +199,7 @@ const MUTATIONS = [
     // 组 14 的「侧车退出绝不静默」断言必须因此变红。
     id: 'M18',
     name: '静默退出：侧车退出不再让在途请求失败（重演"假成功"）',
-    file: 'app/ecloud/ecloud_engine.js',
+    file: 'app/ecloud/ecloud_engine.ts',
     from: '_failAllPending',
     to: '_silentlyIgnorePending',
     replaceAll: true,
@@ -213,7 +213,7 @@ const MUTATIONS = [
     // 跨行 from 若用 "\n" 拼接会因 \r 静默失配 → 变异根本没生效（BROKEN）。
     id: 'M19',
     name: '三平台重叠：调度器不再把 ecloud 排除出天翼云任务链',
-    file: 'app/tasks/scheduler.js',
+    file: 'app/tasks/scheduler.ts',
     from: "      if (acc.platform === 'ecloud') continue; // 移动公众保活为常态巡检，无官方任务达成度可言",
     to: '      // mutation：ecloud 不再从达成度巡检中排除',
     replaceAll: false,
@@ -224,7 +224,7 @@ const MUTATIONS = [
     // 组 15 的「L3 字段必须从默认值里消失」断言必须因此变红。
     id: 'M20',
     name: 'L3 复活：把已删除的 SPICE 心跳层塞回账号默认开关（与用户拍板相反）',
-    file: 'app/lib/task_switch.js',
+    file: 'app/lib/task_switch.ts',
     from: '    ecloudL2DesktopReg: true,     // L2 桌面登记保活',
     to: '    ecloudL2DesktopReg: true,     // L2 桌面登记保活\n    ecloudL3SpiceHeart: false,    // mutation：已删除的 L3 复活',
     replaceAll: false,
@@ -235,7 +235,7 @@ const MUTATIONS = [
     // 组 15 的「ok=null 分支内绝不请求重登」断言必须因此变红。
     id: 'M21',
     name: '【真实事故】ok=null 分支误加重登 → 高频密码登录（短信轰炸成因）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: '    this.metrics.l1.unknownCount += 1;',
     to: "    this.metrics.l1.unknownCount += 1;\n    await this.engine.request('session.relogin', this._loginParams(), this.sessionId);",
     replaceAll: false,
@@ -281,7 +281,7 @@ const MUTATIONS = [
   {
     id: 'M26',
     name: '短信登录只提示不发码：need_* 分支移除 loginSendSms 调用（复现用户报障的"收不到验证码"）',
-    file: 'app/http/handler.js',
+    file: 'app/http/handler.ts',
     from: 'await draftClient.loginSendSms(status, mobile);',
     to: '/* M26: 发码被移除 */',
     replaceAll: false,
@@ -324,7 +324,7 @@ const MUTATIONS = [
     // 用户据此误判"保活根本没在跑"。组 16 的「L1 成功路径必须写日志」断言必须因此变红。
     id: 'M31',
     name: '【真实报障】保活成功不落日志：移除 L1 成功日志（日志流只剩登录记录）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: "      this._log('L1 账号态探针通过（HTTP 层探针 ≠ 云电脑不会被关机）', 'success');",
     to: '      /* M31: L1 成功日志被移除 */',
     replaceAll: false,
@@ -334,7 +334,7 @@ const MUTATIONS = [
     // 本变异把这唯一的出口也掐掉（信息黑洞）。组 16 的分层日志断言必须因此变红。
     id: 'M32',
     name: '分层明细不进日志：自动巡检不再调用 _logLayerSummary（卡片已删 ⇒ 三层状态彻底不可见）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: '        if (acted) this._logLayerSummary();',
     to: '        /* M32: 分层日志被移除 */',
     replaceAll: false,
@@ -345,7 +345,7 @@ const MUTATIONS = [
     // 组 16 的「诚实性口径必须仍存在于日志流」断言必须因此变红。
     id: 'M33',
     name: '诚实性口径整体消失：日志里的「探针成功不代表不会被关机」被抹掉（卡片已无说明 ⇒ 无人再设边界）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: '说明: L1/L2 是 HTTP 层探针，成功不代表云电脑不会被关机',
     to: '说明: L1/L2 是 HTTP 层探针',
     replaceAll: false,
@@ -424,7 +424,7 @@ const MUTATIONS = [
     // 组 18 的「后端折叠后必须移到末尾（时间顺序）」断言必须因此变红。
     id: 'M40',
     name: '时间倒挂：后端折叠后不再把日志条目移到 logs 末尾',
-    file: 'app/log_hub.js',
+    file: 'app/log_hub.ts',
     from: 'if (at !== logs.length - 1) {',
     to: 'if (false) {',
     replaceAll: false,
@@ -454,7 +454,7 @@ const MUTATIONS = [
     // 组 20 的行为断言（progress 夹在同源/他源日志之间仍须收敛为 1 条）必须因此变红。
     id: 'M43',
     name: '折叠失效：例行日志折叠键不再把数字归一化（progress 逐条新增成一长串 xN）',
-    file: 'app/log_hub.js',
+    file: 'app/log_hub.ts',
     from: "  return String(message).replace(/\\d+/g, 'N');",
     to: '  return String(message);',
     replaceAll: false,
@@ -464,7 +464,7 @@ const MUTATIONS = [
     // ⇒ 该日志每轮都会新增一行（用户报障"重复太多次了"）。组 20 必须变红。
     id: 'M44',
     name: '例行模式缺失：移动公众「分层巡检结果」不再被识别为可折叠的例行日志',
-    file: 'app/log_hub.js',
+    file: 'app/log_hub.ts',
     from: "  '分层巡检结果',          // 移动公众 L1/L2 汇总汇报",
     to: '  // 变异：删除「分层巡检结果」模式',
     replaceAll: false,
@@ -575,7 +575,7 @@ const MUTATIONS = [
     // 组 23 的「SCG / UNKNOWN 必须被拒绝」断言必须因此变红。
     id: 'M54',
     name: '闸门失效：底座闸门恒放行（SCG / UNKNOWN 也能盲拨 ZTE）',
-    file: 'app/ydpc/product_route.js',
+    file: 'app/ydpc/product_route.ts',
     from: "  if (route.supported === true) return { allow: true, reason: '' };",
     to: "  if (true) return { allow: true, reason: '' };",
     replaceAll: false,
@@ -585,7 +585,7 @@ const MUTATIONS = [
     // 而 firm-auth 会把空闲的 ZTE 机器（cagIp 未下发）误判成 SCG。
     id: 'M55',
     name: '判定降级：丢掉 spuCode 优先级（ZTE 机器被 firm-auth 误判成 SCG）',
-    file: 'app/ydpc/product_route.js',
+    file: 'app/ydpc/product_route.ts',
     from: '  if (spu && SPU_ZTE.test(spu)) {',
     to: '  if (false && spu && SPU_ZTE.test(spu)) {',
     replaceAll: false,
@@ -595,7 +595,7 @@ const MUTATIONS = [
     // 这正是本项目反复强调、却在此前**没有任何断言锁住**的那句措辞。
     id: 'M56',
     name: '诚实性红线：keepaliveProven 从恒 false 改成 true（宣称保活已被证明）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '      keepaliveProven: false,',
     to: '      keepaliveProven: true,',
     replaceAll: false,
@@ -605,7 +605,7 @@ const MUTATIONS = [
     // → "一维护就整轮熔断"的假故障（这三类必须按"只告警不熔断"处理）。
     id: 'M57',
     name: '分级失效：soft 分类被抽空（维护/时长耗尽被当成硬失败）',
-    file: 'app/ydpc/product_route.js',
+    file: 'app/ydpc/product_route.ts',
     from: "  for (const p of SOFT_PATTERNS) { if (p.test(s)) return 'soft'; }",
     to: "  for (const p of []) { if (p.test(s)) return 'soft'; }",
     replaceAll: false,
@@ -616,7 +616,7 @@ const MUTATIONS = [
     // 组 27 的「allowInsecure 门控」断言必须因此变红。
     id: 'M58',
     name: '降级失控：allowInsecure 门控被删（无条件 rejectUnauthorized=false）',
-    file: 'app/ydpc/zte_cag_tls.js',
+    file: 'app/ydpc/zte_cag_tls.ts',
     from: '    if (allowInsecure) {',
     to: '    if (true) { // mutation：不再受 allowInsecure 约束',
     replaceAll: false,
@@ -626,7 +626,7 @@ const MUTATIONS = [
     // —— 等价于把关闭证书校验变成默认行为。组 27 的行为断言（只拨 1 次）必须变红。
     id: 'M59',
     name: '降级失控：去掉证书链白名单判定（任何错误都重拨并放宽校验）',
-    file: 'app/ydpc/zte_cag_tls.js',
+    file: 'app/ydpc/zte_cag_tls.ts',
     from: '    if (!CERT_CHAIN_ERROR_CODES.some((c) => code.includes(c))) throw err;',
     to: '    if (false) throw err; // mutation：任何错误都降级重试',
     replaceAll: false,
@@ -636,7 +636,7 @@ const MUTATIONS = [
     // 让本地排查更"顺"）。组 27 的白名单纯度断言必须变红。
     id: 'M60',
     name: '白名单污染：把通用网络错误 ECONNREFUSED 塞进证书链白名单',
-    file: 'app/ydpc/zte_cag_tls.js',
+    file: 'app/ydpc/zte_cag_tls.ts',
     from: "  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',",
     to: "  'ECONNREFUSED', // mutation：白名单被污染\n  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',",
     replaceAll: false,
@@ -646,7 +646,7 @@ const MUTATIONS = [
     // 组 26 的行为断言（IPv4→tls、主机名→reject）必须变红。
     id: 'M61',
     name: '地址族判据失效：一切内层主机都当 raw（IPv4 也被塞进 raw 拨号）',
-    file: 'app/ydpc/product_route.js',
+    file: 'app/ydpc/product_route.ts',
     from: "  if (bare.includes(':')) {",
     to: '  if (bare.length > 0) { // mutation：不再区分地址族',
     replaceAll: false,
@@ -656,7 +656,7 @@ const MUTATIONS = [
     // 让失败绕过 G2 分级。组 27 的"异常就地收敛"断言必须变红。
     id: 'M62',
     name: '异常失控：data 回调不再 try/catch 收敛（未捕获异常复活，绕过 G2 分级）',
-    file: 'app/ydpc/zte_cag_tls.js',
+    file: 'app/ydpc/zte_cag_tls.ts',
     from: '      try { handleData(chunk); }\n      catch (e) { clearTimeout(timer); sock.destroy(); done(reject, e); }',
     to: '      handleData(chunk); // mutation：异常不再就地收敛',
     replaceAll: false,
@@ -667,7 +667,7 @@ const MUTATIONS = [
     // 组 28 的行为断言（同一天内调用必须返回 0 且计数不变）必须变红。
     id: 'M63',
     name: '清零失控：去掉"跨天才清零"的判定（每次调用都把例行日志归 1，xN 永远 x1）',
-    file: 'app/log_hub.js',
+    file: 'app/log_hub.ts',
     from: '  if (today === routineFoldDay) return 0;',
     to: '  if (false) return 0; // mutation：不再判断是否跨天（每次调用都清零）',
     replaceAll: false,
@@ -677,7 +677,7 @@ const MUTATIONS = [
     // 组 28 的"异常条目计数不得被跨天清零"断言必须变红。
     id: 'M64',
     name: '清零越界：跨天把非例行日志的计数也一起归 1（异常/业务条目被误改）',
-    file: 'app/log_hub.js',
+    file: 'app/log_hub.ts',
     from: '    if (!routineFoldKey(entry.source, entry.message)) continue;',
     to: '    if (false) continue; // mutation：非例行日志也被清零',
     replaceAll: false,
@@ -687,7 +687,7 @@ const MUTATIONS = [
     // 组 29 的"状态变化必须留证"断言必须变红。
     id: 'M65',
     name: '观测失效：平台电源状态变化不再落日志（历史无法回放，真关机也看不出来）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: '        if (rawPrev === null || rawPrev !== rawNow) {',
     to: '        if (false) { // mutation：平台电源状态变化不再留证',
     replaceAll: false,
@@ -697,7 +697,7 @@ const MUTATIONS = [
     // 组 29 的"回退必须告警"断言必须变红。
     id: 'M66',
     name: '告警失效：在线时长回退不再告警（平台侧会话被重建时静默无感）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: '        if (Number.isFinite(upPrev) && upPrev >= 0 && upNow < upPrev - UPTIME_REGRESSION_MIN_SEC) {',
     to: '        if (false) { // mutation：在线时长回退不再告警',
     replaceAll: false,
@@ -705,7 +705,7 @@ const MUTATIONS = [
   {
     id: 'M67',
     name: '重启空洞：去掉"无判定但有 vendor"的重建（_route 不落盘 ⇒ 闸门重启后 fail-open，SCG 机被 ZTE 盲拨）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '        if (!vm._route && vm.vendor) {',
     to: '        if (false) { // mutation：不再重建判定，重启后闸门形同虚设',
     replaceAll: false,
@@ -715,13 +715,13 @@ const MUTATIONS = [
     // 2026-09-26 第十轮：SCG（深信服）第二套数据面。
     //
     // 【M68 的沿革】它原来锁的是"vendor=SCG 重建后必须**不**受支持"——那是 SCG 通道
-    // 尚未实现时的口径。本轮 SCG 通道（app/ydpc/scg_keepalive.js）已落地，判定改为
+    // 尚未实现时的口径。本轮 SCG 通道（app/ydpc/scg_keepalive.ts）已落地，判定改为
     // `supported: true`，旧 `from` 文本随之消失。于是把它**顺势改指**到真正的红线：
     // 材料不全时的明确拒绝。**不能只删掉它** —— 那等于本轮静默让出一条旧缺口。
     // ───────────────────────────────────────────────────────────────────────
     id: 'M68',
     name: 'SCG 材料闸门失效：resolveScgMaterial 不再明确拒绝（带着半套材料去拨）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: '  if (missing.length) {',
     to: '  if (false) { // mutation：材料不全也放行，带着半套材料去拨',
     replaceAll: false,
@@ -731,7 +731,7 @@ const MUTATIONS = [
     // 组 7 的指纹扫描 + 组 30 的 TLS 策略断言都必须因此变红。
     id: 'M69',
     name: 'SCG 关校验复活：TLS 选项写死 rejectUnauthorized:false（无条件关证书）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: 'rejectUnauthorized: !allowInsecure',
     to: 'rejectUnauthorized: false',
     replaceAll: false,
@@ -740,7 +740,7 @@ const MUTATIONS = [
     // 同轮：严格先行被破坏 —— 第一次拨号就放宽校验，"白名单降级"退化成"默认降级"。
     id: 'M70',
     name: 'SCG 严格先行被破坏：首次拨号直接 allowInsecure=true（默认关校验）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: '    return await scgConnectOnce({ ...opts, allowInsecure: false });',
     to: '    return await scgConnectOnce({ ...opts, allowInsecure: true });',
     replaceAll: false,
@@ -750,7 +750,7 @@ const MUTATIONS = [
     // 组 30 的静态精确形断言与行为断言（只拨 1 次）都必须因此变红。
     id: 'M71',
     name: 'SCG 降级失控：去掉证书链白名单判定（任何错误都重拨并放宽校验）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: '    if (!CERT_CHAIN_ERROR_CODES.includes(code)) throw e;',
     to: '    if (false) throw e; // mutation：任何错误都降级重试',
     replaceAll: false,
@@ -759,7 +759,7 @@ const MUTATIONS = [
     // 同轮：白名单污染 —— 最常见的错法（顺手加 ECONNREFUSED 让本地排查更"顺"）。
     id: 'M72',
     name: 'SCG 白名单污染：把通用网络错误 ECONNREFUSED 塞进 SCG 证书链白名单',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: "  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',",
     to: "  'ECONNREFUSED', // mutation：白名单被污染\n  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',",
     replaceAll: false,
@@ -769,7 +769,7 @@ const MUTATIONS = [
     // 显示数据"，且看起来像"平台不给"。这正是最需要机械拦截的一类"静默错"。
     id: 'M73',
     name: 'SCG 帧长错位：Chuanyun 帧头由 24B 改成 20B（连得上但永远解不出帧）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: 'const SCG_FRAME_HEAD_SIZE = 24;',
     to: 'const SCG_FRAME_HEAD_SIZE = 20; // mutation：帧头长度错位',
     replaceAll: false,
@@ -779,7 +779,7 @@ const MUTATIONS = [
     // 于是界面可以合法地宣称"已观察到显示数据"。这是本项目反复强调的假保活声明形态。
     id: 'M74',
     name: 'SCG 显示判据放宽：只要发过 DISPLAY_INIT 就算"显示已证明"（假保活声明）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: '  return !!(p.displayInitSent && p.markReceived &&\n    (p.surfaceCreateReceived || p.drawCopyReceived));',
     to: '  return !!p.displayInitSent; // mutation：只要发过 DISPLAY_INIT 就算已证明',
     replaceAll: false,
@@ -791,7 +791,7 @@ const MUTATIONS = [
     // 组 7 的指纹扫描**确实**已覆盖 scg_keepalive.js（而不是只在名单里挂着）。
     id: 'M75',
     name: '红线注入：把伪造的服务端 UA（cdpsdk-server）注入 scg_keepalive.js',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: "'use strict';",
     to: "'use strict';\nconst FORGED_UA = 'User-Agent: cdpsdk-server-1.0'; // mutation：伪造官方服务端身份",
     replaceAll: false,
@@ -801,7 +801,7 @@ const MUTATIONS = [
     // 即历史症状「每 30s 报一次 cagIp 缺失，无法开机」。
     id: 'M76',
     name: 'SCG 接线缺失：数据面不再按 SCG 分流（回落 cagBootVm，复活 cagIp 缺失盲拨）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "          if (vm._route && vm._route.kind === 'SCG') {",
     to: '          if (false) { // mutation：SCG 不再分流，回落到 cagBootVm',
     replaceAll: false,
@@ -810,7 +810,7 @@ const MUTATIONS = [
     // 同轮：通道名谎报 —— 把 SCG 也写成 raw ZTEC，界面上"另一套通道"被谎报成 ZTE。
     id: 'M77',
     name: 'SCG 通道名谎报：状态视图把 scg 也写成 raw ZTEC（把另一套通道谎报成 ZTE）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "        : (dpPath === 'scg' ? 'SCG · trunk+SPICE' : ''));",
     to: "        : (dpPath === 'scg' ? 'IPv6 · raw ZTEC' : ''));",
     replaceAll: false,
@@ -898,7 +898,7 @@ const MUTATIONS = [
     // 「ZTEC CAG TCP 握手保活成功」（用户看到的那条假日志）。
     id: 'M85',
     name: '假成功复活：runWithGrade 不再识别「不抛异常但 success:false」',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '              r && r.success === false',
     to: '              false && r.success === false',
     replaceAll: false,
@@ -908,7 +908,7 @@ const MUTATIONS = [
     // ⇒ 同一台机器"卡片说已关机、循环说在运行"，于是照打心跳与握手。
     id: 'M86',
     name: '判据分叉复活：runCycle 退回就地重写的关机判据（漏「未开机」/状态码 0）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '          const isVmOff = isYdpcVmOff(vm);',
     to: "          const isVmOff = String(vm.vmStatus || '').includes('关机') || vm.vmStatusCode === 23 || vm.vmStatusCode === 16;",
     replaceAll: false,
@@ -918,7 +918,7 @@ const MUTATIONS = [
     // （与 pingCag 的契约不一致，正是它让 SOHO 分支把"待命"算进了 doneParts）。
     id: 'M87',
     name: '假成功复活：sendHeartbeat 关机返回改回 success:true（待命谎报成完成）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from:
       '      // 【2026-09-26 修复·假成功】"没做事"必须报 success:false —— 与 pingCag 统一契约。\n' +
       '      // 旧写法返回 success:true，调用方于是把"待命"记成了"完成"。\n' +
@@ -930,7 +930,7 @@ const MUTATIONS = [
     // 成功日志的护栏被拆：CAG 调用点不再排除 skipped ⇒ 没拨号也照样打 success 日志。
     id: 'M88',
     name: '假成功复活：CAG 调用点不再排除 skipped（没拨号也打「握手保活成功」）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '            } else if (!cagFail.skipped) {',
     to: '            } else {',
     replaceAll: false,
@@ -953,7 +953,7 @@ const MUTATIONS = [
     // 这台机器一条保活动作都没有，被平台按"无活动"关机（用户现场："一直自动关机"）。
     id: 'M90',
     name: '假活跃复活：isDataPlaneActive 退回只看 task.running（失败任务也当"在场"）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '    return (task.failStreak || 0) < DATA_PLANE_FAIL_LIMIT;',
     to: '    return true;',
     replaceAll: false,
@@ -962,7 +962,7 @@ const MUTATIONS = [
     // 失败不计数 ⇒ 永远不会降级 ⇒ 控制面永远拿不回保活权（假活跃的另一半）。
     id: 'M92',
     name: '假活跃复活：失败计数不再累加（连续失败也无法触发交还控制面）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '    task.failStreak = (task.failStreak || 0) + 1;',
     to: '    task.failStreak = (task.failStreak || 0);',
     replaceAll: false,
@@ -972,7 +972,7 @@ const MUTATIONS = [
     // ⇒ `getaddrinfo ENOTFOUND undefined`（用户贴出的原句），并被 hard 分档报成链路故障。
     id: 'M91',
     name: 'undefined 当主机名复活：performCagAuthHold 拆掉材料守卫',
-    file: 'app/ydpc/cag_client.js',
+    file: 'app/ydpc/cag_client.ts',
     from:
       "  const cagHostRaw = String(a.cagIp || a.cagHost || '').trim();\n" +
       '  if (!cagHostRaw) {\n' +
@@ -988,7 +988,7 @@ const MUTATIONS = [
     // （这条变异存在的意义正是证明"必须有行为断言"，否则本类缺陷会永久隐身。）
     id: 'M93',
     name: '守卫失效：pingCag 的 SCG 前置拒绝被改成 if (false)（字符串仍在，拦截已失效）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "    if (currentVm && (currentVm.vendor === 'SCG' ||",
     to: "    if (false && (currentVm.vendor === 'SCG' ||",
     replaceAll: false,
@@ -997,7 +997,7 @@ const MUTATIONS = [
     // 同上：材料缺失改成抛错（而不是 return 跳过）⇒ 每轮被记成真失败并弹 error 告警。
     id: 'M94',
     name: '守卫失效：pingCag 的材料缺失前置拒绝被改成 if (false)',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '      if (!firmAuth || !(firmAuth.cagIp || firmAuth.cagHost)) {',
     to: '      if (false) {',
     replaceAll: false,
@@ -1007,7 +1007,7 @@ const MUTATIONS = [
     // 声称一条**在 SCG 上不存在**的保活通道正在保活（与"假成功"同源的失真）。
     id: 'M95',
     name: '措辞失真复活：SCG 降级留证改回声称"CAG 握手"在保活（该通道不存在）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "          ? '（SCG 底座无 CAG 握手通道，仅剩 SOHO 心跳）'",
     to: "          ? '（SOHO 心跳 + CAG 握手）'",
     replaceAll: false,
@@ -1016,7 +1016,7 @@ const MUTATIONS = [
     // 底座标签不落 task ⇒ 所有底座都退化成 ZTE 措辞 ⇒ SCG 机又被宣称有 CAG 握手。
     id: 'M96',
     name: '措辞失真复活：task.routeKind 不再按底座写入（SCG 机退回 ZTE 措辞）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "      routeKind: (vm && vm._route && vm._route.kind) || ''",
     to: "      routeKind: ''",
     replaceAll: false,
@@ -1027,7 +1027,7 @@ const MUTATIONS = [
     // 静态断言抓不到这种"条件被改假"，只有真起一个静默 TCP 服务端的行为断言能抓到。
     id: 'M97',
     name: '守卫失效：SCG"零应答"分支被改成 if (false)（空应答又被当成字节不符）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: '    if (!resp.length) {',
     to: '    if (false && !resp.length) {',
     replaceAll: false,
@@ -1036,7 +1036,7 @@ const MUTATIONS = [
     // 失真复活：把"零应答"的文案改回编造出来的 byte[0]=0x0 ⇒ 排查方向被带偏。
     id: 'M98',
     name: '失真复活：SCG 零应答文案改回"byte[0]=0x0"（编造一个不存在的字节）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: "        'SCG auth 无应答：超时内未收到任何字节（服务端未回包或连接已被断开）'",
     to: "        'SCG auth 失败：byte[0]=0x0'",
     replaceAll: false,
@@ -1048,7 +1048,7 @@ const MUTATIONS = [
     // ───────────────────────────────────────────────────────────────────────
     id: 'M99',
     name: 'SCG 开机接线被拆：bootVmViaCag 的 SCG 分支退回"暂不支持开机"的旧拒绝',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: '      return await this.bootVmViaCem(userServiceId, accName, firmAuth);',
     to: "      throw new Error('SCG 底座暂不支持自动开机'); // mutation：CEM 开机被拆",
     replaceAll: false,
@@ -1056,7 +1056,7 @@ const MUTATIONS = [
   {
     id: 'M100',
     name: 'SCG 冷启动超时回退：getConnectInfo 超时从 120s 退回 20s（把"正在开机"误判成失败）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: 'timeoutMs: 120000',
     to: 'timeoutMs: 20000 /* mutation：冷启动等待不足，会把开机中的机器误判为失败 */',
     replaceAll: false,
@@ -1068,7 +1068,7 @@ const MUTATIONS = [
     // ───────────────────────────────────────────────────────────────────────
     id: 'M101',
     name: '504 在途语义被拆：getConnectInfo 的 5xx 不再被识别为可重试（机器被拉起却报失败）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: 'if (res.status >= 500) {',
     to: 'if (false) { // mutation：504 不再按"在途"处理',
     replaceAll: false,
@@ -1076,7 +1076,7 @@ const MUTATIONS = [
   {
     id: 'M102',
     name: '独立核验被拆：开机调用方不再走列表接口核实（读不到"已运行"就敢报失败）',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: 'const verified = await this._verifyVmRunning(userServiceId);',
     to: 'const verified = true; /* mutation：独立核验被拆，不再核实真实状态 */',
     replaceAll: true,
@@ -1084,7 +1084,7 @@ const MUTATIONS = [
   {
     id: 'M103',
     name: '在途语义退化：预算耗尽不再返回 pending（开机在途被当成致命错误抛出）',
-    file: 'app/ydpc/scg_keepalive.js',
+    file: 'app/ydpc/scg_keepalive.ts',
     from: 'ok: false, pending: true, reason: e.message, readyStatus: null,',
     to: 'ok: false, pending: false, reason: e.message, readyStatus: null, /* mutation：丢掉在途语义 */',
     replaceAll: false,
@@ -1114,7 +1114,7 @@ const MUTATIONS = [
     // ───────────────────────────────────────────────────────────────────────
     id: 'M106',
     name: '续期周期倒退：从 25 分钟改回 40 分钟（晚于平台 ~30 分钟 TTL，401 照旧）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: 'parseInt(process.env.ECLOUD_TOKEN_REFRESH_MS, 10) || 25 * 60 * 1000',
     to: 'parseInt(process.env.ECLOUD_TOKEN_REFRESH_MS, 10) || 40 * 60 * 1000 /* mutation：晚于 TTL */',
     replaceAll: false,
@@ -1133,7 +1133,7 @@ const MUTATIONS = [
     // ───────────────────────────────────────────────────────────────────────
     id: 'M108',
     name: '开机取值失真：poweron 映射改成后端不认识的 startup（开机能力实际失效）',
-    file: 'app/http/handler.js',
+    file: 'app/http/handler.ts',
     from: "poweron: 'available', boot: 'available'",
     to: "poweron: 'startup', boot: 'available' /* mutation：后端不认识 startup，开机必失败 */",
     replaceAll: false,
@@ -1152,7 +1152,7 @@ const MUTATIONS = [
     // ───────────────────────────────────────────────────────────────────────
     id: 'M110',
     name: '免登录泄漏：所有会话都落盘（未勾选的公共电脑会话也被持久化）',
-    file: 'app/auth_manager.js',
+    file: 'app/auth_manager.ts',
     from: 'if (!s.remember) continue;',
     to: 'if (false) continue; /* mutation：所有会话都落盘 */',
     replaceAll: false,
@@ -1160,7 +1160,7 @@ const MUTATIONS = [
   {
     id: 'M111',
     name: '会话永不过期：恢复时不再校验 30 天窗口（过期 token 复活）',
-    file: 'app/auth_manager.js',
+    file: 'app/auth_manager.ts',
     from: 'if (Date.now() > s.expiresAt) continue; // 过期不恢复（30 天窗口到期）',
     to: 'if (false) continue; /* mutation：不校验过期 */',
     replaceAll: false,
@@ -1168,7 +1168,7 @@ const MUTATIONS = [
   {
     id: 'M112',
     name: '登出退不掉：登出端点不再吊销服务端会话（重启后旧 token 复活）',
-    file: 'app/http/handler.js',
+    file: 'app/http/handler.ts',
     from: 'authManager.destroySession(session.token);',
     to: '/* mutation：登出不再吊销会话 */',
     replaceAll: false,
@@ -1179,7 +1179,7 @@ const MUTATIONS = [
     // ───────────────────────────────────────────────────────────────────────
     id: 'M113',
     name: '守护失守·单机门禁：显式关闭的单机守护也被无视（关了还开）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: 'if (d.autoBootEnabled === false) continue;',
     to: 'if (false) continue; /* mutation：单机开关门禁被拆 */',
     replaceAll: false,
@@ -1187,7 +1187,7 @@ const MUTATIONS = [
   {
     id: 'M114',
     name: '守护失守·盲开：不再校验合成判定（向运行中的机器也下发开机）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: "if (st.state !== 'off') continue;",
     to: 'if (false) continue; /* mutation：不校验开关机状态，盲开 */',
     replaceAll: false,
@@ -1195,7 +1195,7 @@ const MUTATIONS = [
   {
     id: 'M115',
     name: '守护失守·冷却被拆：不再做同机 10 分钟冷却（接口刷屏风险）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: 'if (Date.now() - (d._lastAutoBootAt || 0) < ECLOUD_AUTOBOOT_COOLDOWN_MS) continue;',
     to: 'if (false) continue; /* mutation：冷却被拆 */',
     replaceAll: false,
@@ -1204,7 +1204,7 @@ const MUTATIONS = [
     // 2026-09-28 用户拍板：守护双开关均默认开启。本变异把它翻回"默认关闭"口径。
     id: 'M116',
     name: '默认开启倒退：ecloud 守护账号级门禁改回 === true（用户没勾就不守护）',
-    file: 'app/ecloud/ecloud_client.js',
+    file: 'app/ecloud/ecloud_client.ts',
     from: 'if (this.account.features?.autoBoot !== false) {',
     to: 'if (this.account.features?.autoBoot === true) { /* mutation：默认开启倒退 */',
     replaceAll: false,
@@ -1214,7 +1214,7 @@ const MUTATIONS = [
     // 会抛 ReferenceError 中断整账号巡检（抽取重构的真实伴生缺陷，被组 34 的两条新断言捕获）。
     id: 'M117',
     name: '悬空引用复活：关机分支的"未武装原因"改回引用已删除的 accAutoBootOn/vmAutoBootOn',
-    file: 'app/ydpc/ydpc_client.js',
+    file: 'app/ydpc/ydpc_client.ts',
     from: "const why = this._autoBootArmed(vm) ? '当前套餐时长受限' : '未开启自动开机守护';",
     to: "const why = (!accAutoBootOn || !vmAutoBootOn) ? '当前套餐时长受限' : '未开启自动开机守护';",
     replaceAll: false,
@@ -1268,7 +1268,7 @@ const MUTATIONS = [
 // 沙箱构造：整树复制（只排除与源码无关的目录）
 //
 // 【2026-09-23 修复 · 重要】这里原先是一份手工维护的 SRC_FILES 清单。组 11 给回归测试网
-// 新增 `read('app/persist_log.js')` 之后清单没同步，导致沙箱里的回归脚本在**读取阶段就
+// 新增 `read('app/persist_log.ts')` 之后清单没同步，导致沙箱里的回归脚本在**读取阶段就
 // ENOENT 崩溃**（退出码非 0，但不是任何断言失败）→ 12 项变异全部被误判为"被捕获"，
 // 整个变异验证退化成**假 PASS**（一份永远不会真正变红的测试网）。
 //
@@ -1309,7 +1309,7 @@ function freshSandbox(tag) {
   fs.mkdirSync(dir, { recursive: true }); // 全新路径，无需（也不依赖）先删除
   copyTree(ROOT, dir);
   // 自证：拷贝必须完整，否则后续所有「被捕获 / 漏网」的结论都不可信
-  for (const must of ['server.js', 'package.json', path.join('app', 'ydpc', 'ydpc_client.js')]) {
+  for (const must of ['server.ts', 'package.json', path.join('app', 'ydpc', 'ydpc_client.ts')]) {
     if (!fs.existsSync(path.join(dir, must))) {
       throw new Error(`沙箱拷贝不完整：缺少 ${must}（源=${ROOT}，目标=${dir}）`);
     }

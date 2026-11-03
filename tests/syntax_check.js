@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * 静态语法检查：对参与运行的核心 JS 文件做解析（Bun.Transpiler / node --check）。
+ * 静态语法检查：对参与运行的核心 TS/JS 文件做解析（Bun.Transpiler / node --check）。
  * 为什么独立成脚本：不依赖 shell 的 && 连接与平台差异，Windows/Linux 行为一致。
  */
 
@@ -13,32 +13,37 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const isBun = !!process.versions.bun;
 
-function walkJs(dir, acc = []) {
+function isSourceFile(name) {
+  if (name.endsWith('.d.ts')) return false;
+  return name.endsWith('.ts') || name.endsWith('.js');
+}
+
+function walkSources(dir, acc = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     if (e.name === 'node_modules' || e.name === '.git' || e.name === 'data') continue;
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) walkJs(p, acc);
-    else if (e.isFile() && e.name.endsWith('.js')) acc.push(path.relative(ROOT, p));
+    if (e.isDirectory()) walkSources(p, acc);
+    else if (e.isFile() && isSourceFile(e.name)) acc.push(path.relative(ROOT, p));
   }
   return acc;
 }
 
-const FILES = ['server.js', ...walkJs(path.join(ROOT, 'app'))].sort();
+const FILES = ['server.ts', ...walkSources(path.join(ROOT, 'app'))].sort();
 
 let failed = 0;
 
 const REQUIRED = [
-  'server.js',
-  'app/lib/task_switch.js',
-  'app/ctyun_client.js',
-  'app/http/handler.js',
-  'app/http/ctyun_proxy.js',
-  'app/auth_manager.js',
-  'app/ydpc/product_route.js',
-  'app/ydpc/zte_cag_tls.js',
-  'app/ydpc/scg_keepalive.js',
-  'app/ecloud/ecloud_engine.js',
-  'app/ecloud/ecloud_client.js',
+  'server.ts',
+  'app/lib/task_switch.ts',
+  'app/ctyun_client.ts',
+  'app/http/handler.ts',
+  'app/http/ctyun_proxy.ts',
+  'app/auth_manager.ts',
+  'app/ydpc/product_route.ts',
+  'app/ydpc/zte_cag_tls.ts',
+  'app/ydpc/scg_keepalive.ts',
+  'app/ecloud/ecloud_engine.ts',
+  'app/ecloud/ecloud_client.ts',
 ];
 for (const f of REQUIRED) {
   if (!FILES.includes(f)) {
@@ -47,14 +52,14 @@ for (const f of REQUIRED) {
   }
 }
 
-const transpiler = isBun ? new Bun.Transpiler({ loader: 'js' }) : null;
-
 for (const f of FILES) {
   const abs = path.join(ROOT, f);
   let ok = false;
   let errText = '';
-  if (transpiler) {
+  if (isBun) {
     try {
+      const loader = f.endsWith('.ts') ? 'ts' : 'js';
+      const transpiler = new Bun.Transpiler({ loader });
       transpiler.transformSync(fs.readFileSync(abs, 'utf8'));
       ok = true;
     } catch (e) {

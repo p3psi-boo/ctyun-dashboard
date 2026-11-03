@@ -18,7 +18,7 @@
  *
  * 断言分两类：
  *   1) 静态结构断言 —— 直接读源码文本，断言"危险模式不存在 / 安全模式存在"；
- *   2) 行为断言 —— 从 server.js 抽取权威开关解析函数 resolveTaskEnabled 后真实调用，
+ *   2) 行为断言 —— 从 server.ts 抽取权威开关解析函数 resolveTaskEnabled 后真实调用，
  *      验证语义正确（尤其是 sign -> autoSign 的字段映射，见 #43）。
  *
  * 零依赖，直接 `node tests/regression.test.js`。
@@ -56,31 +56,31 @@ const stripLineComments = (code) =>
     .join('\n');
 
 const SERVER_SPLIT_FILES = [
-  'server.js',
-  'app/runtime.js',
-  'app/paths.js',
-  'app/lib/time.js',
-  'app/lib/crypto_util.js',
-  'app/lib/net.js',
-  'app/lib/atomic_fs.js',
-  'app/lib/access.js',
-  'app/lib/task_switch.js',
-  'app/crypto/secrets.js',
-  'app/config_store.js',
-  'app/notify.js',
-  'app/log_hub.js',
-  'app/ctyun_client.js',
-  'app/clients.js',
-  'app/http/limits.js',
-  'app/http/cors.js',
-  'app/http/body.js',
-  'app/http/session.js',
-  'app/http/json.js',
-  'app/http/static.js',
-  'app/http/ctyun_assets.js',
-  'app/http/ctyun_proxy.js',
-  'app/http/handler.js',
-  'app/auth_manager.js',
+  'server.ts',
+  'app/runtime.ts',
+  'app/paths.ts',
+  'app/lib/time.ts',
+  'app/lib/crypto_util.ts',
+  'app/lib/net.ts',
+  'app/lib/atomic_fs.ts',
+  'app/lib/access.ts',
+  'app/lib/task_switch.ts',
+  'app/crypto/secrets.ts',
+  'app/config_store.ts',
+  'app/notify.ts',
+  'app/log_hub.ts',
+  'app/ctyun_client.ts',
+  'app/clients.ts',
+  'app/http/limits.ts',
+  'app/http/cors.ts',
+  'app/http/body.ts',
+  'app/http/session.ts',
+  'app/http/json.ts',
+  'app/http/static.ts',
+  'app/http/ctyun_assets.ts',
+  'app/http/ctyun_proxy.ts',
+  'app/http/handler.ts',
+  'app/auth_manager.ts',
 ];
 
 function readServerSources() {
@@ -91,8 +91,8 @@ function readServerSources() {
 }
 
 const server = readServerSources();
-const scheduler = read('app/tasks/scheduler.js');
-const native = read('app/tasks/native_tasks.js');
+const scheduler = read('app/tasks/scheduler.ts');
+const native = read('app/tasks/native_tasks.ts');
 
 let passed = 0;
 let failed = 0;
@@ -197,7 +197,7 @@ const nativeCode = stripComments(native);
 // ============================================================================
 group('组 1 · 开关语义单一入口（暗线 A）');
 
-test('server.js 定义 TASK_FEATURE_KEY 且把 sign 映射到 autoSign（#43 字段漂移）', () => {
+test('server.ts 定义 TASK_FEATURE_KEY 且把 sign 映射到 autoSign（#43 字段漂移）', () => {
   assert.ok(/TASK_FEATURE_KEY/.test(serverCode), '未找到 TASK_FEATURE_KEY');
   assert.ok(
     /TASK_FEATURE_KEY\s*=\s*\{[^}]*sign:\s*'autoSign'[^}]*\}/.test(serverCode),
@@ -205,12 +205,12 @@ test('server.js 定义 TASK_FEATURE_KEY 且把 sign 映射到 autoSign（#43 字
   );
 });
 
-test('server.js 暴露 resolveTask 统一入口', () => {
+test('server.ts 暴露 resolveTask 统一入口', () => {
   assert.ok(/resolveTask\s*\(\s*taskType/.test(serverCode), '缺少 CtYunClient.resolveTask');
   assert.ok(/function\s+resolveTaskEnabled\s*\(/.test(serverCode), '缺少 resolveTaskEnabled');
 });
 
-test('server.js 不得再出现挂机/保活执行闸门的原始字段直读', () => {
+test('server.ts 不得再出现挂机/保活执行闸门的原始字段直读', () => {
   const bad = [
     /if\s*\(\s*d\.keepaliveEnabled\s*===\s*false\s*\)\s*continue/,
     /if\s*\(\s*\w+\.taskEnabled\s*===\s*false\s*\)\s*continue/,
@@ -235,7 +235,7 @@ test('scheduler.js 不得就地读取 acc.features 的任务开关', () => {
   }
 });
 
-test('scheduler.js 提供 taskGate 统一入口，且兜底映射与 server.js 一致（sign -> autoSign）', () => {
+test('scheduler.js 提供 taskGate 统一入口，且兜底映射与 server.ts 一致（sign -> autoSign）', () => {
   assert.ok(/taskGate\s*\(/.test(schedulerCode), '缺少 scheduler.taskGate');
   assert.ok(
     /taskType\s*===\s*'sign'\s*\?\s*'autoSign'\s*:\s*taskType/.test(schedulerCode),
@@ -248,19 +248,19 @@ test('scheduler.js 提供 taskGate 统一入口，且兜底映射与 server.js �
 // ============================================================================
 group('组 2 · 挂机不得盲重连（暗线 B）');
 
-test('server.js 存在 "Unverified Channel Close" 证据缺失标记', () => {
+test('server.ts 存在 "Unverified Channel Close" 证据缺失标记', () => {
   assert.ok(
     /Unverified Channel Close/.test(server),
     '缺少"通道关闭但无客户端在场证据"的显式标记，退化为 unknow 重连'
   );
 });
 
-test('server.js 的挂机中断判定必须返回 unverified 分支（不对称判定）', () => {
+test('server.ts 的挂机中断判定必须返回 unverified 分支（不对称判定）', () => {
   assert.ok(/diagnoseHangInterruption/.test(serverCode), '缺少 diagnoseHangInterruption');
   assert.ok(/unverified/.test(serverCode), '缺少 unverified 判定结果');
 });
 
-test('server.js 存在重连预算上限字段（防止无限重连顶人）', () => {
+test('server.ts 存在重连预算上限字段（防止无限重连顶人）', () => {
   assert.ok(/hangReconnectCount/.test(serverCode), '缺少 hangReconnectCount 重连预算');
   assert.ok(/hangUnverifiedStreak/.test(serverCode), '缺少 hangUnverifiedStreak 退避计数');
 });
@@ -270,7 +270,7 @@ test('server.js 存在重连预算上限字段（防止无限重连顶人）', (
 // ============================================================================
 group('组 3 · 打卡判定必须以官方确认（暗线 C）');
 
-test('server.js 提供跨分钟复检机制 scheduleSignVerify / isSignTaskDone', () => {
+test('server.ts 提供跨分钟复检机制 scheduleSignVerify / isSignTaskDone', () => {
   assert.ok(/scheduleSignVerify/.test(serverCode), '缺少 scheduleSignVerify');
   assert.ok(/isSignTaskDone/.test(serverCode), '缺少 isSignTaskDone');
 });
@@ -315,7 +315,7 @@ test('native_tasks.js 硬编码 isCompleted: true 的返回点须恰好 3 处（
 // ============================================================================
 group('组 4 · 错误证据不得被吞掉（暗线 D）');
 
-test('server.js refreshOfficialTasks 返回可区分可信度的结果 { ok }', () => {
+test('server.ts refreshOfficialTasks 返回可区分可信度的结果 { ok }', () => {
   assert.ok(
     /refreshOfficialTasks\s*\(/.test(serverCode),
     '缺少 refreshOfficialTasks'
@@ -364,7 +364,7 @@ group('组 6 · resolveTaskEnabled 行为验证（抽取源码真实执行）');
 
 function loadResolveTaskEnabled() {
   const m = server.match(/const TASK_CN_NAME[\s\S]*?\n\}\n/);
-  assert.ok(m, '无法从 server.js 抽取 resolveTaskEnabled 代码块');
+  assert.ok(m, '无法从 server.ts 抽取 resolveTaskEnabled 代码块');
   const code = m[0];
   assert.ok(/function\s+resolveTaskEnabled/.test(code), '抽取到的代码块不含 resolveTaskEnabled');
   // eslint-disable-next-line no-new-func
@@ -449,41 +449,41 @@ group('组 7 · 移动云开机必须走干净通道（禁伪造身份 / 关证�
 
 // 扫描生产源码中的"脏手段"指纹（沙箱内缺失的文件自动跳过）
 const BOOT_SCAN_FILES = [
-  'server.js',
-  'app/ctyun_client.js',
-  'app/http/handler.js',
-  'app/http/ctyun_proxy.js',
-  'app/tasks/scheduler.js',
-  'app/tasks/native_tasks.js',
-  'app/ydpc/ydpc_client.js',
-  'app/ydpc/soho_client.js',
-  'app/ydpc/cag_boot.js',
-  'app/ydpc/zte_cag_raw.js',
-  'app/ydpc/zte_cag_tls.js',
+  'server.ts',
+  'app/ctyun_client.ts',
+  'app/http/handler.ts',
+  'app/http/ctyun_proxy.ts',
+  'app/tasks/scheduler.ts',
+  'app/tasks/native_tasks.ts',
+  'app/ydpc/ydpc_client.ts',
+  'app/ydpc/soho_client.ts',
+  'app/ydpc/cag_boot.ts',
+  'app/ydpc/zte_cag_raw.ts',
+  'app/ydpc/zte_cag_tls.ts',
   // 【2026-09-26】SCG 通道是**第二个**数据面实现，与 cag_boot 同属"移动云开机/保活相关文件"。
   // 该通道同时用到 CEM 客户端 ID 与 RSA 公钥（见下方豁免），必须一并扫 ——
   // 否则"抄协议格式"很容易顺手把来源不明的第三方身份也带进来而无人拦。
-  'app/ydpc/scg_keepalive.js',
+  'app/ydpc/scg_keepalive.ts',
   'app/static/app.js',
 ];
 
 const REJECT_UNAUTHORIZED_EXEMPT = new Set([
   // 天翼云 WebRTC / 官方通道上的历史豁免，与移动云开机无关
-  'server.js',
-  'app/ctyun_client.js',
+  'server.ts',
+  'app/ctyun_client.ts',
 ]);
 
 // app/ydpc 下与开机/保活链路无关、且各自有独立 TLS 口径的文件（豁免纳入扫描名单）
 const YDPC_SCAN_EXEMPT = new Set([
-  'app/ydpc/cag_client.js',
-  'app/ydpc/mqtt_client.js',
-  'app/ydpc/product_route.js',
+  'app/ydpc/cag_client.ts',
+  'app/ydpc/mqtt_client.ts',
+  'app/ydpc/product_route.ts',
 ]);
 
 test('app/ydpc 下不得出现未纳入红线扫描的 .js 文件（新文件的复活路径必须被覆盖）', () => {
   const dir = path.join(ROOT, 'app/ydpc');
   const present = fs.readdirSync(dir)
-    .filter((f) => f.endsWith('.js'))
+    .filter((f) => f.endsWith('.js') || f.endsWith('.ts'))
     .map((f) => `app/ydpc/${f}`);
   const missing = present.filter((f) => !BOOT_SCAN_FILES.includes(f) && !YDPC_SCAN_EXEMPT.has(f));
   assert.deepStrictEqual(
@@ -495,7 +495,7 @@ test('app/ydpc 下不得出现未纳入红线扫描的 .js 文件（新文件的
 });
 
 // 一旦出现即代表"伪造身份 / 硬编码凭据 / 关证书"被重新引入的指纹
-// 【2026-09-26 修订】sc-user-5e38ece5 与 sdk2 RSA 公钥经用户批准在 app/ydpc/scg_keepalive.js
+// 【2026-09-26 修订】sc-user-5e38ece5 与 sdk2 RSA 公钥经用户批准在 app/ydpc/scg_keepalive.ts
 //   的 CEM 控制面（保活路径）中合法使用 —— 真机四轮探针实证 firm-auth 的 scAuthCode 只是
 //   OAuth ext-grant 令牌，不经 CEM（OAuth → getConnectInfo）边缘对任何输入一律静默丢包。
 //   这两个指纹因此对 scg_keepalive.js **豁免**，对其余文件仍然全面禁止（此类手段
@@ -504,12 +504,12 @@ const BOOT_FINGERPRINTS = [
   {
     re: /sc-user-5e38ece5/,
     why: '硬编码的第三方 SC 客户端 ID（伪造官方身份）',
-    except: ['app/ydpc/scg_keepalive.js']
+    except: ['app/ydpc/scg_keepalive.ts']
   },
   {
     re: /SC_RSA_PK_SDK2/,
     why: '硬编码的第三方 SC RSA 公钥',
-    except: ['app/ydpc/scg_keepalive.js']
+    except: ['app/ydpc/scg_keepalive.ts']
   },
   { re: /scBootVm\s*\(/, why: 'SC 直连开机函数' },
   { re: /scRsaEncryptVmId/, why: 'SC 专用 VMID 加密函数' },
@@ -524,7 +524,7 @@ test('生产源码不得出现"伪造身份 / 硬编码第三方凭据 / 关证�
     if (!fs.existsSync(abs)) continue;
     const code = stripComments(fs.readFileSync(abs, 'utf8'));
     for (const { re, why, except } of BOOT_FINGERPRINTS) {
-      // 例外：server.js 的 rejectUnauthorized 两处均在天翼云路径上
+      // 例外：server.ts 的 rejectUnauthorized 两处均在天翼云路径上
       //   · 2162 行附近：天翼云 WebRTC 的 wss 连接选项
       //   · 3402 行附近：天翼云网页端代理透传的 https.request 选项
       // 与移动云开机无关，故仅在"移动云开机相关文件"上检查关证书项。
@@ -544,7 +544,7 @@ test('生产源码不得出现"伪造身份 / 硬编码第三方凭据 / 关证�
 });
 
 test('cag_boot 实现必须：证书校验受控降级 + 公钥动态获取 + 不硬编码凭据', () => {
-  const abs = path.join(ROOT, 'app/ydpc/cag_boot.js');
+  const abs = path.join(ROOT, 'app/ydpc/cag_boot.ts');
   if (!fs.existsSync(abs)) return; // 未启用开机能力时跳过
   const code = stripComments(fs.readFileSync(abs, 'utf8'));
 
@@ -616,7 +616,7 @@ test('cag_boot 实现必须：证书校验受控降级 + 公钥动态获取 + �
 });
 
 test('ydpc_client 的开机调用点必须走 cag_boot，而不是 SC 直连', () => {
-  const code = stripComments(read('app/ydpc/ydpc_client.js'));
+  const code = stripComments(read('app/ydpc/ydpc_client.ts'));
   // 注意：官方 rebootVm 的字符串里含 "bootVm" 子串，会误报，先剔除 rebootVm 再检查
   const noReboot = code.replace(/rebootVm/g, '');
   if (/bootVm\s*\(/.test(noReboot) || /cagBootVm\s*\(/.test(code)) {
@@ -628,7 +628,7 @@ test('ydpc_client 的开机调用点必须走 cag_boot，而不是 SC 直连', (
 });
 
 test('scheduler 的移动云开机（若有）必须走 cag_boot', () => {
-  const code = stripComments(read('app/tasks/scheduler.js'));
+  const code = stripComments(read('app/tasks/scheduler.ts'));
   if (/\bcagBootVm\s*\(/.test(code)) {
     assert.ok(
       /require\s*\(\s*['"][^'"]*cag_boot['"]\s*\)/.test(code),
@@ -653,7 +653,7 @@ test('scheduler 的移动云开机（若有）必须走 cag_boot', () => {
 // ============================================================================
 group('组 8 · ZTE CSAP 加密链路（参数进 query + 加解密可用）');
 
-const cagBoot = require(path.join(ROOT, 'app/ydpc/cag_boot.js'));
+const cagBoot = require(path.join(ROOT, 'app/ydpc/cag_boot.ts'));
 
 test('ZTE_TRIPLE_KEY：三把对称密钥长度正确（AES-256-CBC / AES-128-ECB）', () => {
   assert.strictEqual(Buffer.byteLength(cagBoot.ZTE_UAS_KEY, 'utf8'), 32, 'UasKey 必须是 32 字节（AES-256）');
@@ -794,7 +794,7 @@ test('令牌失效码 1000100 必须被登记为可重试', () => {
 // ============================================================================
 group('组 9 · 移动云保活不因"时长耗尽"而熔断（运行中机器仍保活）');
 
-const ydpcCode = stripComments(read('app/ydpc/ydpc_client.js'));
+const ydpcCode = stripComments(read('app/ydpc/ydpc_client.ts'));
 
 test('自动开机闸门仍须受 isLimitedExpired 约束（耗尽不拉起，方向不可反）', () => {
   // 【2026-09-28】武装判定抽取为 _autoBootArmed 单一入口后闸门形状更新为
@@ -966,7 +966,7 @@ test('refreshVms 差异合并必须泛化保留 `_` 前缀的本机运行时状�
 // ============================================================================
 group('组 11 · 保活有效性可观测（日志落盘 + 独立核验告警）');
 
-const persistLogCode = read('app/persist_log.js');
+const persistLogCode = read('app/persist_log.ts');
 
 test('appendLog 必须"落盘先于折叠"（磁盘保原始流水，折叠只作 UI 优化）', () => {
   const m = server.match(/function appendLog\([\s\S]*?\n\}/);
@@ -1056,7 +1056,7 @@ test('落盘器行为验证：写入 → 回灌 → 保留清理', () => {
   const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ctyun-log-'));
   try {
-    const { LogPersister } = require(path.join(ROOT, 'app', 'persist_log.js'));
+    const { LogPersister } = require(path.join(ROOT, 'app', 'persist_log.ts'));
     const p = new LogPersister({ dir: tmp, retentionDays: 7 });
     assert.strictEqual(p.init(), true, '落盘器初始化应成功');
     assert.ok(fs.existsSync(tmp), '日志目录应被创建');
@@ -1099,7 +1099,7 @@ test('落盘器行为验证：写入 → 回灌 → 保留清理', () => {
 //   - 后端必须提供**只读、按主机**的状态视图 describeVmKeepAlive(vm)（现算倒计时）；
 //   - 后端必须按 userServiceId 记录每台主机最近动作（vmActions，仅内存、不落盘）；
 //   - 账号级摘要必须**在运行态也刷新**，不得退回固定文案；
-//   - server.js 必须把视图逐台下发；前端移动云卡片必须逐台渲染，
+//   - server.ts 必须把视图逐台下发；前端移动云卡片必须逐台渲染，
 //     **不得回退成账号级单行**，同时**天翼云侧一个字节都不许被改动**。
 // ============================================================================
 group('组 12 · 移动云多机状态必须按主机维度呈现');
@@ -1271,8 +1271,8 @@ test('行为：账号级摘要必须反映"几台运行中 / 几台已关机 / �
   assert.ok(text.includes('1 台单机保活关闭'), `摘要必须写出关闭保活的台数，实际: ${text}`);
 });
 
-test('server.js 必须逐台下发 keepAliveView，且单机视图计算失败不得打挂整个接口', () => {
-  assert.ok(/keepAliveView/.test(server), 'server.js 必须在序列化时给每台移动云主机挂上 keepAliveView');
+test('server.ts 必须逐台下发 keepAliveView，且单机视图计算失败不得打挂整个接口', () => {
+  assert.ok(/keepAliveView/.test(server), 'server.ts 必须在序列化时给每台移动云主机挂上 keepAliveView');
   assert.ok(
     /client\.describeVmKeepAlive\(vm\)/.test(server),
     '状态视图必须由 client（Node 侧状态所有者）现算，不得在前端猜'
@@ -1346,7 +1346,7 @@ test('移动爱家 ZTEC 监视行不得再显示运行状态徽章（与「名�
 group('组 13 · 保活循环必须真的跑起来（启动崩溃 + 网络无超时）');
 
 let sohoCode = '';
-try { sohoCode = read('app/ydpc/soho_client.js'); } catch (e) { sohoCode = ''; }
+try { sohoCode = read('app/ydpc/soho_client.ts'); } catch (e) { sohoCode = ''; }
 
 test('核验看门狗的节拍常量必须被真正定义（只引用不定义 = 启动即 ReferenceError）', () => {
   for (const n of ['EFFECT_VERIFY_INTERVAL_MS', 'EFFECT_VERIFY_FIRST_DELAY_MS', 'EFFECT_VERIFY_SAMPLE_SEC']) {
@@ -1394,7 +1394,7 @@ test('soho_client 所有出网请求必须带主动超时（超时封装之外�
 });
 
 testAsync('行为：startKeepAliveWorker() 必须真的把保活循环排上（不得抛错后静默卡死）', async () => {
-  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.js'));
+  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.ts'));
   const account = {
     id: 'regression-probe', platform: 'ydpc', name: '回归探针', user: 'probe',
     keepaliveInterval: 600,
@@ -1440,7 +1440,7 @@ testAsync('行为：startKeepAliveWorker() 必须真的把保活循环排上（�
 
 testAsync('行为：fetchWithTimeout 对"连上但不回包"的服务端必须在超时内抛错且可诊断', async () => {
   const http = require('http');
-  const { fetchWithTimeout } = require(path.join(ROOT, 'app', 'ydpc', 'soho_client.js'));
+  const { fetchWithTimeout } = require(path.join(ROOT, 'app', 'ydpc', 'soho_client.ts'));
 
   // 本地故意不响应的服务端：模拟"TCP 连上了但网关不回包"
   const server = http.createServer(() => { /* 故意不响应 */ });
@@ -1496,7 +1496,7 @@ testAsync('行为：fetchWithTimeout 对"连上但不回包"的服务端必须�
 group('组 14 · 移动公众侧车：凭据外置 + 三平台保活不重叠');
 
 let ecloudEngineCode = '';
-try { ecloudEngineCode = read('app/ecloud/ecloud_engine.js'); } catch (e) { ecloudEngineCode = ''; }
+try { ecloudEngineCode = read('app/ecloud/ecloud_engine.ts'); } catch (e) { ecloudEngineCode = ''; }
 let ecloudConfigPy = '';
 try { ecloudConfigPy = read('app/ecloud_engine/config.py'); } catch (e) { ecloudConfigPy = ''; }
 let ecloudSidecarPy = '';
@@ -1508,7 +1508,7 @@ test('侧车桥接层必须存在且导出完整接口', () => {
   // 注意：本断言**不得**读 tests/ 下的文件 —— 变异验证的沙箱刻意不复制 tests/
   // （mutation_check.js 的 IGNORE_DIRS），读它会 ENOENT 崩溃，把整轮变异验证拖成假 PASS。
   // 「已登记进语法闸门」由 tests/syntax_check.js 的自检负责。
-  assert.ok(ecloudEngineCode.length > 500, 'app/ecloud/ecloud_engine.js 缺失或过短');
+  assert.ok(ecloudEngineCode.length > 500, 'app/ecloud/ecloud_engine.ts 缺失或过短');
   for (const sym of ['EcloudEngine', 'EngineState', 'resolvePython']) {
     assert.ok(
       new RegExp(`\\b${sym}\\b`).test(ecloudEngineCode),
@@ -1580,7 +1580,7 @@ test('三平台保活不重叠：ecloud 桥接层不得复用 ydpc / 天翼云�
   );
   assert.ok(
     !/require\([^)]*server\.js[^)]*\)/.test(ecloudEngineCode),
-    'ecloud 桥接层不得反向依赖 server.js（避免宿主与侧车互相缠绕）'
+    'ecloud 桥接层不得反向依赖 server.ts（避免宿主与侧车互相缠绕）'
   );
 });
 
@@ -1609,7 +1609,7 @@ test('侧车退出绝不静默（方案书 R6）：在途请求必须失败并�
 
 testAsync('侧车可被真实拉起并跑通 IPC（无凭据时报"未就绪"而非崩溃）', async () => {
   const { spawnSync } = require('child_process');
-  const { EcloudEngine } = require(path.join(ROOT, 'app/ecloud/ecloud_engine.js'));
+  const { EcloudEngine } = require(path.join(ROOT, 'app/ecloud/ecloud_engine.ts'));
 
   const candidates = [process.env.ECLOUD_PYTHON, 'python3', 'python'].filter(Boolean);
   let py = null;
@@ -1671,7 +1671,7 @@ testAsync('侧车可被真实拉起并跑通 IPC（无凭据时报"未就绪"而
 
 testAsync('签约常量内置：覆盖文件缺失时，侧车必须靠内置公开常量正常加载（开箱即用）', async () => {
   const { spawnSync } = require('child_process');
-  const { EcloudEngine } = require(path.join(ROOT, 'app/ecloud/ecloud_engine.js'));
+  const { EcloudEngine } = require(path.join(ROOT, 'app/ecloud/ecloud_engine.ts'));
 
   const candidates = [process.env.ECLOUD_PYTHON, 'python3', 'python'].filter(Boolean);
   let py = null;
@@ -1752,24 +1752,24 @@ test('行为：环境变量必须是最优先来源（内置常量不得反过�
 //   ③ 登录 UI 区分（结构侧由组 16 守前端）。
 //
 // 本组比组 14 更进一步：不再只做"源码里有没有这句话"的静态断言，而是**真实 require
-// server.js 并调用权威入口**（resolveTaskEnabled / inferLogPlatform /
+// server.ts 并调用权威入口**（resolveTaskEnabled / inferLogPlatform /
 // buildEcloudDefaultFeatures），因为"长得像但语义错了"只有行为断言才拦得住。
 // ============================================================================
 group('组 15 · 移动公众接入主程序：三平台隔离 + 独立日志 + 分层开关');
 
 let _pureHelpers = null;
 function helpers() {
-  // 刻意**不 require server.js**：变异沙箱按设计不复制 node_modules（也刻意不含 tests/），
+  // 刻意**不 require server.ts**：变异沙箱按设计不复制 node_modules（也刻意不含 tests/），
   // require 会因缺 `ws` 直接崩在加载期 —— 那就变成"脚本崩溃"而不是"断言变红"，
   // 违背变异验证的判据（只认断言失败）。这里沿用组 6 的做法：抽源码 + 真实执行。
   if (_pureHelpers) return _pureHelpers;
   const mSwitch = server.match(/const TASK_CN_NAME[\s\S]*?\n\}\n/);
-  assert.ok(mSwitch, '无法从 server.js 抽取开关权威表与 resolveTaskEnabled');
+  assert.ok(mSwitch, '无法从 server.ts 抽取开关权威表与 resolveTaskEnabled');
   assert.ok(/function\s+resolveTaskEnabled/.test(mSwitch[0]), '抽取块不含 resolveTaskEnabled');
   const mFeat = server.match(/function buildEcloudDefaultFeatures\(\)[\s\S]*?\n\}\n/);
-  assert.ok(mFeat, '无法从 server.js 抽取 buildEcloudDefaultFeatures');
+  assert.ok(mFeat, '无法从 server.ts 抽取 buildEcloudDefaultFeatures');
   const mInf = server.match(/function inferLogPlatform[\s\S]*?\n\}\n/);
-  assert.ok(mInf, '无法从 server.js 抽取 inferLogPlatform');
+  assert.ok(mInf, '无法从 server.ts 抽取 inferLogPlatform');
   // eslint-disable-next-line no-new-func
   _pureHelpers = new Function(
     `${mSwitch[0]}\n${mFeat[0]}\n${mInf[0]}\nconst ECLOUD_LOG_SOURCE = 'ECLOUD';\n` +
@@ -1814,7 +1814,7 @@ test('行为：分层开关判定必须走权威入口，且语义正确（含"�
   // 里都必须彻底消失（对未知任务类型的通用放行是既有行为，不在此特判）。
   assert.ok(
     !/ecloudL3SpiceHeart/.test(stripLineComments(server)),
-    'L3 已删除 —— server.js 不得再出现任何 ecloudL3SpiceHeart 痕迹'
+    'L3 已删除 —— server.ts 不得再出现任何 ecloudL3SpiceHeart 痕迹'
   );
 
   // 单机独立保活关闭 → 三层保活都应被拦下
@@ -1838,16 +1838,16 @@ test('行为：分层开关判定必须走权威入口，且语义正确（含"�
 });
 
 test('三平台保活实现不得互相 require（机制不重叠的结构保证）', () => {
-  const ecloud = stripLineComments(read('app/ecloud/ecloud_client.js'));
+  const ecloud = stripLineComments(read('app/ecloud/ecloud_client.ts'));
   assert.ok(
     !/require\([^)]*(ydpc_client|soho_client|cag_client|cag_boot|zte_cag_raw|zte_cag_tls|mqtt_client|ctyun_encryption)[^)]*\)/.test(ecloud),
     '移动公众客户端不得复用移动爱家 / 天翼云的保活实现'
   );
   assert.ok(
     !/require\([^)]*server\.js[^)]*\)/.test(ecloud),
-    '移动公众客户端不得反向依赖 server.js（避免宿主与平台实现互相缠绕）'
+    '移动公众客户端不得反向依赖 server.ts（避免宿主与平台实现互相缠绕）'
   );
-  const ydpc = stripLineComments(read('app/ydpc/ydpc_client.js'));
+  const ydpc = stripLineComments(read('app/ydpc/ydpc_client.ts'));
   assert.ok(
     !/require\([^)]*ecloud[^)]*\)/.test(ydpc),
     '移动爱家客户端不得反向复用移动公众的保活实现'
@@ -1855,7 +1855,7 @@ test('三平台保活实现不得互相 require（机制不重叠的结构保证
 });
 
 test('三态红线：ecloud 客户端必须原样保留 ok=null，且该分支内绝不请求重登（防短信轰炸）', () => {
-  const ecloud = read('app/ecloud/ecloud_client.js');
+  const ecloud = read('app/ecloud/ecloud_client.ts');
   assert.ok(/ok === null/.test(ecloud), '必须显式处理 ok===null（全端点失败但非 token 错误）');
   assert.ok(
     /ok === null/.test(ecloud) && /不重登|绝不重登|不得重登/.test(ecloud),
@@ -1892,7 +1892,7 @@ test('保活机制必须"完整融合"：L1/L2 必须真的调用探针实现，
     'L2 必须真正调用 desktopUptime（desktop_once），不得空壳'
   );
   // Node 侧同样必须真的把请求送到侧车
-  const ecloud = read('app/ecloud/ecloud_client.js');
+  const ecloud = read('app/ecloud/ecloud_client.ts');
   assert.ok(/engine\.keepaliveL1\(/.test(ecloud) && /engine\.keepaliveL2\(/.test(ecloud),
     'Node 客户端必须真正下发 L1/L2 请求，不得只保留方法名');
 });
@@ -1946,7 +1946,7 @@ test('静态：accessToken 主动续期（平台 TTL≈30 分钟，提前 25 分
   // 【2026-09-27 用户报障核查】真机统计 111 次 401 中 92 次间隔精确 30.5 分钟（均值 32.7），
   // 规律自 09-24 起就存在 ⇒ 平台 accessToken 有效期约 30 分钟，旧实现为"401 后才被动重登"。
   // 现改为提前续期：密码登录频率不变（仍约 30 分钟一次），但 401 与告警从此消失。
-  const ecloud = stripLineComments(read('app/ecloud/ecloud_client.js'));
+  const ecloud = stripLineComments(read('app/ecloud/ecloud_client.ts'));
   const sidecarDs = stripLineComments(read('app/ecloud_engine/sidecar.py'));
   // ① 周期必须提前于 ~30 分钟 TTL（晚于过期则形同虚设）
   assert.ok(/25 \* 60 \* 1000/.test(ecloud), '续期周期必须是 25 分钟（提前于 ~30 分钟的平台 TTL）');
@@ -1975,8 +1975,8 @@ test('静态：移动公众开机能力接线（sidecar op → 引擎 → 客户
   // 【2026-09-28】开机能力正式接入：平台官方 operate 通道（available=开机，asar 客户端同款语义）。
   // 此前服务端对该平台返回 501「暂不支持电源控制」——那正是页面"不具备开机能力"的来源，必须消失。
   const sidecarDs = stripLineComments(read('app/ecloud_engine/sidecar.py'));
-  const engineJs = stripLineComments(read('app/ecloud/ecloud_engine.js'));
-  const ecloudJs = stripLineComments(read('app/ecloud/ecloud_client.js'));
+  const engineJs = stripLineComments(read('app/ecloud/ecloud_engine.ts'));
+  const ecloudJs = stripLineComments(read('app/ecloud/ecloud_client.ts'));
   const serverJs = stripLineComments(server);
   // ① sidecar：op 函数 + 注册 + operate 白名单
   assert.ok(/def op_desktop_power\(/.test(sidecarDs), '侧车必须实现 op_desktop_power');
@@ -2030,7 +2030,7 @@ test('静态：移动公众开机能力接线（sidecar op → 引擎 → 客户
 //   登出 ⇒ **显式吊销服务端会话**（含磁盘记录），否则重启后旧 token 复活 = "退不掉"
 // ============================================================================
 test('行为：30 天免登录 —— 勾选会话说盘且重启可恢复；未勾选绝不落盘；登出即吊销且重启不复活', () => {
-  const { AuthManager, hashPassword } = require(path.join(ROOT, 'app/auth_manager.js'));
+  const { AuthManager, hashPassword } = require(path.join(ROOT, 'app/auth_manager.ts'));
   const admin = { id: 'u_admin', username: 'admin', passwordHash: hashPassword('admin123'), role: 'admin', maxQuota: 999 };
   let storeData = null;
   const mkStore = () => ({ load: () => storeData, save: (o) => { storeData = o; } });
@@ -2068,7 +2068,7 @@ test('静态：免登录全链路接线（服务端 sessionStore/remember/logout
   const serverJs = server;
   const appJs2 = read('app/static/app.js');
   const html = read('app/static/index.html');
-  const authJs = read('app/auth_manager.js');
+  const authJs = read('app/auth_manager.ts');
   // ① 服务端：注入存储 + 登录透传 remember + 登出路由吊销
   assert.ok(/sessionStore: authSessionStore/.test(serverJs), 'AuthManager 必须注入磁盘会话存储');
   assert.ok(/authSessionStore = \{/.test(serverJs) && /auth_sessions\.json/.test(serverJs), '存储必须落在 data/auth_sessions.json');
@@ -2111,7 +2111,7 @@ test('静态：免登录全链路接线（服务端 sessionStore/remember/logout
 // ============================================================================
 test('行为：开关机合成判定 _effectivePowerState（探测证据 > 平台操作表 > 平台状态）', () => {
   // eslint-disable-next-line global-require
-  const { EcloudClient } = require(path.join(ROOT, 'app/ecloud/ecloud_client.js'));
+  const { EcloudClient } = require(path.join(ROOT, 'app/ecloud/ecloud_client.ts'));
   const client = new EcloudClient(
     { id: 'ec_unit', platform: 'ecloud', name: '单元测试', features: {} },
     {
@@ -2138,7 +2138,7 @@ test('行为：开关机合成判定 _effectivePowerState（探测证据 > 平�
 });
 
 test('静态：自动开机守护接线（账号级/单机双开关 + 冷却 + 合成门禁 + UI 双开关）', () => {
-  const ecloud = stripLineComments(read('app/ecloud/ecloud_client.js'));
+  const ecloud = stripLineComments(read('app/ecloud/ecloud_client.ts'));
   // 后端守护块四要素
   assert.ok(
     /ECLOUD_AUTOBOOT_COOLDOWN_MS = 10 \* 60 \* 1000/.test(ecloud),
@@ -2213,7 +2213,7 @@ test('静态：自动开机守护接线（账号级/单机双开关 + 冷却 + �
     '单机守护胶囊文案必须按"默认开"口径如实反映状态'
   );
   // 移动爱家（ydpc）：默认口径按底座分叉（含 SCG 的账号默认开；纯 ZTE 保持默认关）
-  const ydpcJs = stripLineComments(read('app/ydpc/ydpc_client.js'));
+  const ydpcJs = stripLineComments(read('app/ydpc/ydpc_client.ts'));
   assert.ok(
     /if \(isVmOff && this\._autoBootArmed\(vm\) && !isLimitedExpired\)/.test(ydpcJs),
     'ydpc 守护武装判定必须走 _autoBootArmed 单一入口'
@@ -2248,7 +2248,7 @@ test('会话契约：顶层 sessionId 必须被回填进 params（历史缺陷�
     /params\["sessionId"\]\s*=\s*req\.get\("sessionId"\)/.test(sidecar),
     'main() 必须把顶层 sessionId 回填进 params —— 否则所有会话内 op 都会报"会话不存在"'
   );
-  const ecloudEngine = read('app/ecloud/ecloud_engine.js');
+  const ecloudEngine = read('app/ecloud/ecloud_engine.ts');
   assert.ok(
     /const payload = \{ id, op, sessionId, params \}/.test(ecloudEngine),
     '桥接层必须把 sessionId 放在报文顶层（与 sidecar 文档一致）'
@@ -2256,7 +2256,7 @@ test('会话契约：顶层 sessionId 必须被回填进 params（历史缺陷�
 });
 
 test('scheduler 必须把 ecloud 与"天翼云任务链"隔离，且保活开关走 taskGate', () => {
-  const sc = stripLineComments(read('app/tasks/scheduler.js'));
+  const sc = stripLineComments(read('app/tasks/scheduler.ts'));
   // 每一处"能力隔离"都必须显式考虑 ecloud：达成度巡检、补跑自检、挂机、积分兑换、
   // 以及 ecloud 自己的独立分支 —— 少一处，移动公众账号就会被当成天翼云账号误跑。
   const refs = (sc.match(/platform\s*[!=]==\s*'ecloud'/g) || []).length;
@@ -2302,7 +2302,7 @@ test('两段式登录的待定会话必须有 TTL 清理（否则侧车进程与
 
 testAsync('行为：顶层 sessionId 必须真正送达侧车（IPC 契约自证）', async () => {
   const { spawnSync } = require('child_process');
-  const { EcloudEngine } = require(path.join(ROOT, 'app/ecloud/ecloud_engine.js'));
+  const { EcloudEngine } = require(path.join(ROOT, 'app/ecloud/ecloud_engine.ts'));
 
   const candidates = [process.env.ECLOUD_PYTHON, 'python3', 'python'].filter(Boolean);
   let py = null;
@@ -2375,7 +2375,7 @@ test('移动公众必须有**独立**的卡片渲染函数（不得复用移动�
 });
 
 test('分层结论（L1/L2）必须落到日志流（用户 2026-09-24：卡片只留逐台状态）', () => {
-  const ecloud = read('app/ecloud/ecloud_client.js');
+  const ecloud = read('app/ecloud/ecloud_client.ts');
   // 真实缺陷（用户报障）：原先只有 L1/L2 的**失败 / 重登**路径才 _log，成功路径完全静默，
   // 于是实时控制台里"移动公众"只剩登录记录 —— 用户据此误判"保活根本没在跑"。
   assert.ok(
@@ -2561,7 +2561,7 @@ test('L3 占位层已整层删除（2026-09-26 用户拍板）：UI 不得再有
     '卡片上的诚实性说明框已按用户要求删除，不得复活（口径改由日志流承载）'
   );
   assert.ok(
-    /成功不代表云电脑不会被关机|探针成功不等于云电脑不会被关机/.test(read('app/ecloud/ecloud_client.js')),
+    /成功不代表云电脑不会被关机|探针成功不等于云电脑不会被关机/.test(read('app/ecloud/ecloud_client.ts')),
     '诚实性口径必须仍存在于日志流中（分层日志需附「探针 ≠ 不会被关机」）—— 不许随卡片一起消失'
   );
   // 反向约束：移动公众卡片不得出现笼统的"已保活/保活成功"结论
@@ -2729,7 +2729,7 @@ test('短信分支名必须与 login.LoginResult 常量一致（不得自造短�
 });
 
 test('桥接层必须暴露 loginSendSms 包装（Node ↔ 侧车契约）', () => {
-  const engine = read('app/ecloud/ecloud_engine.js');
+  const engine = read('app/ecloud/ecloud_engine.ts');
   assert.ok(
     /loginSendSms\(sessionId,\s*p\)\s*\{[\s\S]{0,120}'login\.sendSms'/.test(engine),
     'ecloud_engine.js 必须把 login.sendSms 包装成 loginSendSms(sessionId, p)'
@@ -2737,7 +2737,7 @@ test('桥接层必须暴露 loginSendSms 包装（Node ↔ 侧车契约）', () 
 });
 
 test('客户端 loginSendSms 未获确认必须抛错，绝不返回"假成功"', () => {
-  const client = read('app/ecloud/ecloud_client.js');
+  const client = read('app/ecloud/ecloud_client.ts');
   const start = client.indexOf('async loginSendSms(');
   assert.ok(start > -1, 'ecloud_client.js 必须实现 loginSendSms');
   const body = client.slice(start, start + 1400);
@@ -2747,7 +2747,7 @@ test('客户端 loginSendSms 未获确认必须抛错，绝不返回"假成功"'
   );
 });
 
-test('server.js 在 need_* 分支必须真正调用发码，不得只登记 pending 就返回', () => {
+test('server.ts 在 need_* 分支必须真正调用发码，不得只登记 pending 就返回', () => {
   const start = server.indexOf('if (INTERACTIVE_BRANCHES.has(status)) {');
   assert.ok(start > -1, '必须能定位 need_* 分支');
   const end = server.indexOf('jsonResponse(res, {', start);
@@ -3018,11 +3018,11 @@ function extractFunctionFrom(src, name) {
   assert.fail(`${name} 的大括号不平衡，无法抽取`);
 }
 
-/** 抽出 server.js 里的顶层 const（用于拿到例行日志模式表与扫描窗口常量） */
+/** 抽出 server.ts 里的顶层 const（用于拿到例行日志模式表与扫描窗口常量） */
 function extractServerConst(name) {
   const re = new RegExp('(?:const|let)\\s+' + name + '\\s*=[\\s\\S]*?;');
   const m = server.match(re);
-  assert.ok(m, `无法从 server.js 抽取常量 ${name}`);
+  assert.ok(m, `无法从 server.ts 抽取常量 ${name}`);
   return m[0];
 }
 
@@ -3489,16 +3489,16 @@ test('运行状态徽章：on/off/unknown 三态必须如实渲染（unknown 绝
 // ============================================================================
 group('组 23 · 底座闸门（G1）：纯函数判定 + 不支持时必须拒绝拨号');
 
-const productRouteCode = stripComments(read('app/ydpc/product_route.js'));
+const productRouteCode = stripComments(read('app/ydpc/product_route.ts'));
 // eslint-disable-next-line global-require
-const productRoute = require(path.join(ROOT, 'app/ydpc/product_route.js'));
+const productRoute = require(path.join(ROOT, 'app/ydpc/product_route.ts'));
 
 test('底座判定必须收敛到纯函数层 product_route.js，且不得有依赖 / 网络 / 凭据', () => {
   // 注意：必须用 __dirname 直接读，**不能走 read('tests/...')** —— 变异验证的沙箱
   // 刻意不拷贝 tests/ 目录（CTYUN_TEST_ROOT 指向沙箱），走 ROOT 拼路径会 ENOENT 崩溃，
   // 而"崩溃"会被变异判据算作 BROKEN，直接把整轮变异验证拖垮。
   const syntaxCheckSrc = fs.readFileSync(path.join(__dirname, 'syntax_check.js'), 'utf8');
-  assert.ok(/app\/ydpc\/product_route\.js/.test(syntaxCheckSrc), 'product_route.js 必须登记进语法闸门的 FILES 清单');
+  assert.ok(/app\/ydpc\/product_route\.ts/.test(syntaxCheckSrc), 'product_route.ts 必须登记进语法闸门的 FILES 清单');
   assert.ok(
     /require\(\s*'\.\/product_route'\s*\)/.test(ydpcCode),
     'ydpc_client.js 必须 require 本地的 product_route 纯函数层（判定不得就地散写）'
@@ -3533,7 +3533,7 @@ test('行为：spuCode 必须优先于 firm-auth（后者会把空闲 ZTE 机器
 
   const scg = resolveVmRoute({}, { scAuthCode: 'X', cagIp: '' });
   assert.strictEqual(scg.kind, 'SCG', '无 spuCode + scAuthCode 非空且 cagIp 为空 → SCG');
-  assert.strictEqual(scg.supported, true, 'SCG 通道已实现（app/ydpc/scg_keepalive.js）⇒ 必须标为受支持');
+  assert.strictEqual(scg.supported, true, 'SCG 通道已实现（app/ydpc/scg_keepalive.ts）⇒ 必须标为受支持');
 
   const unknown = resolveVmRoute({}, {});
   assert.strictEqual(unknown.kind, 'UNKNOWN', '两级信号都不足 → UNKNOWN');
@@ -3878,10 +3878,10 @@ test('静态：状态视图不得把通道名写死（地址族是每台的属�
 // ============================================================================
 group('组 27 · IPv4/TLS 数据面（G5）：受控降级 + 异常就地收敛');
 
-const tlsCode = stripComments(read('app/ydpc/zte_cag_tls.js'));
-const rawCode = stripComments(read('app/ydpc/zte_cag_raw.js'));
+const tlsCode = stripComments(read('app/ydpc/zte_cag_tls.ts'));
+const rawCode = stripComments(read('app/ydpc/zte_cag_raw.ts'));
 // eslint-disable-next-line global-require
-const tlsMod = require(path.join(ROOT, 'app/ydpc/zte_cag_tls.js'));
+const tlsMod = require(path.join(ROOT, 'app/ydpc/zte_cag_tls.ts'));
 
 test('静态：证书校验必须"严格先行 + 白名单降级"，不得无条件关校验', () => {
   assert.ok(!/CERT_NONE/.test(tlsCode), '不得使用 CERT_NONE —— 证书校验不可被完全绕过');
@@ -4148,7 +4148,7 @@ function extractMethodFrom(src, anchor) {
 }
 
 test('行为：平台「在线时长」解析必须正确（回退判定的地基，解析错则整条哑火）', () => {
-  const ecSrc = read('app/ecloud/ecloud_client.js');
+  const ecSrc = read('app/ecloud/ecloud_client.ts');
   const fnSrc = extractFunctionFrom(ecSrc, 'parseUptimeSeconds');
   // eslint-disable-next-line no-new-func
   const parseUptimeSeconds = new Function(`${fnSrc}\nreturn parseUptimeSeconds;`)();
@@ -4166,7 +4166,7 @@ test('行为：平台「在线时长」解析必须正确（回退判定的地�
 });
 
 test('静态：平台电源状态变化必须留证（含原始 resourceStatus，否则事后无法回放）', () => {
-  const ecSrc = read('app/ecloud/ecloud_client.js');
+  const ecSrc = read('app/ecloud/ecloud_client.ts');
   const body = stripLineComments(extractMethodFrom(ecSrc, 'async refreshDesktops()'));
   assert.ok(/resourceStatus/.test(body), 'refreshDesktops 必须读原始 resourceStatus');
   assert.ok(
@@ -4181,7 +4181,7 @@ test('静态：平台电源状态变化必须留证（含原始 resourceStatus�
 });
 
 test('静态：在线时长回退必须告警（回退 = 平台侧会话记录被重建）', () => {
-  const ecSrc = read('app/ecloud/ecloud_client.js');
+  const ecSrc = read('app/ecloud/ecloud_client.ts');
   const body = stripLineComments(extractMethodFrom(ecSrc, 'async keepaliveL2(desktop)'));
   assert.ok(/parseUptimeSeconds\(/.test(body), 'keepaliveL2 必须解析在线时长');
   assert.ok(/upNow\s*<\s*upPrev/.test(body), '必须比较"本次 < 上次"才算回退');
@@ -4223,7 +4223,7 @@ test('静态：在线时长回退必须告警（回退 = 平台侧会话记录�
 // ============================================================================
 group('组 30 · SCG 数据面（深信服底座）：第二套通道的协议 / 红线 / 诚实性');
 
-const SCG_PATH = 'app/ydpc/scg_keepalive.js';
+const SCG_PATH = 'app/ydpc/scg_keepalive.ts';
 const scgCode = stripComments(read(SCG_PATH));
 // eslint-disable-next-line global-require
 const scg = require(path.join(ROOT, SCG_PATH));
@@ -4325,8 +4325,8 @@ test('行为：SCG 证书链白名单只能含证书链缺陷，不得混入通�
 test('静态：SCG 通道必须注册进语法闸门 + 被 ydpc 在 cagBootVm **之前**分流', () => {
   const syntaxCheckSrc = fs.readFileSync(path.join(__dirname, 'syntax_check.js'), 'utf8');
   assert.ok(
-    /app\/ydpc\/scg_keepalive\.js/.test(syntaxCheckSrc),
-    'scg_keepalive.js 必须登记进语法闸门的清单'
+    /app\/ydpc\/scg_keepalive\.ts/.test(syntaxCheckSrc),
+    'scg_keepalive.ts 必须登记进语法闸门的清单'
   );
   assert.ok(
     /require\(\s*'\.\/scg_keepalive'\s*\)/.test(ydpcCode),
@@ -4628,7 +4628,7 @@ testAsync('行为：状态视图必须按数据面 path 如实给出通道名（
     _route: { kind: 'SCG', supported: true, reason: 'spuCode=sc-cloud-pc' }
   };
   const ctx = makeViewCtx(proto, { features: { autoBoot: true }, dataPlaneActive: true });
-  // dataPlaneTasks 是实例字段（见 app/ydpc/ydpc_client.js），makeViewCtx 不代管，就地注入
+  // dataPlaneTasks 是实例字段（见 app/ydpc/ydpc_client.ts），makeViewCtx 不代管，就地注入
   ctx.dataPlaneTasks = new Map([[usid, { running: true, path: 'scg' }]]);
 
   const view = proto.describeVmKeepAlive.call(ctx, vm);
@@ -4667,7 +4667,7 @@ testAsync('行为：状态视图必须按数据面 path 如实给出通道名（
 // ---------------------------------------------------------------------------
 
 test('静态：SCG auth 的"零应答"不得被兜底成一个字节值（0 是编出来的）', () => {
-  const code = stripComments(read('app/ydpc/scg_keepalive.js'));
+  const code = stripComments(read('app/ydpc/scg_keepalive.ts'));
   assert.ok(
     !/\(resp\.length \? resp\[0\] : 0\)/.test(code),
     '空应答兜底成 0 是编造数据（把"没收到"写成"收到了 0x00"）—— 必须显式区分零应答'
@@ -4680,7 +4680,7 @@ test('静态：SCG auth 的"零应答"不得被兜底成一个字节值（0 是�
 
 testAsync('行为：SCG 服务端一个字都不回时，必须报"无应答"而不是"byte[0]=0x0"', async () => {
   const net = require('net');
-  const { scgConnectOnce } = require(path.join(ROOT, 'app', 'ydpc', 'scg_keepalive.js'));
+  const { scgConnectOnce } = require(path.join(ROOT, 'app', 'ydpc', 'scg_keepalive.ts'));
   // 服务端收下 TCP 连接，但一个字都不回 —— 复刻现场情形。
   // ⚠️ 必须自己收好 socket 并显式 destroy：服务端 socket 停在半开态时
   // `await new Promise(res => srv.close(res))` 的回调**永不触发**，
@@ -4858,8 +4858,8 @@ test('静态：5 秒增量轮询按元素存在性同步（SCG 控件恢复渲�
 });
 
 test('静态：SCG 开机 CEM 接线（bootVmViaCag SCG 分支 → bootVmViaCem → cemBootVm）', () => {
-  const scg = stripLineComments(read('app/ydpc/scg_keepalive.js'));
-  const ydpc = stripLineComments(read('app/ydpc/ydpc_client.js'));
+  const scg = stripLineComments(read('app/ydpc/scg_keepalive.ts'));
+  const ydpc = stripLineComments(read('app/ydpc/ydpc_client.ts'));
   // 数据面 / 开机共用的 CEM 开机函数必须存在：
   assert.ok(/async function cemBootVm\(/.test(scg), 'cemBootVm（OAuth → getConnectInfo 触发开机 → ready 轮询）必须存在');
   assert.ok(/timeoutMs: 120000/.test(scg), 'getConnectInfo 对冷启动机器必须放大超时到 120s（真机实测 >30s 才响应）');
@@ -4880,8 +4880,8 @@ test('静态：SCG 开机 CEM 接线（bootVmViaCag SCG 分支 → bootVmViaCem 
 });
 
 test('静态：CEM 开机必须把 504/超时当"在途"（真机 2026-09-27：504 后机器照样被拉起）', () => {
-  const scg = stripLineComments(read('app/ydpc/scg_keepalive.js'));
-  const ydpc = stripLineComments(read('app/ydpc/ydpc_client.js'));
+  const scg = stripLineComments(read('app/ydpc/scg_keepalive.ts'));
+  const ydpc = stripLineComments(read('app/ydpc/ydpc_client.ts'));
   // ① getConnectInfo 必须把 5xx 与网络超时标记为可重试（在途），而不是致命失败：
   assert.ok(/res\.status >= 500/.test(scg), 'getConnectInfo 必须把 HTTP 5xx（含 504）识别为可重试');
   assert.ok(/err\.retryable = true/.test(scg), '5xx/超时必须携带 retryable 标记（在途语义）');
@@ -4971,7 +4971,7 @@ test('静态：不得再就地重写关机判据（两处调用必须走同一�
 });
 
 testAsync('行为：对已关机机器 sendHeartbeat / pingCag 必须报 success:false（"待命"不是"完成"）', async () => {
-  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.js'));
+  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.ts'));
   const account = {
     id: 'yd_probe_test',
     name: '测试账号',
@@ -5107,7 +5107,7 @@ test('静态：数据面"在场"判据不得只看 task.running（连续失败�
 });
 
 testAsync('行为：数据面连续失败到阈值后必须判为"不在场"（控制面必须拿回保活权）', async () => {
-  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.js'));
+  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.ts'));
   const logs = [];
   const client = new YdpcClient({ id: 'yd_dp_test', name: '测试账号', vms: [], features: {} }, {
     appendLog: (tag, message, level) => logs.push(`${tag}|${level}|${message}`),
@@ -5196,7 +5196,7 @@ testAsync('行为：数据面连续失败到阈值后必须判为"不在场"（�
 });
 
 testAsync('行为：CAG 材料缺失必须在**拨号前**明确拒绝（不得把 undefined 当主机名去查 DNS）', async () => {
-  const { performCagAuthHold } = require(path.join(ROOT, 'app', 'ydpc', 'cag_client.js'));
+  const { performCagAuthHold } = require(path.join(ROOT, 'app', 'ydpc', 'cag_client.ts'));
   const t0 = Date.now();
   let err = null;
   try {
@@ -5212,7 +5212,7 @@ testAsync('行为：CAG 材料缺失必须在**拨号前**明确拒绝（不得�
   assert.ok(!/undefined/.test(err.message), '文案里不得出现 undefined（那正是旧 bug 的指纹）');
   assert.ok(cost < 500, `必须在拨号前当场拒绝（实测 ${cost}ms）—— 明显变慢说明已经去碰网络了`);
 
-  const cagCode = stripComments(read('app/ydpc/cag_client.js'));
+  const cagCode = stripComments(read('app/ydpc/cag_client.ts'));
   assert.ok(
     !/String\(firmAuth\.cagIp \|\| firmAuth\.cagHost\)/.test(cagCode),
     '旧写法 String(firmAuth.cagIp || firmAuth.cagHost) 得到字面量 "undefined" —— ' +
@@ -5259,7 +5259,7 @@ testAsync('行为：pingCag 对 SCG 机与材料缺失机必须"返回未执行"
   // 为什么必须用**行为**断言：静态只能证明"那两行字还在"。
   // 把守卫改成 `if (false)`，字符串依旧在、位置依旧在——静态断言全绿而缺陷复活。
   // 所以这里直接调真函数，靠"返回值 / 是否抛错"来判定守卫是否**真的生效**。
-  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.js'));
+  const { YdpcClient } = require(path.join(ROOT, 'app', 'ydpc', 'ydpc_client.ts'));
   const running = { vmStatus: '运行中', vmStatusCode: 1 };
   const account = {
     id: 'yd_ping_test',
@@ -5316,7 +5316,7 @@ testAsync('行为：pingCag 对 SCG 机与材料缺失机必须"返回未执行"
 group('组 · 运行时安全：ADMIN 口令、ctyun-proxy、CORS、请求体上限');
 
 test('默认管理员必须是 ADMIN，且密码只来自 ADMIN_PASSWORD（禁止硬编码 admin123）', () => {
-  const authJs = read('app/auth_manager.js');
+  const authJs = read('app/auth_manager.ts');
   assert.ok(/username:\s*'ADMIN'/.test(authJs), '默认管理员用户名必须是 ADMIN');
   assert.ok(/process\.env\.ADMIN_PASSWORD/.test(authJs), '默认管理员密码必须来自 ADMIN_PASSWORD');
   assert.ok(
@@ -5326,7 +5326,7 @@ test('默认管理员必须是 ADMIN，且密码只来自 ADMIN_PASSWORD（禁�
 });
 
 test('行为：无 ADMIN_PASSWORD 且无管理员时必须拒绝启动；有口令则创建 ADMIN', () => {
-  const { AuthManager } = require(path.join(ROOT, 'app/auth_manager.js'));
+  const { AuthManager } = require(path.join(ROOT, 'app/auth_manager.ts'));
   const prev = process.env.ADMIN_PASSWORD;
   delete process.env.ADMIN_PASSWORD;
   const emptyCfg = { config: { users: [], settings: {}, accounts: [] }, saveConfig: () => {} };
@@ -5349,8 +5349,8 @@ test('行为：无 ADMIN_PASSWORD 且无管理员时必须拒绝启动；有口�
 });
 
 test('/api/ctyun-proxy 必须登录，且不得把 Cookie/Authorization 原样转发出去', () => {
-  const proxy = read('app/http/ctyun_proxy.js');
-  const handler = read('app/http/handler.js');
+  const proxy = read('app/http/ctyun_proxy.ts');
+  const handler = read('app/http/handler.ts');
   assert.ok(/handleCtyunProxy/.test(handler), 'handler 必须把 /api/ctyun-proxy 交给专用模块');
   assert.ok(/getSessionFromReq/.test(proxy), '代理通道必须校验登录会话');
   assert.ok(/STRIP_REQUEST_HEADERS/.test(proxy), '必须显式剥离危险请求头');
@@ -5372,19 +5372,19 @@ test('接口不得用 Access-Control-Allow-Origin: * 对任意网站放行', () 
     }
   }
   assert.deepStrictEqual(hits, [], `以下文件仍对任意 Origin 放行 CORS：${hits.join(', ')}`);
-  const cors = read('app/http/cors.js');
+  const cors = read('app/http/cors.ts');
   assert.ok(/CORS_ORIGINS/.test(cors), '跨站调用必须走 CORS_ORIGINS 白名单');
   assert.ok(!/allowlist\.includes\('\*'\)/.test(cors), '白名单不得把 * 当成合法 Origin');
 });
 
 test('JSON / 代理 / 导入请求体必须有上限，禁止无限读取', () => {
-  const limits = read('app/http/limits.js');
-  const body = read('app/http/body.js');
-  const proxy = read('app/http/ctyun_proxy.js');
+  const limits = read('app/http/limits.ts');
+  const body = read('app/http/body.ts');
+  const proxy = read('app/http/ctyun_proxy.ts');
   assert.ok(/MAX_JSON_BODY_BYTES/.test(limits) && /MAX_PROXY_BODY_BYTES/.test(limits), '必须定义请求体上限常量');
   assert.ok(/PayloadTooLargeError/.test(body) && /size > limit/.test(body), 'parse/read body 必须在超限时拒绝');
   assert.ok(/MAX_PROXY_BODY_BYTES/.test(proxy), 'ctyun-proxy 必须套用代理请求体上限');
-  assert.ok(/MAX_IMPORT_BODY_BYTES/.test(read('app/http/handler.js')), '配置导入必须使用更大但仍有限的上限');
+  assert.ok(/MAX_IMPORT_BODY_BYTES/.test(read('app/http/handler.ts')), '配置导入必须使用更大但仍有限的上限');
 });
 
 test('容器必须以非 root 用户启动，且入口不是 shell', () => {

@@ -24,7 +24,7 @@ if "%ADMIN_PASSWORD%"=="" (
 echo [*] 正在启动 Web 控制台服务...
 echo [*] 启动后请在浏览器中访问: http://127.0.0.1:8571
 echo.
-bun server.js
+bun server.ts
 echo.
 echo [!] 服务已停止运行。
 pause

@@ -5285,18 +5285,24 @@ test('Docker：无鉴权 /healthz + HEALTHCHECK + tini PID 1 + 可拉取镜像�
   assert.ok(/\/healthz/.test(df), 'HEALTHCHECK 必须打 /healthz');
   assert.ok(/ENTRYPOINT \["tini"/.test(df), 'PID 1 必须是 tini，否则 Python 侧车退出会变僵尸进程');
   assert.ok(/docker-entrypoint\.sh/.test(df), '必须经 entrypoint 处理 data 卷权限');
-  assert.ok(/requirements\.txt/.test(df), 'Python 依赖必须以 requirements.txt 为单一真源');
-  assert.ok(/--require-hashes/.test(df), 'Dockerfile pip install 必须 --require-hashes，否则锁文件形同虚设');
+  assert.ok(/requirements\.txt/.test(df), 'Python 依赖必须以 requirements.txt 为安装清单');
+  assert.ok(/ghcr\.io\/astral-sh\/uv:0\.13\.7/.test(df), '镜像必须钉死 uv 版本，不得 COPY latest');
+  assert.ok(/uv pip install/.test(df), '镜像必须用 uv 安装侧车依赖（不再装 python3-pip）');
+  assert.ok(/--require-hashes/.test(df), 'uv/pip 安装必须 --require-hashes，否则锁文件形同虚设');
+  assert.ok(!/python3-pip/.test(df), '运行镜像不得再装 python3-pip');
   assert.ok(/PYTHONDONTWRITEBYTECODE=1/.test(df), '镜像必须禁用 Python 字节码，避免只读/降权后写不了 __pycache__');
   assert.ok(/npm ci --omit=dev/.test(df), '构建必须 npm ci，保证 lockfile 可复现');
 
   const pyReq = read('app/ecloud_engine/requirements.txt');
-  const pyIn = read('app/ecloud_engine/requirements.in');
+  const pyProject = read('app/ecloud_engine/pyproject.toml');
+  const pyLock = read('app/ecloud_engine/uv.lock');
   assert.ok(/^requests==\d+\.\d+/m.test(pyReq), 'requests 必须锁精确版本（Docker 构建不能跟 PyPI 浮动）');
   assert.ok(/^pycryptodome==\d+\.\d+/m.test(pyReq), 'pycryptodome 必须锁精确版本');
   assert.ok(/--hash=sha256:/.test(pyReq), 'requirements.txt 必须带 sha256 哈希，防止构建时被换包');
-  assert.ok(/^requests==\d+\.\d+/m.test(pyIn) && /^pycryptodome==\d+\.\d+/m.test(pyIn),
-    'requirements.in 也必须钉死直接依赖，编译锁文件时不能再写成浮动包名');
+  assert.ok(/requests==2\.34\.2/.test(pyProject) && /pycryptodome==3\.24\.1/.test(pyProject),
+    'pyproject.toml 必须钉死直接依赖，uv lock 不能再写成浮动包名');
+  assert.ok(/name = "pycryptodome"/.test(pyLock) && /3\.24\.1/.test(pyLock),
+    'uv.lock 必须冻结 pycryptodome 3.24.1');
 
   assert.ok(/pathname === '\/healthz'/.test(server), 'server 必须实现 /healthz');
   const hzStart = server.indexOf("pathname === '/healthz'");

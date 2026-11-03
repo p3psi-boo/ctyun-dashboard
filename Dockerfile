@@ -37,25 +37,26 @@ ENV TZ=Asia/Shanghai \
     ECLOUD_SESSION_FILE=/app/data/ecloud_sessions.json \
     ECLOUD_LOGIN_RATE_LIMIT_FILE=/app/data/ecloud_login_rate_limit.json
 
-ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+# 国内构建默认走清华 PyPI；可用 --build-arg 覆盖。
+ARG UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ENV UV_DEFAULT_INDEX=$UV_INDEX_URL
 
 # ca-certificates：天翼云 HTTPS
 # tini：作 PID 1 回收 Python 侧车僵尸进程，并转发 SIGTERM
-# python3（bookworm = 3.11）+ 锁死的 requests/pycryptodome：移动公众协议侧车运行时。
-#   依赖以带哈希的 requirements.txt 为单一真源；装完即卸 pip，避免把构建工具留在运行镜像里。
+# python3（bookworm = 3.11）：移动公众协议侧车运行时
+# uv：按带哈希的 requirements.txt（由 uv.lock 导出）装依赖，装完即删，镜像不留 pip
+COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /usr/local/bin/uv
 COPY app/ecloud_engine/requirements.txt /tmp/requirements.txt
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates python3 python3-pip tini && \
-    pip3 install --no-cache-dir --break-system-packages --require-hashes \
-        -i "$PIP_INDEX_URL" \
+        ca-certificates python3 tini && \
+    uv pip install --python /usr/bin/python3 --system --no-cache --require-hashes \
         -r /tmp/requirements.txt && \
-    apt-get purge -y python3-pip && \
-    apt-get autoremove -y --purge && \
+    rm -f /usr/local/bin/uv && \
     chmod +x /usr/local/bin/docker-entrypoint.sh && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache /root/.local
 
 # 从构建阶段拷贝极速轻量 node_modules
 COPY --from=builder /app/node_modules ./node_modules

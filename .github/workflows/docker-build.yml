@@ -35,8 +35,20 @@ jobs:
           # 与 Docker 基础镜像 node:22-bookworm-slim 自带的 python3（3.11）对齐，避免 CI 绿、镜像红。
           python-version: '3.11'
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: '0.13.7'
+
+      - name: Verify sidecar lock is in sync
+        working-directory: app/ecloud_engine
+        run: |
+          uv lock --check
+          uv export --frozen --no-dev --no-emit-project --no-header -o /tmp/ecloud-requirements.txt
+          diff -u requirements.txt /tmp/ecloud-requirements.txt
+
       - name: Install sidecar dependencies
-        run: pip install --require-hashes -r app/ecloud_engine/requirements.txt
+        run: uv pip install --python python3 --require-hashes -r app/ecloud_engine/requirements.txt
 
       - name: Syntax check (node --check)
         run: node tests/syntax_check.js

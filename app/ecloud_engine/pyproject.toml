@@ -1,0 +1,17 @@
+[project]
+name = "ecloud-engine"
+version = "0.0.0"
+description = "移动公众协议侧车运行时依赖（非独立发布包）"
+requires-python = ">=3.11"
+dependencies = [
+    "requests==2.34.2",
+    "pycryptodome==3.24.1",
+]
+
+[tool.uv]
+package = false
+
+# 改依赖后在本目录执行：
+#   uv lock
+#   uv export --frozen --no-dev --no-emit-project --no-header -o requirements.txt
+# requirements.txt 给没有 uv 的本机 / pip；镜像与 CI 用 uv 按锁安装。

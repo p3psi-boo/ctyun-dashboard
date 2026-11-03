@@ -1294,10 +1294,10 @@ const MUTATIONS = [
   },
   {
     id: 'M126',
-    name: 'Python 锁失守：pip 不再校验哈希（锁文件可以被换包）',
+    name: 'Python 锁失守：uv 不再校验哈希（锁文件可以被换包）',
     file: 'Dockerfile',
-    from: 'pip3 install --no-cache-dir --break-system-packages --require-hashes \\',
-    to: 'pip3 install --no-cache-dir --break-system-packages \\',
+    from: 'uv pip install --python /usr/bin/python3 --system --no-cache --require-hashes \\',
+    to: 'uv pip install --python /usr/bin/python3 --system --no-cache \\',
     replaceAll: false,
   },
 ];

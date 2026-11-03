@@ -6,7 +6,7 @@
 > ✨ **v2.2.1 稳定性与链路加固**：彻底解决天翼云每日打卡 40050 报错 (Issue #17) + 移动云 MQTT 官方报文适配与标准 8883 端口纠偏 + 双栈 IPv4 优先选路 + 前端多机周期精准联动 + 存储灾备双备份与钉钉加签支持。
 > ✨ **v2.2 重大更新**：单账号多主机精细化独立纳管（Per-VM 独立保活/任务/开机守护）+ 高精度单机独立时间戳时间轮调度（Per-Device Timestamp Wheel）+ 状态层叠动态联动与当日轮次统计。
 > ✨ **v2.1 全量融合**：全量融合中国移动云电脑（SOHO REST 签名加密 + ZTEC CAG TCP 三阶段握手），双云同台统一管理与统一配额。
-> 📌 **依赖说明**：天翼云与移动爱家保活为零 Python 依赖的纯原生 Node.js 实现；移动公众协议侧车需 Python 3（Docker 镜像已内置 python3 + requests + pycryptodome，本机直跑需自备 Python 3.12），其签名常量已内置公开值、开箱即用（见部署指南 §3）。
+> 📌 **依赖说明**：运行时与包管理器均为 **Bun 1.4.4+**（`bun install` / `bun server.ts`）。服务端为 TypeScript，由 Bun 直接执行、无需单独编译；浏览器控制台仍是 `app/static/` 下的原生 JS。天翼云与移动爱家保活为零 Python 依赖的纯原生实现；移动公众协议侧车需 Python 3（Docker 镜像已内置 python3 + requests + pycryptodome，本机直跑需自备 Python 3.12），其签名常量已内置公开值、开箱即用（见部署指南 §3）。
 
 ---
 ![控制台总览](https://github.com/user-attachments/assets/1cea9bcb-b06c-4845-8940-74565a3aa88c)
@@ -16,7 +16,7 @@
 
 ### 1. ☁️ 天翼云 / 移动云 双平台全量融合
 - **天翼云电脑（CtYun）**：WebSocket 长连接 + REDQ RSA-OAEP 挑战应答 + Type 118 身份信令 + Type 112 会话认领 + Type 7 心跳，全协议纯原生实现；
-- **移动云电脑（YDPc）**：SOHO REST API（HMAC-SHA256 签名 + RSA 分段加密）+ ZTEC CAG TCP 三阶段握手保活 + 官方 MQTT 3.1.1 over TLS 长连接，**以原生 Node.js 完整实现，零 Python 依赖**；
+- **移动云电脑（YDPc）**：SOHO REST API（HMAC-SHA256 签名 + RSA 分段加密）+ ZTEC CAG TCP 三阶段握手保活 + 官方 MQTT 3.1.1 over TLS 长连接，**以原生 JavaScript（Bun runtime）完整实现，零 Python 依赖**；
 - **主子账号体系**：移动云支持和家亲主账号与独立子账号，自动识别限时套餐（20 小时/月包）与永久时长，套餐耗尽智能熔断；
 - **双云统一配额**：多用户配额体系下，天翼云与移动云账号统一计入配额管理。
 
@@ -72,9 +72,10 @@
    cd ctyun-dashboard
    ```
 2. **直接双击运行 `start_dashboard.bat`**：
-   - 脚本自动检测系统是否安装 Node.js（未安装会提示并引导至官网下载）；
-   - 首次运行自动补齐依赖（`npm install`）；
+   - 脚本自动检测系统是否安装 Bun（未安装会提示并引导至 [bun.com](https://bun.com/docs/installation)）；
+   - 首次运行自动补齐依赖（`bun install`）；
    - 自动启动服务并输出控制台实时日志。
+   - 首次启动请先设置管理员密码：`set ADMIN_PASSWORD=你的强密码`（默认账号 `ADMIN`）。
 3. **访问系统**：打开浏览器访问 **`http://127.0.0.1:8571`**。
 
 ---
@@ -83,10 +84,15 @@
 
 #### 1. 使用 Docker CLI 一键运行：
 ```bash
+# 数据目录需对容器用户 uid 10001 可写
+mkdir -p data && sudo chown -R 10001:10001 data
+
 # Docker Hub 镜像 (推荐国内 NAS 用户拉取)
 docker run -d \
   --name ctyun-dashboard \
+  --user 10001:10001 \
   -p 8571:8571 \
+  -e ADMIN_PASSWORD='请换成强密码' \
   -v $(pwd)/data:/app/data \
   --restart unless-stopped \
   learycn/ctyun-dashboard:latest
@@ -96,7 +102,9 @@ docker run -d \
 ```bash
 docker run -d \
   --name ctyun-dashboard \
+  --user 10001:10001 \
   -p 8571:8571 \
+  -e ADMIN_PASSWORD='请换成强密码' \
   -v $(pwd)/data:/app/data \
   --restart unless-stopped \
   ghcr.io/muyicn/ctyun-dashboard:latest
@@ -105,19 +113,19 @@ docker run -d \
 #### 2. 使用 `docker-compose.yml` 部署：
 在任意目录下创建 `docker-compose.yml`：
 ```yaml
-version: '3.8'
-
 services:
   ctyun-dashboard:
     image: learycn/ctyun-dashboard:latest # 或 ghcr.io/muyicn/ctyun-dashboard:latest
     container_name: ctyun-dashboard
     restart: unless-stopped
+    user: "10001:10001"
     ports:
       - "8571:8571"
     environment:
       - TZ=Asia/Shanghai
       - PORT=8571
       - CTYUN_DATA_DIR=/app/data
+      - ADMIN_PASSWORD=请换成强密码
     volumes:
       - ./data:/app/data
 ```
@@ -153,12 +161,12 @@ docker compose up -d
 git clone https://github.com/muyicn/ctyun-dashboard.git
 cd ctyun-dashboard
 
-# 使用 Docker Compose 本地构建
-docker compose up -d --build
+# 使用 Docker Compose 本地构建（需设置 ADMIN_PASSWORD）
+ADMIN_PASSWORD='请换成强密码' docker compose up -d --build
 
-# 或者使用 Node.js 直接运行 (Node.js >= 18)
-npm install --omit=dev
-node server.js
+# 或者使用 Bun 直接运行 (Bun >= 1.4.4)
+bun install --production
+ADMIN_PASSWORD='请换成强密码' bun server.ts
 ```
 
 ---
@@ -166,9 +174,13 @@ node server.js
 ## 🔑 初始登录信息
 
 - **访问地址**：`http://你的服务器IP:8571`
-- **默认管理员账号**：`admin`
-- **默认初始密码**：`admin123`
-*(首次登录后，请立即在右上角头像菜单中修改密码)*
+- **默认管理员账号**：`ADMIN`
+- **默认初始密码**：由环境变量 `ADMIN_PASSWORD` 设置（至少 8 位）。**未设置时全新部署会拒绝启动**，避免弱口令。
+- 从旧版本升级、数据卷里已经有管理员账号时，不必再设 `ADMIN_PASSWORD`（原 `admin` 账号仍然有效，请尽快改掉历史默认密码 `admin123`）。
+
+可选环境变量：
+- `CORS_ORIGINS`：允许跨站调用的 Origin 白名单，逗号分隔。默认只放行同源。
+- `MAX_JSON_BODY_BYTES` / `MAX_IMPORT_BODY_BYTES` / `MAX_PROXY_BODY_BYTES`：JSON、配置导入、天翼云代理的请求体上限。
 
 ---
 
@@ -176,19 +188,24 @@ node server.js
 
 ```
 ctyun-dashboard/
-├── server.js                 # 核心 HTTP/SSE 服务、双云驱动整合、API 路由
+├── server.ts                 # 启动入口：加载配置、注入运行时、监听端口
+├── tsconfig.json             # Bun 原生 TypeScript（无单独构建步骤）
 ├── app/
-│   ├── auth_manager.js       # 多用户会话、密码哈希、个人通知偏好
-│   ├── ctyun_encryption.js   # 天翼云 REDQ RSA-OAEP 加解密核心
+│   ├── types.ts              # 共享领域类型（账号 / 会话 / 配置）
+│   ├── http/                 # HTTP：CORS、请求体上限、路由、天翼云代理
+│   ├── lib/                  # 时间、开关语义、SSRF、原子写盘
+│   ├── auth_manager.ts       # 多用户会话、密码哈希、个人通知偏好
+│   ├── ctyun_client.ts       # 天翼云原生保活客户端
+│   ├── ctyun_encryption.ts   # 天翼云 REDQ RSA-OAEP 加解密核心
 │   ├── ydpc/                 # 移动云电脑原生驱动 (零 Python 依赖)
-│   │   ├── soho_client.js    #   SOHO REST 签名/加密/登录/心跳、官方关机/重启
-│   │   ├── cag_client.js     #   ZTEC CAG TCP 三阶段握手
-│   │   ├── mqtt_client.js    #   官方 MQTT 3.1.1 over TLS 长连接
-│   │   └── ydpc_client.js    #   保活守护看门狗与生命周期管理
+│   │   ├── soho_client.ts    #   SOHO REST 签名/加密/登录/心跳、官方关机/重启
+│   │   ├── cag_client.ts     #   ZTEC CAG TCP 三阶段握手
+│   │   ├── mqtt_client.ts    #   官方 MQTT 3.1.1 over TLS 长连接
+│   │   └── ydpc_client.ts    #   保活守护看门狗与生命周期管理
 │   ├── tasks/                # 官方任务自动化 (签到/AI对话/挂机/兑换/调度)
-│   └── static/               # 前端控制台 (原生 HTML/CSS/JS，无构建步骤)
+│   └── static/               # 前端控制台 (浏览器原生 JS，无构建步骤)
 ├── data/                     # 运行时数据目录 (配置加密落盘，建议挂载持久化)
-├── Dockerfile
+├── Dockerfile                # Bun 1.4.4 + Python 侧车；非 root、无 shell
 └── docker-compose.yml
 ```
 
@@ -199,7 +216,12 @@ ctyun-dashboard/
 
 1. **工业级加密**：所有云电脑账号密码及重要凭据均采用 AES-256-GCM 加密落盘；
 2. **多租户权限隔离**：未登录访客完全阻断；普通用户仅能查看与操作自己名下的云电脑与日志；全局系统设置仅管理员可访问；
-3. **SSRF 防御**：Webhook 推送严格校验目标地址，自动拦截本地回环与私有网段。
+3. **SSRF 防御**：Webhook 推送严格校验目标地址，自动拦截本地回环与私有网段；
+4. **默认管理员**：账号 `ADMIN`，密码仅来自 `ADMIN_PASSWORD`，不再内置 `admin123`；
+5. **CORS**：默认仅同源；跨站必须配置 `CORS_ORIGINS`，接口不再返回 `Access-Control-Allow-Origin: *`；
+6. **天翼云代理** `/api/ctyun-proxy`：必须登录，且剥离 Cookie / Authorization 等凭证头，目标仅限 `https://*.ctyun.cn`；
+7. **请求体上限**：JSON / 配置导入 / 代理通道分别限制大小，拒绝无限上传；
+8. **容器**：以 uid 10001 运行，最终镜像去掉 shell。绑定 `./data` 时请 `chown 10001:10001 data`。
 
 ---
 

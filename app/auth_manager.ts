@@ -1,13 +1,19 @@
-const crypto = require('crypto');
+import type { AppConfig, AppUser, AuthSession, NotifyConfig, SessionStore } from './types';
+
+const crypto = require('crypto') as typeof import('crypto');
 const { createLogger } = require('./logger');
 
 const authLog = createLogger('Auth');
 
-function hashPassword(password, salt = 'ctyun_salt_2026') {
+function hashPassword(password: string, salt = 'ctyun_salt_2026'): string {
   return crypto.createHash('sha256').update(password + salt).digest('hex');
 }
 
 class AuthManager {
+  configManager: { config: AppConfig; saveConfig: () => unknown; sessionStore?: SessionStore | null };
+  sessionStore: SessionStore | null;
+  sessions: Map<string, AuthSession>;
+
   constructor(configManager) {
     this.configManager = configManager;
     // 【2026-09-28】免登录会话持久化：会话表原先是纯内存 Map，容器一重启全部丢失 ——
@@ -28,7 +34,8 @@ class AuthManager {
     const data = this.sessionStore.load();
     if (!data || typeof data !== 'object') return;
     let restored = 0;
-    for (const [token, s] of Object.entries(data)) {
+    for (const [token, raw] of Object.entries(data)) {
+      const s = raw as Partial<AuthSession>;
       if (!s || !s.userId || !s.expiresAt) continue;
       if (Date.now() > s.expiresAt) continue; // 过期不恢复（30 天窗口到期）
       this.sessions.set(token, {
@@ -138,14 +145,30 @@ class AuthManager {
 
     // 按角色判定而非用户名字面量：只要系统中已存在任意管理员（含被改名的），
     // 一律不再注入默认账号，避免管理员改名/删除后被凭空重建。
-    // 仅在系统完全没有管理员时（全新部署或误删全部管理员的兜底防锁死）才创建默认 admin。
+    // 仅在系统完全没有管理员时（全新部署或误删全部管理员的兜底防锁死）才创建默认 ADMIN。
     const hasAnyAdmin = cfg.users.some(u => u.role === 'admin');
-    if (hasAnyAdmin) return;
+    if (hasAnyAdmin) {
+      const weak = hashPassword('admin123');
+      if (cfg.users.some(u => u.role === 'admin' && u.passwordHash === weak)) {
+        authLog.warn('检测到历史默认密码 admin123，请立即在控制台修改管理员密码');
+      }
+      return;
+    }
 
-    const admin = {
+    const password = String(process.env.ADMIN_PASSWORD || '').trim();
+    if (!password) {
+      throw new Error(
+        '首次启动必须通过环境变量 ADMIN_PASSWORD 设置管理员密码（默认账号为 ADMIN）。'
+      );
+    }
+    if (password.length < 8) {
+      throw new Error('ADMIN_PASSWORD 长度至少 8 位');
+    }
+
+    const admin: AppUser = {
       id: 'u_admin',
-      username: 'admin',
-      passwordHash: hashPassword('admin123'),
+      username: 'ADMIN',
+      passwordHash: hashPassword(password),
       role: 'admin',
       maxQuota: 999,
       createdAt: new Date().toISOString()
@@ -173,7 +196,7 @@ class AuthManager {
     }
 
     const defaultQuota = cfg.settings?.defaultQuota || 2;
-    const newUser = {
+    const newUser: AppUser = {
       id: 'u_' + crypto.randomUUID().substring(0, 8),
       username: cleanUser,
       passwordHash: hashPassword(password),

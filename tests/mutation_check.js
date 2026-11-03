@@ -1294,10 +1294,10 @@ const MUTATIONS = [
   },
   {
     id: 'M126',
-    name: 'Python 锁失守：uv 不再校验哈希（锁文件可以被换包）',
+    name: 'Python 锁失守：uv sync 去掉 --frozen（锁文件可以被换包）',
     file: 'Dockerfile',
-    from: 'uv pip install --python /usr/bin/python3 --system --no-cache --require-hashes \\',
-    to: 'uv pip install --python /usr/bin/python3 --system --no-cache \\',
+    from: 'uv sync --frozen --no-dev --no-cache --python /usr/bin/python3 \\',
+    to: 'uv sync --no-dev --no-cache --python /usr/bin/python3 \\',
     replaceAll: false,
   },
 ];
@@ -1317,7 +1317,7 @@ const MUTATIONS = [
 // ③ 只认"断言失败"，脚本崩溃会被判为 BROKEN 而不是 PASS。
 // ---------------------------------------------------------------------------
 const IGNORE_DIRS = new Set([
-  '.git', 'node_modules', 'analysis', '.workbuddy', '.workbuddy-ai', 'data', 'tests', '.github', '.vscode'
+  '.git', 'node_modules', 'analysis', '.workbuddy', '.workbuddy-ai', 'data', 'tests', '.github', '.vscode', '.venv'
 ]);
 const IGNORE_FILES = new Set(['~srv.log', '~srv2.log', '~srv_run.log', 'repro_out.txt', 'status_out.txt']);
 

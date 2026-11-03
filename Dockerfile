@@ -32,7 +32,11 @@ ENV TZ=Asia/Shanghai \
     CTYUN_DATA_DIR=/app/data \
     PUID=1000 \
     PGID=1000 \
-    ECLOUD_PYTHON=/usr/bin/python3 \
+    ECLOUD_PYTHON=/opt/ctyun-ecloud/.venv/bin/python \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/opt/ctyun-ecloud/.venv \
+    PATH="/opt/ctyun-ecloud/.venv/bin:$PATH" \
     ECLOUD_CRED_FILE=/app/data/ecloud_credentials.json \
     ECLOUD_SESSION_FILE=/app/data/ecloud_sessions.json \
     ECLOUD_LOGIN_RATE_LIMIT_FILE=/app/data/ecloud_login_rate_limit.json
@@ -43,18 +47,17 @@ ENV UV_DEFAULT_INDEX=$UV_INDEX_URL
 
 # ca-certificates：天翼云 HTTPS
 # tini：作 PID 1 回收 Python 侧车僵尸进程，并转发 SIGTERM
-# python3（bookworm = 3.11）：移动公众协议侧车运行时
-# uv：按带哈希的 requirements.txt（由 uv.lock 导出）装依赖，装完即删，镜像不留 pip
+# python3（bookworm = 3.11）：移动公众协议侧车解释器，由 uv 装进独立 venv
+# uv：按 uv.lock 做 uv sync --frozen，作为镜像内 Python 环境管理器保留
 COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /usr/local/bin/uv
-COPY app/ecloud_engine/requirements.txt /tmp/requirements.txt
+COPY app/ecloud_engine/pyproject.toml app/ecloud_engine/uv.lock /opt/ctyun-ecloud/
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates python3 tini && \
-    uv pip install --python /usr/bin/python3 --system --no-cache --require-hashes \
-        -r /tmp/requirements.txt && \
-    rm -f /usr/local/bin/uv && \
+    uv sync --frozen --no-dev --no-cache --python /usr/bin/python3 \
+        --directory /opt/ctyun-ecloud && \
     chmod +x /usr/local/bin/docker-entrypoint.sh && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache /root/.local
 

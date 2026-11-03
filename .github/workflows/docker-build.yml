@@ -48,7 +48,10 @@ jobs:
           diff -u requirements.txt /tmp/ecloud-requirements.txt
 
       - name: Install sidecar dependencies
-        run: uv pip install --python python3 --require-hashes -r app/ecloud_engine/requirements.txt
+        working-directory: app/ecloud_engine
+        run: |
+          uv sync --frozen --no-dev --python python3
+          echo "ECLOUD_PYTHON=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
 
       - name: Syntax check (node --check)
         run: node tests/syntax_check.js

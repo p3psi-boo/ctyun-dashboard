@@ -1522,6 +1522,7 @@ test('签名常量：内置公开值必须齐备、可被覆盖，且缺失即�
 test('Public 红线：凭据文件与 Python 缓存必须被 .gitignore', () => {
   assert.ok(/app\/ecloud_engine\/credentials\.json/.test(gitignoreCode), 'credentials.json 未加入 .gitignore');
   assert.ok(/__pycache__/.test(gitignoreCode), '__pycache__ 未加入 .gitignore');
+  assert.ok(/\.venv/.test(gitignoreCode), 'uv 本地 .venv 未加入 .gitignore');
 });
 
 test('三平台保活不重叠：ecloud 桥接层不得复用 ydpc / 天翼云保活实现', () => {
@@ -1655,7 +1656,7 @@ testAsync('签约常量内置：覆盖文件缺失时，侧车必须靠内置公
       h.credentials, 'loaded',
       `覆盖文件缺失时必须回落到内置公开常量（public_credentials.json）并加载成功，` +
         `实际 credentials=${h.credentials}，原因: ${(h.credentialError || h.importError || '(空)').slice(0, 200)}` +
-        `（本机如提示缺 Python 包，请 pip install -r app/ecloud_engine/requirements.txt）`
+        `（本机如提示缺 Python 包，请 uv sync --frozen --directory app/ecloud_engine）`
     );
   } finally {
     await eng.stop();
@@ -5285,10 +5286,13 @@ test('Docker：无鉴权 /healthz + HEALTHCHECK + tini PID 1 + 可拉取镜像�
   assert.ok(/\/healthz/.test(df), 'HEALTHCHECK 必须打 /healthz');
   assert.ok(/ENTRYPOINT \["tini"/.test(df), 'PID 1 必须是 tini，否则 Python 侧车退出会变僵尸进程');
   assert.ok(/docker-entrypoint\.sh/.test(df), '必须经 entrypoint 处理 data 卷权限');
-  assert.ok(/requirements\.txt/.test(df), 'Python 依赖必须以 requirements.txt 为安装清单');
+  assert.ok(/pyproject\.toml/.test(df) && /uv\.lock/.test(df), '镜像必须 COPY pyproject.toml 与 uv.lock，作为 uv sync 的项目与锁');
   assert.ok(/ghcr\.io\/astral-sh\/uv:0\.13\.7/.test(df), '镜像必须钉死 uv 版本，不得 COPY latest');
-  assert.ok(/uv pip install/.test(df), '镜像必须用 uv 安装侧车依赖（不再装 python3-pip）');
-  assert.ok(/--require-hashes/.test(df), 'uv/pip 安装必须 --require-hashes，否则锁文件形同虚设');
+  assert.ok(/uv sync/.test(df), '镜像必须用 uv sync 安装侧车依赖（不再装 python3-pip）');
+  assert.ok(/--frozen/.test(df), 'uv sync 必须 --frozen，否则锁文件形同虚设');
+  assert.ok(!/uv pip install/.test(df), '镜像必须 uv sync 进 venv，不得退回 uv pip install --system');
+  assert.ok(!/rm -f \/usr\/local\/bin\/uv/.test(df), '运行镜像必须保留 uv，不得装完即删');
+  assert.ok(/ECLOUD_PYTHON=\/opt\/ctyun-ecloud\/\.venv\/bin\/python/.test(df), '侧车必须走 uv 创建的 venv 解释器');
   assert.ok(!/python3-pip/.test(df), '运行镜像不得再装 python3-pip');
   assert.ok(/PYTHONDONTWRITEBYTECODE=1/.test(df), '镜像必须禁用 Python 字节码，避免只读/降权后写不了 __pycache__');
   assert.ok(/npm ci --omit=dev/.test(df), '构建必须 npm ci，保证 lockfile 可复现');

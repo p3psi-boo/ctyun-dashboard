@@ -6,7 +6,7 @@
 > ✨ **v2.2.1 稳定性与链路加固**：彻底解决天翼云每日打卡 40050 报错 (Issue #17) + 移动云 MQTT 官方报文适配与标准 8883 端口纠偏 + 双栈 IPv4 优先选路 + 前端多机周期精准联动 + 存储灾备双备份与钉钉加签支持。
 > ✨ **v2.2 重大更新**：单账号多主机精细化独立纳管（Per-VM 独立保活/任务/开机守护）+ 高精度单机独立时间戳时间轮调度（Per-Device Timestamp Wheel）+ 状态层叠动态联动与当日轮次统计。
 > ✨ **v2.1 全量融合**：全量融合中国移动云电脑（SOHO REST 签名加密 + ZTEC CAG TCP 三阶段握手），双云同台统一管理与统一配额。
-> 📌 **依赖说明**：天翼云与移动爱家保活为零 Python 依赖的纯原生 Node.js 实现；移动公众协议侧车需 Python 3.11+（Docker 镜像为 bookworm 的 python3=3.11，用 uv 按 `uv.lock` 导出的带哈希 `requirements.txt` 内置 requests / pycryptodome）。本机直跑：`uv pip install --python python3 --require-hashes -r app/ecloud_engine/requirements.txt`（没有 uv 时仍可用 pip）。签名常量已内置公开值、开箱即用（见部署指南 §3）。
+> 📌 **依赖说明**：天翼云与移动爱家保活为零 Python 依赖的纯原生 Node.js 实现；移动公众协议侧车需 Python 3.11+（Docker 镜像为 bookworm 的 python3=3.11，镜像内保留 uv，按 `uv.lock` 做 `uv sync --frozen` 装进独立 venv）。本机直跑：`uv sync --frozen --directory app/ecloud_engine` 后设置 `ECLOUD_PYTHON` 指向该 venv（没有 uv 时仍可用带哈希的 `requirements.txt` + pip）。签名常量已内置公开值、开箱即用（见部署指南 §3）。
 
 ---
 ![控制台总览](https://github.com/user-attachments/assets/1cea9bcb-b06c-4845-8940-74565a3aa88c)
@@ -108,7 +108,7 @@ docker run -d \
   ghcr.io/muyicn/ctyun-dashboard:latest
 ```
 
-镜像已内置 `tini`（PID 1，回收移动公众 Python 侧车）与 `/healthz` 探活，NAS / Compose 会自动显示健康状态。
+镜像已内置 `tini`（PID 1，回收移动公众 Python 侧车）、`uv`（按 `uv.lock` 同步侧车 venv）与 `/healthz` 探活，NAS / Compose 会自动显示健康状态。
 
 #### 2. 使用 `docker-compose.yml` 部署：
 在任意目录下创建 `docker-compose.yml`：
@@ -176,7 +176,8 @@ docker compose up -d --build
 
 # 或者使用 Node.js 直接运行 (Node.js >= 18，移动公众另需 Python 3.11+)
 npm install --omit=dev
-uv pip install --python python3 --require-hashes -r app/ecloud_engine/requirements.txt
+uv sync --frozen --directory app/ecloud_engine
+export ECLOUD_PYTHON="$PWD/app/ecloud_engine/.venv/bin/python"
 # 没有 uv：pip install --require-hashes -r app/ecloud_engine/requirements.txt
 node server.js
 ```

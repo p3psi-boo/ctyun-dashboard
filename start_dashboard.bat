@@ -4,37 +4,44 @@ title 天翼云电脑多账号自动化管理平台
 cd /d "%~dp0"
 
 echo ==========================================================
-echo    天翼云电脑可视化多账号自动化控制平台
+echo    天翼云电脑可视化多账号自动化控制平台 (Bun)
 echo ==========================================================
 echo.
 
-node -v >nul 2>&1
-if errorlevel 1 goto NO_NODE
+where bun >nul 2>&1
+if errorlevel 1 goto NO_BUN
 
 if not exist node_modules goto INSTALL_DEPS
+if not exist bun.lock goto INSTALL_DEPS
 
 :START_SERVER
+if "%ADMIN_PASSWORD%"=="" (
+    echo [!] 首次启动请设置环境变量 ADMIN_PASSWORD（默认账号 ADMIN）
+    echo     例如: set ADMIN_PASSWORD=your-strong-password
+    echo     若 data 目录里已经有管理员账号，可忽略本提示。
+    echo.
+)
 echo [*] 正在启动 Web 控制台服务...
 echo [*] 启动后请在浏览器中访问: http://127.0.0.1:8571
 echo.
-node server.js
+bun server.ts
 echo.
 echo [!] 服务已停止运行。
 pause
 exit /b
 
-:NO_NODE
-echo [!] 错误: 检测到当前系统尚未安装 Node.js 运行环境！
-echo [*] 正在为您自动打开 Node.js 官方下载网站...
-start https://nodejs.org/zh-cn
+:NO_BUN
+echo [!] 错误: 检测到当前系统尚未安装 Bun 运行环境！
+echo [*] 正在为您打开 Bun 官方安装说明...
+start https://bun.com/docs/installation
 echo.
-echo [*] 请下载安装完成后，重新双击运行本脚本即可。
+echo [*] 请安装 Bun 1.4.4 或更高版本后，重新双击运行本脚本。
 pause
 exit /b 1
 
 :INSTALL_DEPS
 echo [*] 检测到首次运行，正在自动安装必要依赖...
-call npm install --omit=dev --registry=https://registry.npmmirror.com
+call bun install --production --registry=https://registry.npmmirror.com
 if errorlevel 1 (
     echo [!] 依赖安装失败，请检查网络连接后重试。
     pause

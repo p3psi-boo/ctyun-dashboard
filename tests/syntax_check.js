@@ -1,44 +1,49 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 'use strict';
 
 /**
- * 静态语法检查：对参与运行的核心 JS 文件执行 `node --check`。
- * 为什么独立成脚本：不依赖 shell 的 && 连接与平台差异，Windows/Linux 行为一致，
- * 可直接被 CI 与本地 `npm run check` 复用。
+ * 静态语法检查：对参与运行的核心 TS/JS 文件做解析（Bun.Transpiler / node --check）。
+ * 为什么独立成脚本：不依赖 shell 的 && 连接与平台差异，Windows/Linux 行为一致。
  */
 
 const { spawnSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
+const isBun = !!process.versions.bun;
 
-const FILES = [
-  'server.js',
-  'app/persist_log.js',
-  'app/tasks/native_tasks.js',
-  'app/tasks/scheduler.js',
-  'app/ydpc/ydpc_client.js',
-  'app/ydpc/product_route.js',
-  'app/ydpc/cag_boot.js',
-  'app/ydpc/zte_cag_raw.js',
-  'app/ydpc/zte_cag_tls.js',
-  'app/ydpc/scg_keepalive.js',
-  'app/ecloud/ecloud_engine.js',
-  'app/ecloud/ecloud_client.js',
-  'app/static/app.js',
-];
+function isSourceFile(name) {
+  if (name.endsWith('.d.ts')) return false;
+  return name.endsWith('.ts') || name.endsWith('.js');
+}
+
+function walkSources(dir, acc = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.name === 'node_modules' || e.name === '.git' || e.name === 'data') continue;
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkSources(p, acc);
+    else if (e.isFile() && isSourceFile(e.name)) acc.push(path.relative(ROOT, p));
+  }
+  return acc;
+}
+
+const FILES = ['server.ts', ...walkSources(path.join(ROOT, 'app'))].sort();
 
 let failed = 0;
 
-// 【自检】关键运行时文件必须留在清单里 —— 防止重构时被误删，导致语法闸门"看不见"它。
-// 教训：变异验证曾因清单漂移而退化成假 PASS（见 tests/mutation_check.js 的 2026-09-23 修复）。
 const REQUIRED = [
-  'server.js',
-  'app/ydpc/product_route.js',
-  'app/ydpc/zte_cag_tls.js',
-  'app/ydpc/scg_keepalive.js',
-  'app/ecloud/ecloud_engine.js',
-  'app/ecloud/ecloud_client.js',
+  'server.ts',
+  'app/lib/task_switch.ts',
+  'app/ctyun_client.ts',
+  'app/http/handler.ts',
+  'app/http/ctyun_proxy.ts',
+  'app/auth_manager.ts',
+  'app/ydpc/product_route.ts',
+  'app/ydpc/zte_cag_tls.ts',
+  'app/ydpc/scg_keepalive.ts',
+  'app/ecloud/ecloud_engine.ts',
+  'app/ecloud/ecloud_client.ts',
 ];
 for (const f of REQUIRED) {
   if (!FILES.includes(f)) {
@@ -49,13 +54,28 @@ for (const f of REQUIRED) {
 
 for (const f of FILES) {
   const abs = path.join(ROOT, f);
-  const r = spawnSync(process.execPath, ['--check', abs], { encoding: 'utf8' });
-  if (r.status === 0) {
+  let ok = false;
+  let errText = '';
+  if (isBun) {
+    try {
+      const loader = f.endsWith('.ts') ? 'ts' : 'js';
+      const transpiler = new Bun.Transpiler({ loader });
+      transpiler.transformSync(fs.readFileSync(abs, 'utf8'));
+      ok = true;
+    } catch (e) {
+      errText = String(e && e.message ? e.message : e);
+    }
+  } else {
+    const r = spawnSync(process.execPath, ['--check', abs], { encoding: 'utf8' });
+    ok = r.status === 0;
+    errText = (r.stderr || r.stdout || '').trim();
+  }
+  if (ok) {
     console.log(`  ok    ${f}`);
   } else {
     failed++;
     console.error(`  FAIL  ${f}`);
-    console.error((r.stderr || r.stdout || '').trim());
+    console.error(errText);
   }
 }
 

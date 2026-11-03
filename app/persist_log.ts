@@ -44,9 +44,16 @@ function beijingDateString(d = new Date()) {
 }
 
 class LogPersister {
-  constructor(opts = {}) {
+  dir: string;
+  retentionDays: number;
+  onError: (msg: string) => void;
+  enabled: boolean;
+  currentDate: string | null;
+  written: number;
+
+  constructor(opts: { dir?: string; retentionDays?: string | number; onError?: (msg: string) => void } = {}) {
     this.dir = opts.dir || path.join(process.cwd(), 'logs');
-    this.retentionDays = Math.max(1, parseInt(opts.retentionDays, 10) || DEFAULT_RETENTION_DAYS);
+    this.retentionDays = Math.max(1, parseInt(String(opts.retentionDays ?? ''), 10) || DEFAULT_RETENTION_DAYS);
     this.onError = typeof opts.onError === 'function' ? opts.onError : () => {};
     this.enabled = false;
     this.currentDate = null;
@@ -158,7 +165,7 @@ class LogPersister {
    * 损坏行直接跳过，不影响整体。
    */
   loadRecent(maxLines = DEFAULT_BOOT_LINES) {
-    const need = Math.max(1, parseInt(maxLines, 10) || DEFAULT_BOOT_LINES);
+    const need = Math.max(1, parseInt(String(maxLines), 10) || DEFAULT_BOOT_LINES);
     const chunks = [];
     let got = 0;
     for (const file of this._listFilesNewestFirst()) {

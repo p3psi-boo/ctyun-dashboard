@@ -1,3 +1,4 @@
+// @ts-nocheck
 const { SohoClient } = require('./soho_client');
 const { performCagAuthHold } = require('./cag_client');
 const { MqttKeepAliveClient } = require('./mqtt_client');

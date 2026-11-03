@@ -1,3 +1,4 @@
+// @ts-nocheck
 const { executeNativeAiChat, executeNativeSign, executeNativeHang } = require('./native_tasks');
 
 function getBeijingDate() {

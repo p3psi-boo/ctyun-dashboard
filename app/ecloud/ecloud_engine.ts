@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict';
 /**
  * 移动公众云电脑 · 协议侧车桥接层

@@ -15,4 +15,5 @@ package = false
 #   uv lock
 #   uv export --frozen --no-dev --no-emit-project --no-header -o requirements.txt
 # 镜像与 CI：uv sync --frozen --no-dev（落到 .venv，侧车走 ECLOUD_PYTHON）。
+# Docker 基础镜像是 python:3.12-slim-bookworm；本机 3.11+ 即可。
 # requirements.txt 给没有 uv 的本机 / pip。

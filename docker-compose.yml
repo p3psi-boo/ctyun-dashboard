@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ctyun-dashboard:
     build: .
@@ -7,15 +5,17 @@ services:
     container_name: ctyun-dashboard
     restart: unless-stopped
     stop_grace_period: 15s
+    user: "10001:10001"
     ports:
       - "8571:8571"
     environment:
       - TZ=Asia/Shanghai
       - PORT=8571
       - CTYUN_DATA_DIR=/app/data
-      # 群晖 / 飞牛 / 绿联：改成共享文件夹属主的 uid/gid，避免 data 卷权限问题
-      - PUID=1000
-      - PGID=1000
+      # 首次启动必须设置管理员密码（默认账号 ADMIN）。已有数据卷里若已有管理员则可留空。
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      # 可选：允许的跨站 Origin，逗号分隔。默认仅同源。
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
     volumes:
       - ./data:/app/data
       # 📡 移动公众（公众版）：镜像已内置公开签名常量，默认开箱即用，无需任何额外配置。

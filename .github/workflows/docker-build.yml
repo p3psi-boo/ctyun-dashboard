@@ -21,10 +21,13 @@ jobs:
         uses: actions/checkout@v4
 
       # 质量闸门：语法检查 + 结构性回归测试。任一失败即终止，绝不构建/推送坏镜像。
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
+          bun-version: '1.4.4'
+
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
 
       # 移动公众协议侧车的运行时依赖：回归测试里有一批**真实拉起侧车**的断言，
       # 缺了这些包（曾经的 ModuleNotFoundError: No module named 'Crypto'）会让侧车级
@@ -32,8 +35,8 @@ jobs:
       - name: Set up Python (sidecar runtime)
         uses: actions/setup-python@v5
         with:
-          # 与 Docker 基础镜像 node:22-bookworm-slim 自带的 python3（3.11）对齐，避免 CI 绿、镜像红。
-          python-version: '3.11'
+          # 与 Docker 基础镜像 python:3.12-slim-bookworm 对齐，避免 CI 绿、镜像红。
+          python-version: '3.12'
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v10
@@ -53,11 +56,14 @@ jobs:
           uv sync --frozen --no-dev --python python3
           echo "ECLOUD_PYTHON=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
 
-      - name: Syntax check (node --check)
-        run: node tests/syntax_check.js
+      - name: Syntax check
+        run: bun tests/syntax_check.js
+
+      - name: Typecheck
+        run: bunx tsc --noEmit
 
       - name: Regression invariants
-        run: node tests/regression.test.js
+        run: bun tests/regression.test.js
 
       - name: Set up QEMU (for multi-arch)
         if: github.event_name != 'pull_request'
@@ -126,7 +132,10 @@ jobs:
       - name: Smoke /healthz
         if: github.event_name == 'pull_request'
         run: |
-          docker run -d --name ctyun-smoke -p 8571:8571 -e CTYUN_DATA_DIR=/app/data ctyun-dashboard:pr-smoke
+          docker run -d --name ctyun-smoke -p 8571:8571 \
+            -e CTYUN_DATA_DIR=/app/data \
+            -e ADMIN_PASSWORD=pr-smoke-admin-password \
+            ctyun-dashboard:pr-smoke
           trap 'docker logs ctyun-smoke || true; docker rm -f ctyun-smoke || true' EXIT
           for i in $(seq 1 20); do
             if curl -fsS http://127.0.0.1:8571/healthz | grep -q '"ok":true'; then

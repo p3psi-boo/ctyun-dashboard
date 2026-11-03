@@ -1162,16 +1162,33 @@ input:checked + .slider:before {
 
 .log-time {
   color: #94a3b8;
-  margin-right: 5px;
+  margin-right: 8px;
   display: inline;
   font-size: 11px;
   user-select: none;
   font-variant-numeric: tabular-nums;
 }
 
+.log-lvl {
+  display: inline-block;
+  min-width: 3.6em;
+  margin-right: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  user-select: none;
+  color: #64748b;
+}
+
+.log-level-success .log-lvl { color: #059669; }
+.log-level-error .log-lvl { color: #dc2626; }
+.log-level-warning .log-lvl { color: #b45309; }
+.log-level-info .log-lvl { color: #64748b; }
+.log-level-debug .log-lvl { color: #94a3b8; }
+
 .log-source {
   color: #2563eb;
-  margin-right: 5px;
+  margin-right: 6px;
   font-weight: 700;
   display: inline;
   font-size: 11.5px;
@@ -1201,6 +1218,10 @@ input:checked + .slider:before {
 
 .log-level-info {
   color: #334155;
+}
+
+.log-level-debug {
+  color: #64748b;
 }
 
 /* 全双工重复折叠徽标 Badge Repeat */

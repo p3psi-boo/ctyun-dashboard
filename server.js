@@ -21,21 +21,26 @@ const { performCagAuthHold } = require('./app/ydpc/cag_client');
 const { YdpcClient } = require('./app/ydpc/ydpc_client');
 const { EcloudClient, LOG_SOURCE: ECLOUD_LOG_SOURCE, INTERACTIVE_BRANCHES } = require('./app/ecloud/ecloud_client');
 const { LogPersister } = require('./app/persist_log');
+const { createLogger, normalizeUiLevel } = require('./app/logger');
+
+const sysLog = createLogger('System');
+const cryptoLog = createLogger('Crypto');
+const persistLog = createLogger('PersistLog');
 
 // 全局异常拦截看门狗 (确保守护服务长期稳定运行不宕机)
 // 【2026-09-27 退出取证】现场：面板曾静默死亡一次（exit=1、stdout/stderr 零输出、
 // 无 WER 记录、stderr 捕获已证实有效）⇒ 排除 JS 未捕获异常（handler 会吞且不退出）
 // 与原生崩溃（会打印 FATAL）⇒ 系外部终止（当时 Defender 正在做安全智能更新）。
 // 教训：进程自己死了却不留任何痕迹，违反本项目"退出绝不静默"原则。故补三件事：
-//   ① 异常/拒绝除 console.error 外**同时落持久日志**（stderr 可能丢失，jsonl 一定在）；
+//   ① 异常/拒绝除进程日志（stderr）外**同时落持久日志**（stderr 可能丢失，jsonl 一定在）；
 //   ② 'exit' 钩子记录退出码（进程自杀/正常退出均可见）；
 //   ③ SIGINT/SIGTERM 记录并优雅退出（被要求停止时也留证）。
 process.on('uncaughtException', (err) => {
-  console.error('[!] 系统未捕获异常已拦截 (常驻保障):', err?.message || err);
-  try { appendLog('System', `⚠️ 未捕获异常已拦截（进程继续运行）: ${(err && err.message) || err}`, 'error'); } catch (e) { /* 日志不可用则仅 console */ }
+  sysLog.error('未捕获异常已拦截（进程继续运行）', err);
+  try { appendLog('System', `⚠️ 未捕获异常已拦截（进程继续运行）: ${(err && err.message) || err}`, 'error'); } catch (e) { /* 日志不可用则仅进程日志 */ }
 });
 process.on('unhandledRejection', (reason) => {
-  console.error('[!] 系统未处理 Promise 拒绝已拦截:', reason?.message || reason);
+  sysLog.error('未处理 Promise 拒绝已拦截', reason);
   try { appendLog('System', `⚠️ 未处理 Promise 拒绝已拦截: ${(reason && reason.message) || reason}`, 'error'); } catch (e) { /* 同上 */ }
 });
 process.on('exit', (code) => {
@@ -70,11 +75,11 @@ const BOOT_LOG_LINES = Math.max(0, parseInt(process.env.CTYUN_LOG_BOOT_LINES, 10
 const logPersister = new LogPersister({
   dir: LOG_DIR,
   retentionDays: parseInt(process.env.CTYUN_LOG_RETENTION_DAYS, 10) || 7,
-  onError: (msg) => console.error(`[日志落盘] ${msg}`)
+  onError: (msg) => persistLog.error(msg)
 });
 logPersister.init();
 
-console.log('[*] 纯原生超轻量内核已启动 (纯 HTTP/WebSocket 协议直连，纯净无负担)');
+sysLog.info('内核已启动（HTTP/WebSocket 原生协议）');
 
 const logs = [];
 const sseClients = new Set();
@@ -222,7 +227,7 @@ function scheduleRoutineFoldDayRollover() {
       rolloverRoutineFoldCountsIfNeeded(true);
     } catch (e) {
       // 日志维护出错绝不影响主流程，但必须留痕（不得空 catch）
-      console.error(`[日志折叠] 跨天清零失败: ${e.message}`);
+      sysLog.error('例行日志跨天清零失败', e);
     }
     scheduleRoutineFoldDayRollover();
   }, msUntilNextBeijingMidnight());
@@ -251,9 +256,10 @@ function buildLogEntry(source, message, level = 'info', accountName = '', platfo
   return {
     id: 'log_' + (++logIdCounter),
     timestamp: getBeijingTimeString(),
+    isoTime: new Date().toISOString(),
     source,
     message,
-    level,
+    level: normalizeUiLevel(level),
     accountName: accountName || '',
     platform: inferLogPlatform(source, platform),
     repeatCount: 1
@@ -405,16 +411,17 @@ function bootstrapLogsFromDisk() {
   try {
     rows = logPersister.loadRecent(BOOT_LOG_LINES);
   } catch (e) {
-    console.error(`[日志落盘] 启动回灌失败: ${e.message}`);
+    persistLog.error('启动回灌失败', e);
     return 0;
   }
   for (const row of rows) {
     ingestLogEntry({
       id: 'log_' + (++logIdCounter),
       timestamp: row.timestamp || getBeijingTimeString(),
+      isoTime: row.isoTime || '',
       source: row.source || 'System',
       message: row.message || '',
-      level: row.level || 'info',
+      level: normalizeUiLevel(row.level || 'info'),
       accountName: row.accountName || '',
       platform: row.platform || 'ctyun',
       repeatCount: Math.max(1, parseInt(row.repeatCount, 10) || 1)
@@ -831,7 +838,7 @@ function getOrCreateMasterKey() {
       const raw = fs.readFileSync(MASTER_KEY_BAK_FILE, 'utf8').trim();
       if (raw.length === 64) {
         try { atomicWriteFileSync(MASTER_KEY_FILE, raw, 'utf8', 0o600); } catch (e) {}
-        console.log('🛡️ [安全自愈] 主密钥文件异常，已成功从备份密钥 (.master.key.bak) 恢复！');
+        cryptoLog.warn('主密钥文件异常，已从备份密钥 .master.key.bak 恢复');
         return Buffer.from(raw, 'hex');
       }
     } catch (e) {}
@@ -925,15 +932,15 @@ function loadConfig() {
       if (content) {
         cfg = JSON.parse(content);
       } else {
-        console.warn('⚠️ [配置检查] 主配置文件 app_config.json 为空 (0 字节)');
+        sysLog.warn('主配置文件 app_config.json 为空（0 字节）');
       }
     } catch (e) {
-      console.error('⚠️ [配置损坏] 主配置文件 app_config.json 解析失败:', e.message);
+      sysLog.error('主配置文件 app_config.json 解析失败', e);
       // 保护现场：绝不直接销毁损坏文件！
       try {
         const corruptBak = path.join(DATA_DIR, `app_config.corrupt.${Date.now()}.json`);
         fs.copyFileSync(CONFIG_FILE, corruptBak);
-        console.warn(`⚠️ [安全保护] 已将损坏的配置现场安全备份至: ${corruptBak}`);
+        sysLog.warn(`已将损坏的配置现场备份至 ${corruptBak}`);
       } catch (err) {}
     }
   }
@@ -947,11 +954,11 @@ function loadConfig() {
         if (bakCfg && (Array.isArray(bakCfg.users) || Array.isArray(bakCfg.accounts))) {
           cfg = bakCfg;
           loadedFromBak = true;
-          console.log('🛡️ [容灾自愈] 检测到主配置异常，已成功从自动备份文件 (app_config.json.bak) 完美恢复全量配置！');
+          sysLog.warn('主配置异常，已从自动备份文件 app_config.json.bak 恢复');
         }
       }
     } catch (e) {
-      console.error('读取备份配置文件失败:', e);
+      sysLog.error('读取备份配置文件失败', e);
     }
   }
 
@@ -999,7 +1006,7 @@ function loadConfig() {
   }
 
   // 4. 只有在首次全新安装时（既无主配置，也无备份），才初始化默认配置
-  console.log('ℹ️ [系统初始化] 未检测到已有配置文件，正在初始化全新运行环境...');
+  sysLog.info('未检测到已有配置文件，正在初始化运行环境');
   const defaultCfg = getDefaultConfig();
   saveConfig(defaultCfg);
   return defaultCfg;
@@ -1047,7 +1054,7 @@ function saveConfig(cfg) {
     atomicWriteFileSync(ACCOUNTS_JSON, JSON.stringify(ctyunJson, null, 2), 'utf8');
     return true;
   } catch (e) {
-    console.error('保存配置失败:', e);
+    sysLog.error('保存配置失败', e);
     return false;
   }
 }
@@ -3434,7 +3441,7 @@ async function getCtyunIndexHtml() {
       return cachedCtyunIndexHtml;
     }
   } catch (e) {
-    console.error('Failed to fetch pc.ctyun.cn index:', e.message);
+    sysLog.warn('拉取 pc.ctyun.cn 首页失败', e);
   }
   return cachedCtyunIndexHtml || '<!doctype html><html><head><title>天翼量子AI云电脑</title></head><body><div id="app"></div></body></html>';
 }
@@ -6543,10 +6550,8 @@ function rewardNeedsDesktop(prodId, prodType) {
 if (require.main === module) {
   server.listen(PORT, '0.0.0.0', () => {
     const isDockerEnv = fs.existsSync('/.dockerenv') || process.env.CTYUN_DATA_DIR === '/app/data';
-    console.log(`===========================================================`);
-    console.log(`🚀 天翼云/移动云电脑全功能可视化管理平台已完全就绪！`);
-    console.log(`👉 控制台访问地址: http://127.0.0.1:${PORT}`);
-    console.log(`📁 数据存储目录: ${DATA_DIR} (${isDockerEnv ? 'Docker容器' : '物理机/虚拟机'})`);
+    sysLog.info(`控制台服务已就绪 listen=http://127.0.0.1:${PORT}`);
+    sysLog.info(`dataDir=${DATA_DIR} env=${isDockerEnv ? 'docker' : 'host'}`);
     if (isDockerEnv) {
       try {
         const canary = path.join(DATA_DIR, '.volume_check');
@@ -6554,12 +6559,11 @@ if (require.main === module) {
           fs.writeFileSync(canary, `persisted_test=${new Date().toISOString()}\n`, 'utf8');
         }
       } catch (err) {
-        console.warn(`⚠️ [存储警告] 数据目录 ${DATA_DIR} 写入异常，请检查宿主机挂载卷权限: ${err.message}`);
+        sysLog.error(`数据目录写入异常，请检查宿主机挂载卷权限 dataDir=${DATA_DIR}`, err);
       }
     }
-    console.log(`===========================================================`);
     const restoredLogs = bootstrapLogsFromDisk();
-    if (restoredLogs > 0) console.log(`📜 已从磁盘回灌 ${restoredLogs} 条历史日志 (${LOG_DIR})`);
+    if (restoredLogs > 0) persistLog.info(`已从磁盘回灌 ${restoredLogs} 条历史日志 path=${LOG_DIR}`);
     appendLog('System', `控制台服务已就绪，当前加载 ${appConfig.accounts.length} 个账号（回灌历史日志 ${restoredLogs} 条）`, 'success');
   });
 }

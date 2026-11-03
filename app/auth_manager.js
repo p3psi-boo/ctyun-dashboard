@@ -1,4 +1,7 @@
 const crypto = require('crypto');
+const { createLogger } = require('./logger');
+
+const authLog = createLogger('Auth');
 
 function hashPassword(password, salt = 'ctyun_salt_2026') {
   return crypto.createHash('sha256').update(password + salt).digest('hex');
@@ -39,7 +42,7 @@ class AuthManager {
       });
       restored++;
     }
-    if (restored > 0) console.log(`[Auth] 已从磁盘恢复 ${restored} 个免登录会话（30 天窗口内）`);
+    if (restored > 0) authLog.info(`已从磁盘恢复 ${restored} 个免登录会话（30 天窗口内）`);
   }
 
   /** 把 remember=true 的会话写盘（非免登录会话绝不落盘，避免公共电脑被持久化）。 */

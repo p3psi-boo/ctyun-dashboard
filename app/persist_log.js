@@ -25,6 +25,17 @@
  *   6. 健壮性：任何磁盘异常（只读挂载、配额、权限）都**不得影响主流程** ——
  *      全部 try/catch 包裹，失败即降级为"仅内存日志"，只通过 onError 告警。
  *
+ * 【JSONL 记录字段】一行一条 JSON，约定如下（多余字段原样保留，不得当损坏行丢掉）：
+ *   id          内存条目 id（log_N）
+ *   timestamp   北京时间 YYYY-MM-DD HH:mm:ss（界面展示用）
+ *   isoTime     UTC ISO-8601（取证对照用；缺省时由落盘器补写）
+ *   source      日志源（System / Hang / ECLOUD / …）
+ *   message     正文（必须是字符串，否则回灌时跳过）
+ *   level       info | success | warning | error | debug
+ *   accountName 关联账号名，可空
+ *   platform    ctyun | ydpc | ecloud
+ *   repeatCount 写入时恒为 1（折叠只发生在内存/UI，磁盘是原始流水）
+ *
  * 零依赖（只用 node 内建 fs/path），可直接被回归测试真实调用。
  */
 
@@ -81,7 +92,10 @@ class LogPersister {
         this.currentDate = dateStr;
         this.prune();
       }
-      fs.appendFileSync(this.currentFile(dateStr), JSON.stringify(entry) + '\n', 'utf8');
+      const rec = (entry && typeof entry === 'object')
+        ? { ...entry, isoTime: entry.isoTime || new Date().toISOString() }
+        : { message: String(entry), isoTime: new Date().toISOString() };
+      fs.appendFileSync(this.currentFile(dateStr), JSON.stringify(rec) + '\n', 'utf8');
       this.written++;
       return true;
     } catch (e) {

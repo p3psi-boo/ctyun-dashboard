@@ -14,6 +14,7 @@ const ROOT = path.resolve(__dirname, '..');
 
 const FILES = [
   'server.js',
+  'app/logger.js',
   'app/persist_log.js',
   'app/tasks/native_tasks.js',
   'app/tasks/scheduler.js',
@@ -34,6 +35,7 @@ let failed = 0;
 // 教训：变异验证曾因清单漂移而退化成假 PASS（见 tests/mutation_check.js 的 2026-09-23 修复）。
 const REQUIRED = [
   'server.js',
+  'app/logger.js',
   'app/ydpc/product_route.js',
   'app/ydpc/zte_cag_tls.js',
   'app/ydpc/scg_keepalive.js',

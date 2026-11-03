@@ -55,7 +55,42 @@ const stripLineComments = (code) =>
     })
     .join('\n');
 
-const server = read('server.js');
+const SERVER_SPLIT_FILES = [
+  'server.js',
+  'app/runtime.js',
+  'app/paths.js',
+  'app/lib/time.js',
+  'app/lib/crypto_util.js',
+  'app/lib/net.js',
+  'app/lib/atomic_fs.js',
+  'app/lib/access.js',
+  'app/lib/task_switch.js',
+  'app/crypto/secrets.js',
+  'app/config_store.js',
+  'app/notify.js',
+  'app/log_hub.js',
+  'app/ctyun_client.js',
+  'app/clients.js',
+  'app/http/limits.js',
+  'app/http/cors.js',
+  'app/http/body.js',
+  'app/http/session.js',
+  'app/http/json.js',
+  'app/http/static.js',
+  'app/http/ctyun_assets.js',
+  'app/http/ctyun_proxy.js',
+  'app/http/handler.js',
+  'app/auth_manager.js',
+];
+
+function readServerSources() {
+  return SERVER_SPLIT_FILES.map((f) => {
+    const abs = path.join(ROOT, f);
+    return fs.existsSync(abs) ? read(f) : '';
+  }).join('\n');
+}
+
+const server = readServerSources();
 const scheduler = read('app/tasks/scheduler.js');
 const native = read('app/tasks/native_tasks.js');
 
@@ -415,6 +450,9 @@ group('组 7 · 移动云开机必须走干净通道（禁伪造身份 / 关证�
 // 扫描生产源码中的"脏手段"指纹（沙箱内缺失的文件自动跳过）
 const BOOT_SCAN_FILES = [
   'server.js',
+  'app/ctyun_client.js',
+  'app/http/handler.js',
+  'app/http/ctyun_proxy.js',
   'app/tasks/scheduler.js',
   'app/tasks/native_tasks.js',
   'app/ydpc/ydpc_client.js',
@@ -428,6 +466,12 @@ const BOOT_SCAN_FILES = [
   'app/ydpc/scg_keepalive.js',
   'app/static/app.js',
 ];
+
+const REJECT_UNAUTHORIZED_EXEMPT = new Set([
+  // 天翼云 WebRTC / 官方通道上的历史豁免，与移动云开机无关
+  'server.js',
+  'app/ctyun_client.js',
+]);
 
 // app/ydpc 下与开机/保活链路无关、且各自有独立 TLS 口径的文件（豁免纳入扫描名单）
 const YDPC_SCAN_EXEMPT = new Set([
@@ -484,7 +528,7 @@ test('生产源码不得出现"伪造身份 / 硬编码第三方凭据 / 关证�
       //   · 2162 行附近：天翼云 WebRTC 的 wss 连接选项
       //   · 3402 行附近：天翼云网页端代理透传的 https.request 选项
       // 与移动云开机无关，故仅在"移动云开机相关文件"上检查关证书项。
-      if (re.source.includes('rejectUnauthorized') && f === 'server.js') continue;
+      if (re.source.includes('rejectUnauthorized') && REJECT_UNAUTHORIZED_EXEMPT.has(f)) continue;
       // 例外：CEM 控制面材料（client_id / sdk2 公钥）已获用户批准仅限 scg_keepalive.js
       if (Array.isArray(except) && except.includes(f)) continue;
       const m = code.match(re);
@@ -1769,7 +1813,7 @@ test('行为：分层开关判定必须走权威入口，且语义正确（含"�
   // 【2026-09-26 用户拍板】L3 占位层已删除 —— 权威入口的三张表（中文名 / 字段映射 / 保活集合）
   // 里都必须彻底消失（对未知任务类型的通用放行是既有行为，不在此特判）。
   assert.ok(
-    !/ecloudL3SpiceHeart/.test(stripLineComments(read('server.js'))),
+    !/ecloudL3SpiceHeart/.test(stripLineComments(server)),
     'L3 已删除 —— server.js 不得再出现任何 ecloudL3SpiceHeart 痕迹'
   );
 
@@ -1933,7 +1977,7 @@ test('静态：移动公众开机能力接线（sidecar op → 引擎 → 客户
   const sidecarDs = stripLineComments(read('app/ecloud_engine/sidecar.py'));
   const engineJs = stripLineComments(read('app/ecloud/ecloud_engine.js'));
   const ecloudJs = stripLineComments(read('app/ecloud/ecloud_client.js'));
-  const serverJs = stripLineComments(read('server.js'));
+  const serverJs = stripLineComments(server);
   // ① sidecar：op 函数 + 注册 + operate 白名单
   assert.ok(/def op_desktop_power\(/.test(sidecarDs), '侧车必须实现 op_desktop_power');
   assert.ok(/"desktop\.power": op_desktop_power,/.test(sidecarDs), 'op 必须注册进 dispatch 表');
@@ -2021,7 +2065,7 @@ test('行为：30 天免登录 —— 勾选会话说盘且重启可恢复；未
 });
 
 test('静态：免登录全链路接线（服务端 sessionStore/remember/logout + 前端勾选与双存储分流）', () => {
-  const serverJs = read('server.js');
+  const serverJs = server;
   const appJs2 = read('app/static/app.js');
   const html = read('app/static/index.html');
   const authJs = read('app/auth_manager.js');
@@ -2121,7 +2165,7 @@ test('静态：自动开机守护接线（账号级/单机双开关 + 冷却 + �
   );
   // 账号默认开关值：新建账号必须显式 autoBoot: true（ecloud）
   assert.ok(
-    /ecloudL2DesktopReg: true,[\s\S]{0,200}autoBoot: true/.test(read('server.js')),
+    /ecloudL2DesktopReg: true,[\s\S]{0,200}autoBoot: true/.test(server),
     'buildEcloudDefaultFeatures 必须显式 autoBoot: true'
   );
   // UI：分层开关区（账号级）+ 名下列表（单机）
@@ -5264,6 +5308,91 @@ testAsync('行为：pingCag 对 SCG 机与材料缺失机必须"返回未执行"
     '必须点明"材料未下发"，不能伪装成网络故障'
   );
   assert.strictEqual(firmAuthCalls, 1, '材料判定必须紧跟在取材料之后、在拨号之前');
+});
+
+// ============================================================================
+// 组 · Bun 迁移后的安全红线：默认管理员 / 开放代理 / CORS / 请求体
+// ============================================================================
+group('组 · 运行时安全：ADMIN 口令、ctyun-proxy、CORS、请求体上限');
+
+test('默认管理员必须是 ADMIN，且密码只来自 ADMIN_PASSWORD（禁止硬编码 admin123）', () => {
+  const authJs = read('app/auth_manager.js');
+  assert.ok(/username:\s*'ADMIN'/.test(authJs), '默认管理员用户名必须是 ADMIN');
+  assert.ok(/process\.env\.ADMIN_PASSWORD/.test(authJs), '默认管理员密码必须来自 ADMIN_PASSWORD');
+  assert.ok(
+    !/passwordHash:\s*hashPassword\(\s*'admin123'\s*\)/.test(stripLineComments(authJs)),
+    '不得再把 admin123 写进默认管理员哈希'
+  );
+});
+
+test('行为：无 ADMIN_PASSWORD 且无管理员时必须拒绝启动；有口令则创建 ADMIN', () => {
+  const { AuthManager } = require(path.join(ROOT, 'app/auth_manager.js'));
+  const prev = process.env.ADMIN_PASSWORD;
+  delete process.env.ADMIN_PASSWORD;
+  const emptyCfg = { config: { users: [], settings: {}, accounts: [] }, saveConfig: () => {} };
+  assert.throws(
+    () => new AuthManager(emptyCfg),
+    /ADMIN_PASSWORD/,
+    '全新部署缺少 ADMIN_PASSWORD 必须直接失败，不得静默落入弱口令'
+  );
+
+  process.env.ADMIN_PASSWORD = 'unit-test-admin-pass';
+  const created = { config: { users: [], settings: {}, accounts: [] }, saveConfig: () => {} };
+  const am = new AuthManager(created);
+  const admin = created.config.users.find((u) => u.role === 'admin');
+  assert.ok(admin, '设置 ADMIN_PASSWORD 后必须创建管理员');
+  assert.strictEqual(admin.username, 'ADMIN');
+  const ok = am.login('ADMIN', 'unit-test-admin-pass');
+  assert.ok(ok.success, '必须能用 ENV 里的密码登录 ADMIN');
+  if (prev === undefined) delete process.env.ADMIN_PASSWORD;
+  else process.env.ADMIN_PASSWORD = prev;
+});
+
+test('/api/ctyun-proxy 必须登录，且不得把 Cookie/Authorization 原样转发出去', () => {
+  const proxy = read('app/http/ctyun_proxy.js');
+  const handler = read('app/http/handler.js');
+  assert.ok(/handleCtyunProxy/.test(handler), 'handler 必须把 /api/ctyun-proxy 交给专用模块');
+  assert.ok(/getSessionFromReq/.test(proxy), '代理通道必须校验登录会话');
+  assert.ok(/STRIP_REQUEST_HEADERS/.test(proxy), '必须显式剥离危险请求头');
+  assert.ok(/'cookie'/.test(proxy) && /'authorization'/.test(proxy), 'Cookie 与 Authorization 必须在剥离名单中');
+  assert.ok(!/outgoingHeaders\[k\] = v/.test(proxy) || /STRIP_REQUEST_HEADERS\.has/.test(proxy),
+    '转发请求头前必须按剥离名单过滤');
+  assert.ok(/protocol !== 'https:'/.test(proxy) || /protocol !== \"https:\"/.test(proxy),
+    '代理目标必须限制为 https');
+});
+
+test('接口不得用 Access-Control-Allow-Origin: * 对任意网站放行', () => {
+  const hits = [];
+  for (const f of SERVER_SPLIT_FILES) {
+    const abs = path.join(ROOT, f);
+    if (!fs.existsSync(abs)) continue;
+    const code = stripLineComments(read(f));
+    if (/Access-Control-Allow-Origin['":\s]*\*/.test(code) || /access-control-allow-origin['":\s]*\*/.test(code)) {
+      hits.push(f);
+    }
+  }
+  assert.deepStrictEqual(hits, [], `以下文件仍对任意 Origin 放行 CORS：${hits.join(', ')}`);
+  const cors = read('app/http/cors.js');
+  assert.ok(/CORS_ORIGINS/.test(cors), '跨站调用必须走 CORS_ORIGINS 白名单');
+  assert.ok(!/allowlist\.includes\('\*'\)/.test(cors), '白名单不得把 * 当成合法 Origin');
+});
+
+test('JSON / 代理 / 导入请求体必须有上限，禁止无限读取', () => {
+  const limits = read('app/http/limits.js');
+  const body = read('app/http/body.js');
+  const proxy = read('app/http/ctyun_proxy.js');
+  assert.ok(/MAX_JSON_BODY_BYTES/.test(limits) && /MAX_PROXY_BODY_BYTES/.test(limits), '必须定义请求体上限常量');
+  assert.ok(/PayloadTooLargeError/.test(body) && /size > limit/.test(body), 'parse/read body 必须在超限时拒绝');
+  assert.ok(/MAX_PROXY_BODY_BYTES/.test(proxy), 'ctyun-proxy 必须套用代理请求体上限');
+  assert.ok(/MAX_IMPORT_BODY_BYTES/.test(read('app/http/handler.js')), '配置导入必须使用更大但仍有限的上限');
+});
+
+test('容器必须以非 root 用户启动，且入口不是 shell', () => {
+  const df = read('Dockerfile');
+  assert.ok(/USER\s+10001/.test(df) || /USER\s+app/.test(df), 'Dockerfile 必须 USER 非 root');
+  assert.ok(/ENTRYPOINT\s+\[/.test(df), '必须使用 exec 形式 ENTRYPOINT（不经 shell）');
+  assert.ok(/oven\/bun:1\.4\.4/.test(df), '运行时必须基于 Bun 1.4.4 镜像');
+  assert.ok(/rm -f .*\/bin\/sh/.test(df) || /distroless/.test(df), '最终镜像应去掉 shell 或使用 distroless');
 });
 
 // ============================================================================

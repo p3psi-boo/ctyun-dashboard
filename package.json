@@ -1,17 +1,21 @@
 {
   "name": "ctyun-dashboard",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "天翼云电脑/移动爱家/移动公众可视化多账号保活控制中心",
   "main": "server.js",
+  "packageManager": "bun@1.4.4",
+  "engines": {
+    "bun": ">=1.4.4"
+  },
   "scripts": {
-    "start": "node server.js",
-    "check": "node tests/syntax_check.js",
-    "test": "node tests/syntax_check.js && node tests/regression.test.js",
-    "test:mutation": "node tests/mutation_check.js",
-    "smoke": "node analysis/smoke_check.js",
-    "verify": "node tests/syntax_check.js && node tests/regression.test.js && node tests/mutation_check.js && node analysis/smoke_check.js"
+    "start": "bun server.js",
+    "check": "bun tests/syntax_check.js",
+    "test": "bun tests/syntax_check.js && bun tests/regression.test.js",
+    "test:mutation": "bun tests/mutation_check.js",
+    "smoke": "bun analysis/smoke_check.js",
+    "verify": "bun tests/syntax_check.js && bun tests/regression.test.js && bun tests/mutation_check.js && bun analysis/smoke_check.js"
   },
   "dependencies": {
-    "ws": "^8.21.3"
+    "ws": "^8.18.3"
   }
 }

@@ -33,7 +33,7 @@ const MUTATIONS = [
   {
     id: 'M1',
     name: '暗线A/字段漂移：把 sign 的映射改回错误的 features.sign',
-    file: 'server.js',
+    file: 'app/lib/task_switch.js',
     from: "sign: 'autoSign'",
     to: "sign: 'sign'",
     replaceAll: false,
@@ -41,7 +41,7 @@ const MUTATIONS = [
   {
     id: 'M2',
     name: '暗线A/原始直读：保活闸门退回 d.keepaliveEnabled === false',
-    file: 'server.js',
+    file: 'app/ctyun_client.js',
     from: "if (!this.resolveTask('keepAlive', d).enabled) continue; // 统一入口：账号级/(该机)独立保活开关",
     to: "if (d.keepaliveEnabled === false) continue;",
     replaceAll: false,
@@ -224,7 +224,7 @@ const MUTATIONS = [
     // 组 15 的「L3 字段必须从默认值里消失」断言必须因此变红。
     id: 'M20',
     name: 'L3 复活：把已删除的 SPICE 心跳层塞回账号默认开关（与用户拍板相反）',
-    file: 'server.js',
+    file: 'app/lib/task_switch.js',
     from: '    ecloudL2DesktopReg: true,     // L2 桌面登记保活',
     to: '    ecloudL2DesktopReg: true,     // L2 桌面登记保活\n    ecloudL3SpiceHeart: false,    // mutation：已删除的 L3 复活',
     replaceAll: false,
@@ -281,7 +281,7 @@ const MUTATIONS = [
   {
     id: 'M26',
     name: '短信登录只提示不发码：need_* 分支移除 loginSendSms 调用（复现用户报障的"收不到验证码"）',
-    file: 'server.js',
+    file: 'app/http/handler.js',
     from: 'await draftClient.loginSendSms(status, mobile);',
     to: '/* M26: 发码被移除 */',
     replaceAll: false,
@@ -424,7 +424,7 @@ const MUTATIONS = [
     // 组 18 的「后端折叠后必须移到末尾（时间顺序）」断言必须因此变红。
     id: 'M40',
     name: '时间倒挂：后端折叠后不再把日志条目移到 logs 末尾',
-    file: 'server.js',
+    file: 'app/log_hub.js',
     from: 'if (at !== logs.length - 1) {',
     to: 'if (false) {',
     replaceAll: false,
@@ -454,7 +454,7 @@ const MUTATIONS = [
     // 组 20 的行为断言（progress 夹在同源/他源日志之间仍须收敛为 1 条）必须因此变红。
     id: 'M43',
     name: '折叠失效：例行日志折叠键不再把数字归一化（progress 逐条新增成一长串 xN）',
-    file: 'server.js',
+    file: 'app/log_hub.js',
     from: "  return String(message).replace(/\\d+/g, 'N');",
     to: '  return String(message);',
     replaceAll: false,
@@ -464,7 +464,7 @@ const MUTATIONS = [
     // ⇒ 该日志每轮都会新增一行（用户报障"重复太多次了"）。组 20 必须变红。
     id: 'M44',
     name: '例行模式缺失：移动公众「分层巡检结果」不再被识别为可折叠的例行日志',
-    file: 'server.js',
+    file: 'app/log_hub.js',
     from: "  '分层巡检结果',          // 移动公众 L1/L2 汇总汇报",
     to: '  // 变异：删除「分层巡检结果」模式',
     replaceAll: false,
@@ -667,7 +667,7 @@ const MUTATIONS = [
     // 组 28 的行为断言（同一天内调用必须返回 0 且计数不变）必须变红。
     id: 'M63',
     name: '清零失控：去掉"跨天才清零"的判定（每次调用都把例行日志归 1，xN 永远 x1）',
-    file: 'server.js',
+    file: 'app/log_hub.js',
     from: '  if (today === routineFoldDay) return 0;',
     to: '  if (false) return 0; // mutation：不再判断是否跨天（每次调用都清零）',
     replaceAll: false,
@@ -677,7 +677,7 @@ const MUTATIONS = [
     // 组 28 的"异常条目计数不得被跨天清零"断言必须变红。
     id: 'M64',
     name: '清零越界：跨天把非例行日志的计数也一起归 1（异常/业务条目被误改）',
-    file: 'server.js',
+    file: 'app/log_hub.js',
     from: '    if (!routineFoldKey(entry.source, entry.message)) continue;',
     to: '    if (false) continue; // mutation：非例行日志也被清零',
     replaceAll: false,
@@ -1133,7 +1133,7 @@ const MUTATIONS = [
     // ───────────────────────────────────────────────────────────────────────
     id: 'M108',
     name: '开机取值失真：poweron 映射改成后端不认识的 startup（开机能力实际失效）',
-    file: 'server.js',
+    file: 'app/http/handler.js',
     from: "poweron: 'available', boot: 'available'",
     to: "poweron: 'startup', boot: 'available' /* mutation：后端不认识 startup，开机必失败 */",
     replaceAll: false,
@@ -1168,7 +1168,7 @@ const MUTATIONS = [
   {
     id: 'M112',
     name: '登出退不掉：登出端点不再吊销服务端会话（重启后旧 token 复活）',
-    file: 'server.js',
+    file: 'app/http/handler.js',
     from: 'authManager.destroySession(session.token);',
     to: '/* mutation：登出不再吊销会话 */',
     replaceAll: false,

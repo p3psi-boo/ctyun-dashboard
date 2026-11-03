@@ -60,6 +60,7 @@ const SERVER_SPLIT_FILES = [
   'app/runtime.ts',
   'app/paths.ts',
   'app/lib/time.ts',
+  'app/lib/logger.ts',
   'app/lib/crypto_util.ts',
   'app/lib/net.ts',
   'app/lib/atomic_fs.ts',
@@ -5317,19 +5318,23 @@ testAsync('行为：pingCag 对 SCG 机与材料缺失机必须"返回未执行"
 // 此前进程级日志混用 `[*]` / `[!]`、表情符号、中英夹杂的裸 console.*，
 // 同一件事在 stderr、界面、JSONL 三处长得都不一样，排障时要对齐很费劲。
 // 本组锁住：
-//   ① 进程日志必须走 app/logger.ts，行格式 `时间 LEVEL [组件] 正文`；
+//   ① 进程日志必须走 app/lib/logger.ts，行格式 `时间 LEVEL [组件] 正文`；
 //   ② 级别别名（warn/ok）必须收束到固定集合；
 //   ③ 界面日志行必须带 LEVEL 短标签；
 //   ④ 业务流水文案（含表情符号的 Hang/Sign 提示）不在本组改写范围。
 // ============================================================================
 group('组 33 · 进程日志格式正规化（无装饰前缀 + 固定 LEVEL 列）');
 
-const loggerMod = require(path.join(ROOT, 'app/logger.ts'));
-const loggerSrc = read('app/logger.ts');
+const loggerMod = require(path.join(ROOT, 'app/lib/logger.ts'));
+const loggerSrc = read('app/lib/logger.ts');
 
 test('进程日志模块必须是零依赖纯函数层，并登记进语法闸门', () => {
   const syntaxCheckSrc = fs.readFileSync(path.join(__dirname, 'syntax_check.js'), 'utf8');
-  assert.ok(/app\/logger\.ts/.test(syntaxCheckSrc), 'logger.ts 必须登记进语法闸门的 REQUIRED 清单');
+  assert.ok(/app\/lib\/logger\.ts/.test(syntaxCheckSrc), 'app/lib/logger.ts 必须登记进语法闸门的 REQUIRED 清单');
+  assert.ok(
+    SERVER_SPLIT_FILES.includes('app/lib/logger.ts'),
+    'app/lib/logger.ts 必须登记进 SERVER_SPLIT_FILES，与 time.ts 同属零依赖工具层'
+  );
   assert.ok(
     !/require\s*\(/.test(stripComments(loggerSrc)),
     'logger.ts 必须是零依赖 —— 出现 require 意味着它开始承担 I/O 之外的职责'
@@ -5388,7 +5393,7 @@ test('正文必须压成单行，Error 作为首参时取 message', () => {
 
 test('入口进程日志必须走 logger，不得再使用装饰前缀或裸 emoji 横幅', () => {
   const boot = read('server.ts');
-  assert.ok(/require\('\.\/app\/logger'\)/.test(boot), 'server.ts 必须 require app/logger');
+  assert.ok(/require\('\.\/app\/lib\/logger'\)/.test(boot), 'server.ts 必须 require app/lib/logger');
   assert.ok(/createLogger\('System'\)/.test(boot), '必须创建 System 组件日志器');
   assert.ok(/sysLog\.info\(/.test(boot) && /sysLog\.error\(/.test(boot), '启动与异常路径必须走 sysLog');
   assert.ok(!/\[\*\]/.test(boot) && !/\[!\]/.test(boot), '不得再使用 [*] / [!] 装饰前缀');
@@ -5402,6 +5407,17 @@ test('入口进程日志必须走 logger，不得再使用装饰前缀或裸 emo
     !/console\.(log|warn|error)\(/.test(listen[0]),
     '就绪回调里的进程输出必须走 logger，不得残留 console.*'
   );
+});
+
+test('HTTP 未处理异常必须走 logger，注入页的 localStorage 诊断除外', () => {
+  const handler = read('app/http/handler.ts');
+  assert.ok(/require\('\.\.\/lib\/logger'\)/.test(handler), 'handler 必须 require app/lib/logger');
+  assert.ok(/createLogger\('Http'\)/.test(handler), '必须创建 Http 组件日志器');
+  assert.ok(/httpLog\.error\(/.test(handler), '未处理异常必须走 httpLog.error');
+  const catchBlock = handler.match(/async function handleRequest[\s\S]*?jsonResponseWithReq\(res, \{ error: '服务器内部错误' \}/);
+  assert.ok(catchBlock, '未找到 handleRequest 的 catch');
+  assert.ok(!/console\.error\(/.test(catchBlock[0]), 'handleRequest catch 不得残留 console.error');
+  assert.ok(/console\.error\('Failed to set localStorage'/.test(handler), '注入云电脑页的 localStorage 失败日志必须保留（运行在浏览器，不是 Node）');
 });
 
 test('buildLogEntry 必须归一级别并写入 isoTime', () => {

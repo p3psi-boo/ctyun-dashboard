@@ -2,7 +2,7 @@
 'use strict';
 
 const { corsHeadersFor } = require('./cors');
-const { createLogger } = require('../logger');
+const { createLogger } = require('../lib/logger');
 
 const sysLog = createLogger('System');
 

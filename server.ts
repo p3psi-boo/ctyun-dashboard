@@ -17,7 +17,7 @@ const {
 ensureDataDirs();
 
 const { LogPersister } = require('./app/persist_log');
-const { createLogger } = require('./app/logger');
+const { createLogger } = require('./app/lib/logger');
 const { AuthManager } = require('./app/auth_manager');
 
 const sysLog = createLogger('System');

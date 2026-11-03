@@ -3,7 +3,7 @@
 
 const runtime = require('./runtime');
 const { getBeijingTimeString, getBeijingDateOnly } = require('./lib/time');
-const { createLogger, normalizeUiLevel } = require('./logger');
+const { createLogger, normalizeUiLevel } = require('./lib/logger');
 const persistLog = createLogger('PersistLog');
 const { LOG_SOURCE: ECLOUD_LOG_SOURCE } = require('./ecloud/ecloud_client');
 const { BOOT_LOG_LINES } = require('./paths');

@@ -6,7 +6,7 @@ const path = require('path');
 const { atomicWriteFileSync } = require('./lib/atomic_fs');
 const { encryptPassword, decryptPassword } = require('./crypto/secrets');
 const { PORT, DATA_DIR, CONFIG_FILE, ACCOUNTS_JSON } = require('./paths');
-const { createLogger } = require('./logger');
+const { createLogger } = require('./lib/logger');
 
 const sysLog = createLogger('System');
 

@@ -9,7 +9,7 @@
  * 业务流水（保活 / 任务 / 心跳）仍走 log_hub 的 appendLog
  * （内存折叠 + JSONL 落盘 + SSE），两条通道不要混用。
  *
- * 标准行（北京时间，无表情符号、无 `[!]` / `[*]` 装饰前缀）：
+ * 标准行（北京时间，无表情符号、无装饰前缀）：
  *
  *   YYYY-MM-DD HH:mm:ss LEVEL [COMPONENT] message
  *
@@ -21,7 +21,25 @@
  * 环境变量 CTYUN_LOG_LEVEL 控制最低输出级别（默认 info）。
  *
  * 零依赖（只用 process.stdout / stderr），可被回归测试直接 require。
+ * 北京时间函数内联，不 require ./time，以免破坏该不变量。
  */
+
+type ProcessLogLevel = 'debug' | 'info' | 'warn' | 'error';
+type UiLogLevel = 'debug' | 'info' | 'success' | 'warning' | 'error';
+
+interface ProcessLogRecord {
+  ts: string;
+  level: ProcessLogLevel;
+  component: string;
+  message: string;
+}
+
+interface ProcessLogger {
+  debug: (msg?: unknown, err?: unknown) => ProcessLogRecord | null;
+  info: (msg?: unknown, err?: unknown) => ProcessLogRecord | null;
+  warn: (msg?: unknown, err?: unknown) => ProcessLogRecord | null;
+  error: (msg?: unknown, err?: unknown) => ProcessLogRecord | null;
+}
 
 const LEVELS = Object.freeze({
   debug: { rank: 10, label: 'DEBUG' },
@@ -33,19 +51,23 @@ const LEVELS = Object.freeze({
 const LABEL_WIDTH = 5;
 const COMPONENT_MAX = 24;
 
-const UI_LEVELS = Object.freeze(['debug', 'info', 'success', 'warning', 'error']);
+const UI_LEVELS: readonly UiLogLevel[] = Object.freeze(['debug', 'info', 'success', 'warning', 'error']);
 
-function parseMinLevel() {
-  const raw = String(process.env.CTYUN_LOG_LEVEL || 'info').toLowerCase().trim();
-  return LEVELS[raw] ? raw : 'info';
+function isProcessLogLevel(value: string): value is ProcessLogLevel {
+  return Object.prototype.hasOwnProperty.call(LEVELS, value);
 }
 
-function beijingTimestamp(d = new Date()) {
+function parseMinLevel(): ProcessLogLevel {
+  const raw = String(process.env.CTYUN_LOG_LEVEL || 'info').toLowerCase().trim();
+  return isProcessLogLevel(raw) ? raw : 'info';
+}
+
+function beijingTimestamp(d = new Date()): string {
   return d.toLocaleString('sv-SE', { timeZone: 'Asia/Shanghai' });
 }
 
 /** 界面日志级别归一：把 warn/ok 等别名收束到固定集合，未知值一律 info。 */
-function normalizeUiLevel(level) {
+function normalizeUiLevel(level?: unknown): UiLogLevel {
   const l = String(level == null ? 'info' : level).toLowerCase().trim();
   if (l === 'error' || l === 'err' || l === 'fatal') return 'error';
   if (l === 'warning' || l === 'warn') return 'warning';
@@ -56,7 +78,7 @@ function normalizeUiLevel(level) {
 }
 
 /** 界面展示用的短标签（固定宽度语义：INFO / WARN / ERROR / OK / DEBUG） */
-function uiLevelLabel(level) {
+function uiLevelLabel(level?: unknown): string {
   switch (normalizeUiLevel(level)) {
     case 'error': return 'ERROR';
     case 'warning': return 'WARN';
@@ -66,8 +88,8 @@ function uiLevelLabel(level) {
   }
 }
 
-function normalizeMessage(message, err) {
-  let msg;
+function normalizeMessage(message?: unknown, err?: unknown): string {
+  let msg: string;
   let errorObj = err;
   if (message instanceof Error && err == null) {
     errorObj = message;
@@ -86,8 +108,13 @@ function normalizeMessage(message, err) {
   return String(msg).replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-function formatProcessLog(rec) {
-  const level = rec && LEVELS[rec.level] ? rec.level : 'info';
+function formatProcessLog(rec?: {
+  ts?: string;
+  level?: string;
+  component?: string;
+  message?: string;
+}): string {
+  const level = rec && isProcessLogLevel(String(rec.level)) ? rec.level as ProcessLogLevel : 'info';
   const meta = LEVELS[level];
   const time = (rec && rec.ts) || beijingTimestamp();
   const lvl = meta.label.padEnd(LABEL_WIDTH, ' ');
@@ -97,36 +124,36 @@ function formatProcessLog(rec) {
   return `${time} ${lvl} [${comp}] ${message}`;
 }
 
-function shouldEmit(level) {
+function shouldEmit(level: ProcessLogLevel): boolean {
   const min = LEVELS[parseMinLevel()] || LEVELS.info;
   const cur = LEVELS[level] || LEVELS.info;
   return cur.rank >= min.rank;
 }
 
-function writeLine(level, line) {
+function writeLine(level: ProcessLogLevel, line: string): void {
   const stream = (level === 'warn' || level === 'error') ? process.stderr : process.stdout;
   stream.write(line + '\n');
 }
 
-function emit(component, level, message, err) {
-  if (!LEVELS[level]) level = 'info';
-  if (!shouldEmit(level)) return null;
-  const rec = {
+function emit(component: string, level: string, message?: unknown, err?: unknown): ProcessLogRecord | null {
+  const lvl: ProcessLogLevel = isProcessLogLevel(level) ? level : 'info';
+  if (!shouldEmit(lvl)) return null;
+  const rec: ProcessLogRecord = {
     ts: beijingTimestamp(),
-    level,
+    level: lvl,
     component: component || 'System',
     message: normalizeMessage(message, err)
   };
-  writeLine(level, formatProcessLog(rec));
-  if (err instanceof Error && err.stack && level === 'error') {
+  writeLine(lvl, formatProcessLog(rec));
+  if (err instanceof Error && err.stack && lvl === 'error') {
     process.stderr.write(err.stack + '\n');
-  } else if (message instanceof Error && message.stack && level === 'error') {
+  } else if (message instanceof Error && message.stack && lvl === 'error') {
     process.stderr.write(message.stack + '\n');
   }
   return rec;
 }
 
-function createLogger(component) {
+function createLogger(component?: string): ProcessLogger {
   const c = component || 'System';
   return {
     debug: (msg, err) => emit(c, 'debug', msg, err),

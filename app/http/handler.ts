@@ -16,6 +16,7 @@ const { getCtyunIndexHtml, proxyStaticAsset } = require('./ctyun_assets');
 const { handleCtyunProxy } = require('./ctyun_proxy');
 const { MAX_JSON_BODY_BYTES, MAX_IMPORT_BODY_BYTES, PayloadTooLargeError } = require('./limits');
 const { canUserAccessAccount } = require('../lib/access');
+const { createLogger } = require('../lib/logger');
 const { generateDeviceCode } = require('../lib/crypto_util');
 const { STATIC_DIR } = require('../paths');
 const {
@@ -27,6 +28,7 @@ const { sendNotification, sendAccountNotification } = require('../notify');
 const { EcloudClient, LOG_SOURCE: ECLOUD_LOG_SOURCE, INTERACTIVE_BRANCHES } = require('../ecloud/ecloud_client');
 const { SohoClient } = require('../ydpc/soho_client');
 
+const httpLog = createLogger('Http');
 const saveConfig = (cfg) => runtime.saveConfig(cfg || runtime.config);
 
 const appConfig = new Proxy({}, {
@@ -60,7 +62,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       sendPayloadTooLarge(res, req, err);
       return;
     }
-    console.error('[http] 未处理异常:', err?.message || err);
+    httpLog.error('未处理异常', err);
     jsonResponseWithReq(res, { error: '服务器内部错误' }, 500, req);
   }
 }

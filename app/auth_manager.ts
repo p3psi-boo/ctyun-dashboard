@@ -1,7 +1,7 @@
 import type { AppConfig, AppUser, AuthSession, NotifyConfig, SessionStore } from './types';
 
 const crypto = require('crypto') as typeof import('crypto');
-const { createLogger } = require('./logger');
+const { createLogger } = require('./lib/logger');
 
 const authLog = createLogger('Auth');
 
@@ -18,7 +18,7 @@ class AuthManager {
     this.configManager = configManager;
     // 【2026-09-28】免登录会话持久化：会话表原先是纯内存 Map，容器一重启全部丢失 ——
     // 用户勾了"30 天内免登录"也必须重新登录，这是本次报障的根因。
-    // sessionStore = { load(): object|null, save(obj): void }，由 server.js 注入（data/auth_sessions.json）。
+    // sessionStore = { load(): object|null, save(obj): void }，由 server.ts 注入（data/auth_sessions.json）。
     this.sessionStore = configManager.sessionStore || null;
     this.sessions = new Map(); // token -> { userId, username, role, expiresAt, remember }
     this.initAdminUser();

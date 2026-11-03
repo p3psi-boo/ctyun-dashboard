@@ -34,7 +34,7 @@ let failed = 0;
 
 const REQUIRED = [
   'server.ts',
-  'app/logger.ts',
+  'app/lib/logger.ts',
   'app/lib/task_switch.ts',
   'app/ctyun_client.ts',
   'app/http/handler.ts',

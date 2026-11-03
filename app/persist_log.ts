@@ -1,12 +1,14 @@
 'use strict';
 
+import type { LogEntry } from './types';
+
 /**
  * ============================================================================
  * 日志落盘器（按日期滚动 + 启动回灌）
  * ============================================================================
  *
  * 【为什么需要它】
- * 本项目的运行日志原本**只存在内存数组**里（server.js 的 `const logs = []`），服务一重启
+ * 本项目的运行日志原本**只存在内存数组**里（log_hub 的 `const logs = []`），服务一重启
  * 历史即丢。后果在 2026-09-23 的"ZTE样本主号永久版云电脑自行关机"事件中完全暴露：
  * 事后要复盘"关机发生在几点、当时保活在不在跑"，**数据已经不存在**，只能靠推断。
  *
@@ -19,7 +21,7 @@
  *      ① 顺序确定 ② **进程崩溃/被 kill 时最后几行不丢** —— 而"最后几行"恰恰是
  *      故障取证最需要的（异步流缓冲区一旦没 flush，丢的就是它们）。
  *   4. 保留策略：默认保留 7 天，超期文件在初始化与跨天滚动时清理。
- *      可用环境变量 CTYUN_LOG_RETENTION_DAYS 覆盖（解析在 server.js 侧完成）。
+ *      可用环境变量 CTYUN_LOG_RETENTION_DAYS 覆盖（解析在 server.ts 侧完成）。
  *   5. 启动回灌：从各文件**尾部**按需读取最近 N 行（不会把整文件载入内存），
  *      交回内存日志流，使重启后控制台不至于空白。
  *   6. 健壮性：任何磁盘异常（只读挂载、配额、权限）都**不得影响主流程** ——
@@ -91,7 +93,7 @@ class LogPersister {
   }
 
   /** 追加一条原始日志条目。跨天自动滚动文件并触发清理。 */
-  append(entry) {
+  append(entry: LogEntry | Record<string, unknown> | string | null | undefined): boolean {
     if (!this.enabled || !entry) return false;
     try {
       const dateStr = beijingDateString();
@@ -100,7 +102,7 @@ class LogPersister {
         this.prune();
       }
       const rec = (entry && typeof entry === 'object')
-        ? { ...entry, isoTime: entry.isoTime || new Date().toISOString() }
+        ? { ...entry, isoTime: (entry as LogEntry).isoTime || new Date().toISOString() }
         : { message: String(entry), isoTime: new Date().toISOString() };
       fs.appendFileSync(this.currentFile(dateStr), JSON.stringify(rec) + '\n', 'utf8');
       this.written++;
@@ -178,7 +180,7 @@ class LogPersister {
    * 从最近的文件向前收集，返回按时间升序的最近 maxLines 条**已解析**条目。
    * 损坏行直接跳过，不影响整体。
    */
-  loadRecent(maxLines = DEFAULT_BOOT_LINES) {
+  loadRecent(maxLines = DEFAULT_BOOT_LINES): LogEntry[] {
     const need = Math.max(1, parseInt(String(maxLines), 10) || DEFAULT_BOOT_LINES);
     const chunks = [];
     let got = 0;

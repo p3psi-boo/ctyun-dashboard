@@ -5,7 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { atomicWriteFileSync } = require('../lib/atomic_fs');
 const { MASTER_KEY_FILE, MASTER_KEY_BAK_FILE } = require('../paths');
-const { createLogger } = require('../logger');
+const { createLogger } = require('../lib/logger');
 
 const cryptoLog = createLogger('Crypto');
 

@@ -2,7 +2,8 @@
 
 export type UserRole = 'admin' | 'user';
 export type Platform = 'ctyun' | 'ydpc' | 'ecloud' | string;
-export type LogLevel = 'info' | 'success' | 'warning' | 'error' | 'progress' | string;
+export type ProcessLogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = 'debug' | 'info' | 'success' | 'warning' | 'error';
 
 export interface NotifyConfig {
   enabled?: boolean;
@@ -110,14 +111,15 @@ export interface SessionStore {
 }
 
 export interface LogEntry {
-  id?: number | string;
-  time?: string;
+  id?: string;
+  timestamp?: string;
+  isoTime?: string;
   source?: string;
   message: string;
   level?: LogLevel;
-  platform?: string;
-  account?: string;
-  count?: number;
+  platform?: Platform;
+  accountName?: string;
+  repeatCount?: number;
   [key: string]: unknown;
 }
 

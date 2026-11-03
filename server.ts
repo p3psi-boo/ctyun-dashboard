@@ -17,7 +17,11 @@ const {
 ensureDataDirs();
 
 const { LogPersister } = require('./app/persist_log');
+const { createLogger } = require('./app/lib/logger');
 const { AuthManager } = require('./app/auth_manager');
+
+const sysLog = createLogger('System');
+const persistLog = createLogger('PersistLog');
 const { TaskScheduler } = require('./app/tasks/scheduler');
 const { atomicWriteFileSync } = require('./app/lib/atomic_fs');
 const { loadConfig, saveConfig, bindConfig } = require('./app/config_store');
@@ -33,22 +37,22 @@ const { handleRequest } = require('./app/http/handler');
 const logPersister = new LogPersister({
   dir: LOG_DIR,
   retentionDays: parseInt(process.env.CTYUN_LOG_RETENTION_DAYS, 10) || 7,
-  onError: (msg) => console.error(`[日志落盘] ${msg}`)
+  onError: (msg) => persistLog.error(msg)
 });
 logPersister.init();
 runtime.logPersister = logPersister;
 runtime.appendLog = appendLog;
 runtime.sendAccountNotification = sendAccountNotification;
 
-console.log('[*] 纯原生超轻量内核已启动 (Bun HTTP/WebSocket 协议直连，纯净无负担)');
+sysLog.info('内核已启动（HTTP/WebSocket 原生协议）');
 
 // 全局异常拦截看门狗 (确保守护服务长期稳定运行不宕机)
 process.on('uncaughtException', (err: any) => {
-  console.error('[!] 系统未捕获异常已拦截 (常驻保障):', err?.message || err);
-  try { appendLog('System', `⚠️ 未捕获异常已拦截（进程继续运行）: ${(err && err.message) || err}`, 'error'); } catch (e) { /* 日志不可用则仅 console */ }
+  sysLog.error('未捕获异常已拦截（进程继续运行）', err);
+  try { appendLog('System', `⚠️ 未捕获异常已拦截（进程继续运行）: ${(err && err.message) || err}`, 'error'); } catch (e) { /* 日志不可用则仅进程日志 */ }
 });
 process.on('unhandledRejection', (reason: any) => {
-  console.error('[!] 系统未处理 Promise 拒绝已拦截:', reason?.message || reason);
+  sysLog.error('未处理 Promise 拒绝已拦截', reason);
   try { appendLog('System', `⚠️ 未处理 Promise 拒绝已拦截: ${(reason && reason.message) || reason}`, 'error'); } catch (e) { /* 同上 */ }
 });
 process.on('exit', (code) => {
@@ -125,7 +129,7 @@ runtime.initAllKeepAlive = initAllKeepAlive;
 
 const server = http.createServer((req, res) => {
   Promise.resolve(handleRequest(req, res)).catch((err: any) => {
-    console.error('[http] handleRequest 拒绝:', err?.message || err);
+    sysLog.error('handleRequest 拒绝', err);
     if (!res.headersSent) {
       res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: '服务器内部错误' }));
@@ -138,10 +142,8 @@ if (require.main === module) {
   setTimeout(() => taskScheduler.start(), 3000);
   server.listen(PORT, '0.0.0.0', () => {
     const isDockerEnv = fs.existsSync('/.dockerenv') || process.env.CTYUN_DATA_DIR === '/app/data';
-    console.log(`===========================================================`);
-    console.log(`🚀 天翼云/移动云电脑全功能可视化管理平台已完全就绪！`);
-    console.log(`👉 控制台访问地址: http://127.0.0.1:${PORT}`);
-    console.log(`📁 数据存储目录: ${DATA_DIR} (${isDockerEnv ? 'Docker容器' : '物理机/虚拟机'})`);
+    sysLog.info(`控制台服务已就绪 listen=http://127.0.0.1:${PORT}`);
+    sysLog.info(`dataDir=${DATA_DIR} env=${isDockerEnv ? 'docker' : 'host'}`);
     if (isDockerEnv) {
       try {
         const canary = path.join(DATA_DIR, '.volume_check');
@@ -149,12 +151,11 @@ if (require.main === module) {
           fs.writeFileSync(canary, `persisted_test=${new Date().toISOString()}\n`, 'utf8');
         }
       } catch (err) {
-        console.warn(`⚠️ [存储警告] 数据目录 ${DATA_DIR} 写入异常，请检查宿主机挂载卷权限: ${err.message}`);
+        sysLog.error(`数据目录写入异常，请检查宿主机挂载卷权限 dataDir=${DATA_DIR}`, err);
       }
     }
-    console.log(`===========================================================`);
     const restoredLogs = bootstrapLogsFromDisk();
-    if (restoredLogs > 0) console.log(`📜 已从磁盘回灌 ${restoredLogs} 条历史日志 (${LOG_DIR})`);
+    if (restoredLogs > 0) persistLog.info(`已从磁盘回灌 ${restoredLogs} 条历史日志 path=${LOG_DIR}`);
     appendLog('System', `控制台服务已就绪，当前加载 ${appConfig.accounts.length} 个账号（回灌历史日志 ${restoredLogs} 条）`, 'success');
   });
 }

@@ -3,6 +3,8 @@
 
 const runtime = require('./runtime');
 const { getBeijingTimeString, getBeijingDateOnly } = require('./lib/time');
+const { createLogger, normalizeUiLevel } = require('./lib/logger');
+const persistLog = createLogger('PersistLog');
 const { LOG_SOURCE: ECLOUD_LOG_SOURCE } = require('./ecloud/ecloud_client');
 const { BOOT_LOG_LINES } = require('./paths');
 
@@ -144,7 +146,7 @@ function scheduleRoutineFoldDayRollover() {
       rolloverRoutineFoldCountsIfNeeded(true);
     } catch (e) {
       // 日志维护出错绝不影响主流程，但必须留痕（不得空 catch）
-      console.error(`[日志折叠] 跨天清零失败: ${e.message}`);
+      persistLog.error('例行日志跨天清零失败', e);
     }
     scheduleRoutineFoldDayRollover();
   }, msUntilNextBeijingMidnight());
@@ -172,9 +174,10 @@ function buildLogEntry(source, message, level = 'info', accountName = '', platfo
   return {
     id: 'log_' + (++logIdCounter),
     timestamp: getBeijingTimeString(),
+    isoTime: new Date().toISOString(),
     source,
     message,
-    level,
+    level: normalizeUiLevel(level),
     accountName: accountName || '',
     platform: inferLogPlatform(source, platform),
     repeatCount: 1
@@ -328,16 +331,17 @@ function bootstrapLogsFromDisk() {
     const logPersister = runtime.logPersister;
     rows = logPersister.loadRecent(BOOT_LOG_LINES);
   } catch (e) {
-    console.error(`[日志落盘] 启动回灌失败: ${e.message}`);
+    persistLog.error('启动回灌失败', e);
     return 0;
   }
   for (const row of rows) {
     ingestLogEntry({
       id: 'log_' + (++logIdCounter),
       timestamp: row.timestamp || getBeijingTimeString(),
+      isoTime: row.isoTime || '',
       source: row.source || 'System',
       message: row.message || '',
-      level: row.level || 'info',
+      level: normalizeUiLevel(row.level || 'info'),
       accountName: row.accountName || '',
       platform: row.platform || 'ctyun',
       repeatCount: Math.max(1, parseInt(row.repeatCount, 10) || 1)

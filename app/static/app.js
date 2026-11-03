@@ -253,7 +253,7 @@ async function loadStatus() {
     document.getElementById("stat-points").innerText = data.totalEarnedPoints || 0;
     cachedPointsDetails = data.pointsDetails || [];
   } catch (e) {
-    console.error("加载状态异常:", e);
+    console.error("[Status] 加载系统统计失败", e);
   }
 }
 
@@ -4284,11 +4284,35 @@ function upsertLogList(list, item) {
   return 'inserted';
 }
 
+/** 把服务端 level 收束为固定短标签，与进程日志 LEVEL 列对齐。 */
+function logLevelLabel(level) {
+  switch (String(level || 'info').toLowerCase()) {
+    case 'error':
+    case 'err':
+    case 'fatal':
+      return 'ERROR';
+    case 'warning':
+    case 'warn':
+      return 'WARN';
+    case 'success':
+    case 'ok':
+      return 'OK';
+    case 'debug':
+    case 'trace':
+      return 'DEBUG';
+    default:
+      return 'INFO';
+  }
+}
+
 function logLineInnerHtml(item) {
   const repeatBadge = (item.repeatCount && item.repeatCount > 1)
     ? `<span class="badge-repeat">x${item.repeatCount}</span>`
     : '';
-  return `<span class="log-time">[${item.timestamp}]</span><span class="log-source">[${item.source}]</span><span class="log-text">${escapeHtml(item.message)}</span>${repeatBadge}`;
+  const lvl = logLevelLabel(item.level);
+  const ts = escapeHtml(item.timestamp || '');
+  const src = escapeHtml(item.source || '');
+  return `<span class="log-time">${ts}</span><span class="log-lvl">${lvl}</span><span class="log-source">[${src}]</span><span class="log-text">${escapeHtml(item.message)}</span>${repeatBadge}`;
 }
 
 function createLogLineElement(item) {

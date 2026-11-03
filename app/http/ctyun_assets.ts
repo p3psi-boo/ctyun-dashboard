@@ -2,6 +2,9 @@
 'use strict';
 
 const { corsHeadersFor } = require('./cors');
+const { createLogger } = require('../lib/logger');
+
+const sysLog = createLogger('System');
 
 const ctyunStaticCache = new Map();
 let cachedCtyunIndexHtml = '';
@@ -24,7 +27,7 @@ async function getCtyunIndexHtml() {
       return cachedCtyunIndexHtml;
     }
   } catch (e) {
-    console.error('Failed to fetch pc.ctyun.cn index:', e.message);
+    sysLog.warn('拉取 pc.ctyun.cn 首页失败', e);
   }
   return cachedCtyunIndexHtml || '<!doctype html><html><head><title>天翼量子AI云电脑</title></head><body><div id="app"></div></body></html>';
 }

@@ -1,6 +1,9 @@
 import type { AppConfig, AppUser, AuthSession, NotifyConfig, SessionStore } from './types';
 
 const crypto = require('crypto') as typeof import('crypto');
+const { createLogger } = require('./lib/logger');
+
+const authLog = createLogger('Auth');
 
 function hashPassword(password: string, salt = 'ctyun_salt_2026'): string {
   return crypto.createHash('sha256').update(password + salt).digest('hex');
@@ -15,7 +18,7 @@ class AuthManager {
     this.configManager = configManager;
     // 【2026-09-28】免登录会话持久化：会话表原先是纯内存 Map，容器一重启全部丢失 ——
     // 用户勾了"30 天内免登录"也必须重新登录，这是本次报障的根因。
-    // sessionStore = { load(): object|null, save(obj): void }，由 server.js 注入（data/auth_sessions.json）。
+    // sessionStore = { load(): object|null, save(obj): void }，由 server.ts 注入（data/auth_sessions.json）。
     this.sessionStore = configManager.sessionStore || null;
     this.sessions = new Map(); // token -> { userId, username, role, expiresAt, remember }
     this.initAdminUser();
@@ -46,7 +49,7 @@ class AuthManager {
       });
       restored++;
     }
-    if (restored > 0) console.log(`[Auth] 已从磁盘恢复 ${restored} 个免登录会话（30 天窗口内）`);
+    if (restored > 0) authLog.info(`已从磁盘恢复 ${restored} 个免登录会话（30 天窗口内）`);
   }
 
   /** 把 remember=true 的会话写盘（非免登录会话绝不落盘，避免公共电脑被持久化）。 */
@@ -147,7 +150,7 @@ class AuthManager {
     if (hasAnyAdmin) {
       const weak = hashPassword('admin123');
       if (cfg.users.some(u => u.role === 'admin' && u.passwordHash === weak)) {
-        console.warn('[Auth] 检测到历史默认密码 admin123，请立即在控制台修改管理员密码');
+        authLog.warn('检测到历史默认密码 admin123，请立即在控制台修改管理员密码');
       }
       return;
     }

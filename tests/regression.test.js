@@ -60,6 +60,7 @@ const SERVER_SPLIT_FILES = [
   'app/runtime.ts',
   'app/paths.ts',
   'app/lib/time.ts',
+  'app/lib/logger.ts',
   'app/lib/crypto_util.ts',
   'app/lib/net.ts',
   'app/lib/atomic_fs.ts',
@@ -1072,6 +1073,7 @@ test('落盘器行为验证：写入 → 回灌 → 保留清理', () => {
     assert.strictEqual(back.length, 5, `应回灌出 5 条，实际 ${back.length}`);
     assert.strictEqual(back[0].message, 'm1', '回灌顺序必须为时间升序');
     assert.strictEqual(back[4].message, 'm5', '最后一条应为最新');
+    assert.ok(back[0].isoTime, '落盘器必须为每条补写 isoTime，便于取证对照');
     assert.strictEqual(p.loadRecent(2).length, 2, 'loadRecent 必须遵守 maxLines 上限');
     assert.ok(p.currentFile().includes('dashboard-'), 'currentFile 必须落在约定命名上');
 
@@ -5308,6 +5310,148 @@ testAsync('行为：pingCag 对 SCG 机与材料缺失机必须"返回未执行"
     '必须点明"材料未下发"，不能伪装成网络故障'
   );
   assert.strictEqual(firmAuthCalls, 1, '材料判定必须紧跟在取材料之后、在拨号之前');
+});
+
+// ============================================================================
+// 组 33 · 进程日志格式正规化（无装饰前缀 + 固定 LEVEL 列）
+// ----------------------------------------------------------------------------
+// 此前进程级日志混用 `[*]` / `[!]`、表情符号、中英夹杂的裸 console.*，
+// 同一件事在 stderr、界面、JSONL 三处长得都不一样，排障时要对齐很费劲。
+// 本组锁住：
+//   ① 进程日志必须走 app/lib/logger.ts，行格式 `时间 LEVEL [组件] 正文`；
+//   ② 级别别名（warn/ok）必须收束到固定集合；
+//   ③ 界面日志行必须带 LEVEL 短标签；
+//   ④ 业务流水文案（含表情符号的 Hang/Sign 提示）不在本组改写范围。
+// ============================================================================
+group('组 33 · 进程日志格式正规化（无装饰前缀 + 固定 LEVEL 列）');
+
+const loggerMod = require(path.join(ROOT, 'app/lib/logger.ts'));
+const loggerSrc = read('app/lib/logger.ts');
+
+test('进程日志模块必须是零依赖纯函数层，并登记进语法闸门', () => {
+  const syntaxCheckSrc = fs.readFileSync(path.join(__dirname, 'syntax_check.js'), 'utf8');
+  assert.ok(/app\/lib\/logger\.ts/.test(syntaxCheckSrc), 'app/lib/logger.ts 必须登记进语法闸门的 REQUIRED 清单');
+  assert.ok(
+    SERVER_SPLIT_FILES.includes('app/lib/logger.ts'),
+    'app/lib/logger.ts 必须登记进 SERVER_SPLIT_FILES，与 time.ts 同属零依赖工具层'
+  );
+  assert.ok(
+    !/require\s*\(/.test(stripComments(loggerSrc)),
+    'logger.ts 必须是零依赖 —— 出现 require 意味着它开始承担 I/O 之外的职责'
+  );
+  assert.ok(/createLogger/.test(loggerSrc) && /formatProcessLog/.test(loggerSrc), '必须导出 createLogger 与 formatProcessLog');
+});
+
+test('进程日志行格式必须是「YYYY-MM-DD HH:mm:ss LEVEL [COMPONENT] message」', () => {
+  const info = loggerMod.formatProcessLog({
+    ts: '2026-11-03 22:18:00',
+    level: 'info',
+    component: 'System',
+    message: '控制台服务已就绪'
+  });
+  assert.strictEqual(
+    info,
+    '2026-11-03 22:18:00 INFO  [System] 控制台服务已就绪',
+    `INFO 行格式不符，实际=${JSON.stringify(info)}`
+  );
+  const errLine = loggerMod.formatProcessLog({
+    ts: '2026-11-03 22:18:01',
+    level: 'error',
+    component: 'Crypto',
+    message: '主密钥文件异常，已从备份恢复'
+  });
+  assert.strictEqual(
+    errLine,
+    '2026-11-03 22:18:01 ERROR [Crypto] 主密钥文件异常，已从备份恢复',
+    `ERROR 行格式不符，实际=${JSON.stringify(errLine)}`
+  );
+  const warnLine = loggerMod.formatProcessLog({
+    ts: '2026-11-03 22:18:02',
+    level: 'warn',
+    component: 'PersistLog',
+    message: '启动回灌失败'
+  });
+  assert.ok(/^2026-11-03 22:18:02 WARN {2}\[PersistLog\] 启动回灌失败$/.test(warnLine), `WARN 列必须与 INFO/ERROR 对齐，实际=${JSON.stringify(warnLine)}`);
+});
+
+test('界面日志级别别名必须收束到 info/success/warning/error/debug', () => {
+  assert.strictEqual(loggerMod.normalizeUiLevel('WARN'), 'warning');
+  assert.strictEqual(loggerMod.normalizeUiLevel('ok'), 'success');
+  assert.strictEqual(loggerMod.normalizeUiLevel('err'), 'error');
+  assert.strictEqual(loggerMod.normalizeUiLevel('trace'), 'debug');
+  assert.strictEqual(loggerMod.normalizeUiLevel('nonsense'), 'info');
+  assert.strictEqual(loggerMod.uiLevelLabel('warning'), 'WARN');
+  assert.strictEqual(loggerMod.uiLevelLabel('success'), 'OK');
+  assert.deepStrictEqual(loggerMod.UI_LEVELS.slice().sort(), ['debug', 'error', 'info', 'success', 'warning']);
+});
+
+test('正文必须压成单行，Error 作为首参时取 message', () => {
+  assert.strictEqual(loggerMod.normalizeMessage('a\nb\tc'), 'a b c');
+  assert.strictEqual(loggerMod.normalizeMessage(new Error('磁盘只读')), '磁盘只读');
+  assert.strictEqual(loggerMod.normalizeMessage('落盘失败', new Error('EACCES')), '落盘失败: EACCES');
+});
+
+test('入口进程日志必须走 logger，不得再使用装饰前缀或裸 emoji 横幅', () => {
+  const boot = read('server.ts');
+  assert.ok(/require\('\.\/app\/lib\/logger'\)/.test(boot), 'server.ts 必须 require app/lib/logger');
+  assert.ok(/createLogger\('System'\)/.test(boot), '必须创建 System 组件日志器');
+  assert.ok(/sysLog\.info\(/.test(boot) && /sysLog\.error\(/.test(boot), '启动与异常路径必须走 sysLog');
+  assert.ok(!/\[\*\]/.test(boot) && !/\[!\]/.test(boot), '不得再使用 [*] / [!] 装饰前缀');
+  assert.ok(
+    !/🚀 天翼云\/移动云电脑全功能可视化管理平台已完全就绪/.test(boot),
+    '启动横幅必须改为结构化进程日志，不得再刷表情符号'
+  );
+  const listen = boot.match(/server\.listen\([\s\S]*?\n  \}\);/);
+  assert.ok(listen, '未找到 server.listen 回调');
+  assert.ok(
+    !/console\.(log|warn|error)\(/.test(listen[0]),
+    '就绪回调里的进程输出必须走 logger，不得残留 console.*'
+  );
+});
+
+test('HTTP 未处理异常必须走 logger，注入页的 localStorage 诊断除外', () => {
+  const handler = read('app/http/handler.ts');
+  assert.ok(/require\('\.\.\/lib\/logger'\)/.test(handler), 'handler 必须 require app/lib/logger');
+  assert.ok(/createLogger\('Http'\)/.test(handler), '必须创建 Http 组件日志器');
+  assert.ok(/httpLog\.error\(/.test(handler), '未处理异常必须走 httpLog.error');
+  const catchBlock = handler.match(/async function handleRequest[\s\S]*?jsonResponseWithReq\(res, \{ error: '服务器内部错误' \}/);
+  assert.ok(catchBlock, '未找到 handleRequest 的 catch');
+  assert.ok(!/console\.error\(/.test(catchBlock[0]), 'handleRequest catch 不得残留 console.error');
+  assert.ok(/console\.error\('Failed to set localStorage'/.test(handler), '注入云电脑页的 localStorage 失败日志必须保留（运行在浏览器，不是 Node）');
+});
+
+test('buildLogEntry 必须归一级别并写入 isoTime', () => {
+  const body = extractFunctionFrom(server, 'buildLogEntry');
+  assert.ok(/normalizeUiLevel\(level\)/.test(body), 'buildLogEntry 必须调用 normalizeUiLevel');
+  assert.ok(/isoTime:\s*new Date\(\)\.toISOString\(\)/.test(body), 'buildLogEntry 必须写入 UTC isoTime');
+});
+
+test('界面日志行必须带固定 LEVEL 短标签（INFO/WARN/ERROR/OK）', () => {
+  assert.ok(/function logLevelLabel\(/.test(appJs), '前端必须有 logLevelLabel');
+  assert.ok(/class="log-lvl"/.test(appJs), '渲染模板必须包含 log-lvl 列');
+  // eslint-disable-next-line no-new-func
+  const render = new Function(
+    `${extractFunctionFrom(appJs, 'escapeHtml')}\n` +
+    `${extractFunctionFrom(appJs, 'logLevelLabel')}\n` +
+    `${extractFunctionFrom(appJs, 'logLineInnerHtml')}\n` +
+    'return logLineInnerHtml;'
+  )();
+  const html = render({
+    timestamp: '2026-11-03 22:18:00',
+    source: 'System',
+    message: '控制台服务已就绪',
+    level: 'success',
+    repeatCount: 1
+  });
+  assert.ok(html.includes('>OK<'), `success 必须渲染为 OK 标签，实际=${html}`);
+  assert.ok(html.includes('>2026-11-03 22:18:00<'), '时间戳必须作为独立列，不再套多余方括号');
+  assert.ok(html.includes('[System]'), '来源列必须保留 [Source] 形态');
+  assert.ok(!html.includes('[2026-11-03 22:18:00]'), '时间戳列不得再套一层方括号');
+  const warnHtml = render({
+    timestamp: '2026-11-03 22:18:01', source: 'Hang', message: '告警', level: 'warn', repeatCount: 2
+  });
+  assert.ok(warnHtml.includes('>WARN<'), 'warn 别名必须显示为 WARN');
+  assert.ok(warnHtml.includes('x2'), '重复计数徽标不得因改版消失');
 });
 
 // ============================================================================

@@ -5,6 +5,9 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { atomicWriteFileSync } = require('../lib/atomic_fs');
 const { MASTER_KEY_FILE, MASTER_KEY_BAK_FILE } = require('../paths');
+const { createLogger } = require('../lib/logger');
+
+const cryptoLog = createLogger('Crypto');
 
 function getOrCreateMasterKey() {
   // 1. 优先从主密钥文件读取
@@ -25,7 +28,7 @@ function getOrCreateMasterKey() {
       const raw = fs.readFileSync(MASTER_KEY_BAK_FILE, 'utf8').trim();
       if (raw.length === 64) {
         try { atomicWriteFileSync(MASTER_KEY_FILE, raw, 'utf8', 0o600); } catch (e) {}
-        console.log('🛡️ [安全自愈] 主密钥文件异常，已成功从备份密钥 (.master.key.bak) 恢复！');
+        cryptoLog.warn('主密钥文件异常，已从备份密钥 .master.key.bak 恢复');
         return Buffer.from(raw, 'hex');
       }
     } catch (e) {}

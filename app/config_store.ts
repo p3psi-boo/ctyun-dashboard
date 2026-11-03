@@ -6,6 +6,9 @@ const path = require('path');
 const { atomicWriteFileSync } = require('./lib/atomic_fs');
 const { encryptPassword, decryptPassword } = require('./crypto/secrets');
 const { PORT, DATA_DIR, CONFIG_FILE, ACCOUNTS_JSON } = require('./paths');
+const { createLogger } = require('./lib/logger');
+
+const sysLog = createLogger('System');
 
 let appConfigRef = null;
 function bindConfig(cfg) { appConfigRef = cfg; }
@@ -52,15 +55,15 @@ function loadConfig() {
       if (content) {
         cfg = JSON.parse(content);
       } else {
-        console.warn('⚠️ [配置检查] 主配置文件 app_config.json 为空 (0 字节)');
+        sysLog.warn('主配置文件 app_config.json 为空（0 字节）');
       }
     } catch (e) {
-      console.error('⚠️ [配置损坏] 主配置文件 app_config.json 解析失败:', e.message);
+      sysLog.error('主配置文件 app_config.json 解析失败', e);
       // 保护现场：绝不直接销毁损坏文件！
       try {
         const corruptBak = path.join(DATA_DIR, `app_config.corrupt.${Date.now()}.json`);
         fs.copyFileSync(CONFIG_FILE, corruptBak);
-        console.warn(`⚠️ [安全保护] 已将损坏的配置现场安全备份至: ${corruptBak}`);
+        sysLog.warn(`已将损坏的配置现场备份至 ${corruptBak}`);
       } catch (err) {}
     }
   }
@@ -74,11 +77,11 @@ function loadConfig() {
         if (bakCfg && (Array.isArray(bakCfg.users) || Array.isArray(bakCfg.accounts))) {
           cfg = bakCfg;
           loadedFromBak = true;
-          console.log('🛡️ [容灾自愈] 检测到主配置异常，已成功从自动备份文件 (app_config.json.bak) 完美恢复全量配置！');
+          sysLog.warn('主配置异常，已从自动备份文件 app_config.json.bak 恢复');
         }
       }
     } catch (e) {
-      console.error('读取备份配置文件失败:', e);
+      sysLog.error('读取备份配置文件失败', e);
     }
   }
 
@@ -126,7 +129,7 @@ function loadConfig() {
   }
 
   // 4. 只有在首次全新安装时（既无主配置，也无备份），才初始化默认配置
-  console.log('ℹ️ [系统初始化] 未检测到已有配置文件，正在初始化全新运行环境...');
+  sysLog.info('未检测到已有配置文件，正在初始化运行环境');
   const defaultCfg = getDefaultConfig();
   saveConfig(defaultCfg);
   return defaultCfg;
@@ -174,7 +177,7 @@ function saveConfig(cfg) {
     atomicWriteFileSync(ACCOUNTS_JSON, JSON.stringify(ctyunJson, null, 2), 'utf8');
     return true;
   } catch (e) {
-    console.error('保存配置失败:', e);
+    sysLog.error('保存配置失败', e);
     return false;
   }
 }

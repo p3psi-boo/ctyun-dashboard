@@ -32,10 +32,11 @@ jobs:
       - name: Set up Python (sidecar runtime)
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          # 与 Docker 基础镜像 node:22-bookworm-slim 自带的 python3（3.11）对齐，避免 CI 绿、镜像红。
+          python-version: '3.11'
 
       - name: Install sidecar dependencies
-        run: pip install -r app/ecloud_engine/requirements.txt
+        run: pip install --require-hashes -r app/ecloud_engine/requirements.txt
 
       - name: Syntax check (node --check)
         run: node tests/syntax_check.js

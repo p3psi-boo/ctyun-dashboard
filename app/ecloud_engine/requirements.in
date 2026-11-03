@@ -1,0 +1,7 @@
+# 移动公众协议侧车的直接依赖。改版本后在本目录执行：
+#   pip-compile --generate-hashes --newline=lf -o requirements.txt requirements.in
+# 不要手改 requirements.txt。
+#
+# pycryptodome 钉在 3.x：侧车复刻的是 RSA-1024 + PKCS#1 v1.5，不跟 4.x 大版本。
+requests==2.34.2
+pycryptodome==3.24.1

@@ -6,7 +6,7 @@
 > ✨ **v2.2.1 稳定性与链路加固**：彻底解决天翼云每日打卡 40050 报错 (Issue #17) + 移动云 MQTT 官方报文适配与标准 8883 端口纠偏 + 双栈 IPv4 优先选路 + 前端多机周期精准联动 + 存储灾备双备份与钉钉加签支持。
 > ✨ **v2.2 重大更新**：单账号多主机精细化独立纳管（Per-VM 独立保活/任务/开机守护）+ 高精度单机独立时间戳时间轮调度（Per-Device Timestamp Wheel）+ 状态层叠动态联动与当日轮次统计。
 > ✨ **v2.1 全量融合**：全量融合中国移动云电脑（SOHO REST 签名加密 + ZTEC CAG TCP 三阶段握手），双云同台统一管理与统一配额。
-> 📌 **依赖说明**：天翼云与移动爱家保活为零 Python 依赖的纯原生 Node.js 实现；移动公众协议侧车需 Python 3（Docker 镜像已内置 python3 + requests + pycryptodome，本机直跑需自备 Python 3.12），其签名常量已内置公开值、开箱即用（见部署指南 §3）。
+> 📌 **依赖说明**：天翼云与移动爱家保活为零 Python 依赖的纯原生 Node.js 实现；移动公众协议侧车需 Python 3.11+（Docker 镜像为 bookworm 的 python3=3.11，已按 `app/ecloud_engine/requirements.txt` 锁版本+哈希内置 requests / pycryptodome；本机直跑请 `pip install --require-hashes -r app/ecloud_engine/requirements.txt`），其签名常量已内置公开值、开箱即用（见部署指南 §3）。
 
 ---
 ![控制台总览](https://github.com/user-attachments/assets/1cea9bcb-b06c-4845-8940-74565a3aa88c)
@@ -174,8 +174,9 @@ cd ctyun-dashboard
 # 使用 Docker Compose 本地构建
 docker compose up -d --build
 
-# 或者使用 Node.js 直接运行 (Node.js >= 18)
+# 或者使用 Node.js 直接运行 (Node.js >= 18，移动公众另需 Python 3.11+)
 npm install --omit=dev
+pip install --require-hashes -r app/ecloud_engine/requirements.txt
 node server.js
 ```
 

@@ -5286,7 +5286,17 @@ test('Docker：无鉴权 /healthz + HEALTHCHECK + tini PID 1 + 可拉取镜像�
   assert.ok(/ENTRYPOINT \["tini"/.test(df), 'PID 1 必须是 tini，否则 Python 侧车退出会变僵尸进程');
   assert.ok(/docker-entrypoint\.sh/.test(df), '必须经 entrypoint 处理 data 卷权限');
   assert.ok(/requirements\.txt/.test(df), 'Python 依赖必须以 requirements.txt 为单一真源');
+  assert.ok(/--require-hashes/.test(df), 'Dockerfile pip install 必须 --require-hashes，否则锁文件形同虚设');
+  assert.ok(/PYTHONDONTWRITEBYTECODE=1/.test(df), '镜像必须禁用 Python 字节码，避免只读/降权后写不了 __pycache__');
   assert.ok(/npm ci --omit=dev/.test(df), '构建必须 npm ci，保证 lockfile 可复现');
+
+  const pyReq = read('app/ecloud_engine/requirements.txt');
+  const pyIn = read('app/ecloud_engine/requirements.in');
+  assert.ok(/^requests==\d+\.\d+/m.test(pyReq), 'requests 必须锁精确版本（Docker 构建不能跟 PyPI 浮动）');
+  assert.ok(/^pycryptodome==\d+\.\d+/m.test(pyReq), 'pycryptodome 必须锁精确版本');
+  assert.ok(/--hash=sha256:/.test(pyReq), 'requirements.txt 必须带 sha256 哈希，防止构建时被换包');
+  assert.ok(/^requests==\d+\.\d+/m.test(pyIn) && /^pycryptodome==\d+\.\d+/m.test(pyIn),
+    'requirements.in 也必须钉死直接依赖，编译锁文件时不能再写成浮动包名');
 
   assert.ok(/pathname === '\/healthz'/.test(server), 'server 必须实现 /healthz');
   const hzStart = server.indexOf("pathname === '/healthz'");

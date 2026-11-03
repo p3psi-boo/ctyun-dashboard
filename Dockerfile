@@ -26,6 +26,8 @@ WORKDIR /app
 
 ENV TZ=Asia/Shanghai \
     NODE_ENV=production \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
     PORT=8571 \
     CTYUN_DATA_DIR=/app/data \
     PUID=1000 \
@@ -39,15 +41,15 @@ ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 
 # ca-certificates：天翼云 HTTPS
 # tini：作 PID 1 回收 Python 侧车僵尸进程，并转发 SIGTERM
-# python3 + requests + pycryptodome：移动公众协议侧车（app/ecloud_engine/sidecar.py）运行时；
-#   依赖以 requirements.txt 为单一真源；装完即卸 pip，避免把构建工具留在运行镜像里。
+# python3（bookworm = 3.11）+ 锁死的 requests/pycryptodome：移动公众协议侧车运行时。
+#   依赖以带哈希的 requirements.txt 为单一真源；装完即卸 pip，避免把构建工具留在运行镜像里。
 COPY app/ecloud_engine/requirements.txt /tmp/requirements.txt
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates python3 python3-pip tini && \
-    pip3 install --no-cache-dir --break-system-packages \
+    pip3 install --no-cache-dir --break-system-packages --require-hashes \
         -i "$PIP_INDEX_URL" \
         -r /tmp/requirements.txt && \
     apt-get purge -y python3-pip && \

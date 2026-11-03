@@ -1284,6 +1284,22 @@ const MUTATIONS = [
     to: 'ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]',
     replaceAll: false,
   },
+  {
+    id: 'M125',
+    name: 'Python 锁失守：pycryptodome 不再钉精确版本（镜像构建会跟 PyPI 浮动）',
+    file: 'app/ecloud_engine/requirements.txt',
+    from: 'pycryptodome==3.24.1',
+    to: 'pycryptodome',
+    replaceAll: false,
+  },
+  {
+    id: 'M126',
+    name: 'Python 锁失守：pip 不再校验哈希（锁文件可以被换包）',
+    file: 'Dockerfile',
+    from: 'pip3 install --no-cache-dir --break-system-packages --require-hashes \\',
+    to: 'pip3 install --no-cache-dir --break-system-packages \\',
+    replaceAll: false,
+  },
 ];
 
 // ---------------------------------------------------------------------------

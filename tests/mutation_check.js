@@ -1260,6 +1260,46 @@ const MUTATIONS = [
     to: '    ak = None',
     replaceAll: false,
   },
+  {
+    id: 'M122',
+    name: 'Docker 探活失守：HEALTHCHECK 被拿掉（NAS 无法识别假死容器）',
+    file: 'Dockerfile',
+    from: 'HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \\',
+    to: 'HEALTHNOTE --interval=30s --timeout=5s --start-period=20s --retries=3 \\',
+    replaceAll: false,
+  },
+  {
+    id: 'M123',
+    name: 'Docker 探活失守：/healthz 改成需登录或不存在的路径',
+    file: 'app/http/handler.ts',
+    from: "(pathname === '/healthz' || pathname === '/api/healthz')",
+    to: "(pathname === '/readyz' || pathname === '/api/readyz')",
+    replaceAll: false,
+  },
+  {
+    id: 'M124',
+    name: 'Docker PID 1 失守：去掉 tini（Python 侧车退出会变僵尸进程）',
+    file: 'Dockerfile',
+    from: 'ENTRYPOINT ["tini", "--", "/usr/local/bin/bun"]',
+    to: 'ENTRYPOINT ["/usr/local/bin/bun"]',
+    replaceAll: false,
+  },
+  {
+    id: 'M125',
+    name: 'Python 锁失守：pycryptodome 不再钉精确版本（镜像构建会跟 PyPI 浮动）',
+    file: 'app/ecloud_engine/requirements.txt',
+    from: 'pycryptodome==3.24.1',
+    to: 'pycryptodome',
+    replaceAll: false,
+  },
+  {
+    id: 'M126',
+    name: 'Python 锁失守：uv sync 去掉 --frozen（锁文件可以被换包）',
+    file: 'Dockerfile',
+    from: 'uv sync --frozen --no-dev --no-cache --python python3 \\',
+    to: 'uv sync --no-dev --no-cache --python python3 \\',
+    replaceAll: false,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1277,7 +1317,7 @@ const MUTATIONS = [
 // ③ 只认"断言失败"，脚本崩溃会被判为 BROKEN 而不是 PASS。
 // ---------------------------------------------------------------------------
 const IGNORE_DIRS = new Set([
-  '.git', 'node_modules', 'analysis', '.workbuddy', '.workbuddy-ai', 'data', 'tests', '.github', '.vscode'
+  '.git', 'node_modules', 'analysis', '.workbuddy', '.workbuddy-ai', 'data', 'tests', '.github', '.vscode', '.venv'
 ]);
 const IGNORE_FILES = new Set(['~srv.log', '~srv2.log', '~srv_run.log', 'repro_out.txt', 'status_out.txt']);
 

@@ -80,6 +80,12 @@ async function dispatchRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // Docker / 编排探活：无鉴权、不泄露账号数据。只表示 HTTP 进程已在监听。
+  if (req.method === 'GET' && (pathname === '/healthz' || pathname === '/api/healthz')) {
+    jsonResponse(res, { ok: true });
+    return;
+  }
+
   // 判断商品是否需要绑定云电脑
 function rewardNeedsDesktop(prodId, prodType) {
   const pId = Number(prodId);

@@ -20,7 +20,7 @@ function isSourceFile(name) {
 
 function walkSources(dir, acc = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (e.name === 'node_modules' || e.name === '.git' || e.name === 'data') continue;
+    if (e.name === 'node_modules' || e.name === '.git' || e.name === 'data' || e.name === '.venv') continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walkSources(p, acc);
     else if (e.isFile() && isSourceFile(e.name)) acc.push(path.relative(ROOT, p));

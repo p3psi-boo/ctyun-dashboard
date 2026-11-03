@@ -1,9 +1,10 @@
 services:
   ctyun-dashboard:
     build: .
-    image: ctyun-dashboard:latest
+    image: learycn/ctyun-dashboard:latest
     container_name: ctyun-dashboard
     restart: unless-stopped
+    stop_grace_period: 15s
     user: "10001:10001"
     ports:
       - "8571:8571"
@@ -21,6 +22,11 @@ services:
       #    只有需要覆盖时（平台轮换 Key / 自定义凭据）才放文件，优先级：环境变量 > 覆盖文件 > 内置：
       #    - ./data/ecloud_credentials.json       → 容器内 /app/data/ecloud_credentials.json
       #    字段形状见 app/ecloud_engine/credentials.example.json。
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:

@@ -28,6 +28,7 @@ app/ecloud_engine/credentials.json
 app/ecloud_engine/__pycache__/
 **/__pycache__/
 *.pyc
+.venv/
 # 侧车运行时产物：会话 token（免重复登录）与交互登录限流记账，均为本机状态
 app/ecloud_engine/data/
 app/ecloud_engine/sessions.json

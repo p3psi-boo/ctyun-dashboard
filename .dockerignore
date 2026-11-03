@@ -4,13 +4,16 @@ node_modules
 *.log
 data/*
 !data/.gitkeep
+tests
 test*
 *.tmp
+start_dashboard.bat
 
 # 移动公众协议凭据（方案 B 外置）：绝不进镜像
 app/ecloud_engine/credentials.json
 **/__pycache__
 *.pyc
+.venv
 
 # 本地分析产物 / 会话记录 / 本地记忆：不进镜像
 analysis

@@ -6,6 +6,7 @@ on:
       - main
     tags:
       - 'v*'
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -34,10 +35,26 @@ jobs:
       - name: Set up Python (sidecar runtime)
         uses: actions/setup-python@v5
         with:
+          # 与 Docker 基础镜像 python:3.12-slim-bookworm 对齐，避免 CI 绿、镜像红。
           python-version: '3.12'
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: '0.13.7'
+
+      - name: Verify sidecar lock is in sync
+        working-directory: app/ecloud_engine
+        run: |
+          uv lock --check
+          uv export --frozen --no-dev --no-emit-project --no-header -o /tmp/ecloud-requirements.txt
+          diff -u requirements.txt /tmp/ecloud-requirements.txt
+
       - name: Install sidecar dependencies
-        run: pip install -r app/ecloud_engine/requirements.txt
+        working-directory: app/ecloud_engine
+        run: |
+          uv sync --frozen --no-dev --python python3
+          echo "ECLOUD_PYTHON=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
 
       - name: Syntax check
         run: bun tests/syntax_check.js
@@ -49,13 +66,15 @@ jobs:
         run: bun tests/regression.test.js
 
       - name: Set up QEMU (for multi-arch)
+        if: github.event_name != 'pull_request'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 1. 登录 GitHub Packages (GHCR)
+      # 1. 登录 GitHub Packages (GHCR) —— PR 只做本地冒烟，不推送
       - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -69,7 +88,7 @@ jobs:
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME || 'learycn' }}
           DOCKER_PASS: ${{ secrets.LEARYCN || secrets.DOCKERHUB_TOKEN || secrets.DOCKER_PASSWORD }}
-        if: env.DOCKER_PASS != ''
+        if: github.event_name != 'pull_request' && env.DOCKER_PASS != ''
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKER_USER }}
@@ -99,8 +118,41 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
 
-      # 5. 构建多架构镜像 (linux/amd64, linux/arm64) 并推送
+      # 5a. PR：单架构 load + /healthz 冒烟，拦住 Dockerfile / 入口脚本回归
+      - name: Build image for PR smoke
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ctyun-dashboard:pr-smoke
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke /healthz
+        if: github.event_name == 'pull_request'
+        run: |
+          docker run -d --name ctyun-smoke -p 8571:8571 \
+            -e CTYUN_DATA_DIR=/app/data \
+            -e ADMIN_PASSWORD=pr-smoke-admin-password \
+            ctyun-dashboard:pr-smoke
+          trap 'docker logs ctyun-smoke || true; docker rm -f ctyun-smoke || true' EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8571/healthz | grep -q '"ok":true'; then
+              echo "healthz ok"
+              docker stop ctyun-smoke
+              trap - EXIT
+              docker rm -f ctyun-smoke || true
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "healthz did not become ready"
+          exit 1
+
+      # 5b. main / tag / 手动：构建多架构镜像并推送
       - name: Build and push Docker image
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: .

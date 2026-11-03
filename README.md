@@ -6,7 +6,7 @@
 > ✨ **v2.2.1 稳定性与链路加固**：彻底解决天翼云每日打卡 40050 报错 (Issue #17) + 移动云 MQTT 官方报文适配与标准 8883 端口纠偏 + 双栈 IPv4 优先选路 + 前端多机周期精准联动 + 存储灾备双备份与钉钉加签支持。
 > ✨ **v2.2 重大更新**：单账号多主机精细化独立纳管（Per-VM 独立保活/任务/开机守护）+ 高精度单机独立时间戳时间轮调度（Per-Device Timestamp Wheel）+ 状态层叠动态联动与当日轮次统计。
 > ✨ **v2.1 全量融合**：全量融合中国移动云电脑（SOHO REST 签名加密 + ZTEC CAG TCP 三阶段握手），双云同台统一管理与统一配额。
-> 📌 **依赖说明**：运行时与包管理器均为 **Bun 1.4.4+**（`bun install` / `bun server.ts`）。服务端为 TypeScript，由 Bun 直接执行、无需单独编译；浏览器控制台仍是 `app/static/` 下的原生 JS。天翼云与移动爱家保活为零 Python 依赖的纯原生实现；移动公众协议侧车需 Python 3（Docker 镜像已内置 python3 + requests + pycryptodome，本机直跑需自备 Python 3.12），其签名常量已内置公开值、开箱即用（见部署指南 §3）。
+> 📌 **依赖说明**：运行时与包管理器均为 **Bun 1.4.4+**（`bun install` / `bun server.ts`）。服务端为 TypeScript，由 Bun 直接执行、无需单独编译；浏览器控制台仍是 `app/static/` 下的原生 JS。天翼云与移动爱家保活为零 Python 依赖的纯原生实现；移动公众协议侧车需 Python 3.12（Docker 镜像内保留 uv，按 `uv.lock` 做 `uv sync --frozen` 装进独立 venv）。本机直跑：`uv sync --frozen --directory app/ecloud_engine` 后设置 `ECLOUD_PYTHON` 指向该 venv（没有 uv 时仍可用带哈希的 `requirements.txt` + pip）。签名常量已内置公开值、开箱即用（见部署指南 §3）。
 
 ---
 ![控制台总览](https://github.com/user-attachments/assets/1cea9bcb-b06c-4845-8940-74565a3aa88c)
@@ -94,6 +94,7 @@ docker run -d \
   -p 8571:8571 \
   -e ADMIN_PASSWORD='请换成强密码' \
   -v $(pwd)/data:/app/data \
+  -e TZ=Asia/Shanghai \
   --restart unless-stopped \
   learycn/ctyun-dashboard:latest
 ```
@@ -106,9 +107,12 @@ docker run -d \
   -p 8571:8571 \
   -e ADMIN_PASSWORD='请换成强密码' \
   -v $(pwd)/data:/app/data \
+  -e TZ=Asia/Shanghai \
   --restart unless-stopped \
   ghcr.io/muyicn/ctyun-dashboard:latest
 ```
+
+镜像以 uid `10001` 运行（无 shell），并内置 `tini`（PID 1，回收移动公众 Python 侧车）、`uv`（按 `uv.lock` 同步侧车 venv）与 `/healthz` 探活。数据目录需对 `10001:10001` 可写。
 
 #### 2. 使用 `docker-compose.yml` 部署：
 在任意目录下创建 `docker-compose.yml`：
@@ -118,6 +122,7 @@ services:
     image: learycn/ctyun-dashboard:latest # 或 ghcr.io/muyicn/ctyun-dashboard:latest
     container_name: ctyun-dashboard
     restart: unless-stopped
+    stop_grace_period: 15s
     user: "10001:10001"
     ports:
       - "8571:8571"
@@ -128,11 +133,18 @@ services:
       - ADMIN_PASSWORD=请换成强密码
     volumes:
       - ./data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 ```
 运行启动命令：
 ```bash
 docker compose up -d
 ```
+
+若 `data` 目录出现权限问题，在宿主机执行 `sudo chown -R 10001:10001 data`（与镜像内固定用户对齐），不必再 `chmod 777`。
 
 #### 3. 📡 移动公众（公众版）：开箱即用，可选覆盖
 
@@ -164,8 +176,11 @@ cd ctyun-dashboard
 # 使用 Docker Compose 本地构建（需设置 ADMIN_PASSWORD）
 ADMIN_PASSWORD='请换成强密码' docker compose up -d --build
 
-# 或者使用 Bun 直接运行 (Bun >= 1.4.4)
+# 或者使用 Bun 直接运行 (Bun >= 1.4.4，移动公众另需 Python 3.12)
 bun install --production
+uv sync --frozen --directory app/ecloud_engine
+export ECLOUD_PYTHON="$PWD/app/ecloud_engine/.venv/bin/python"
+# 没有 uv：pip install --require-hashes -r app/ecloud_engine/requirements.txt
 ADMIN_PASSWORD='请换成强密码' bun server.ts
 ```
 
@@ -205,7 +220,7 @@ ctyun-dashboard/
 │   ├── tasks/                # 官方任务自动化 (签到/AI对话/挂机/兑换/调度)
 │   └── static/               # 前端控制台 (浏览器原生 JS，无构建步骤)
 ├── data/                     # 运行时数据目录 (配置加密落盘，建议挂载持久化)
-├── Dockerfile                # Bun 1.4.4 + Python 侧车；非 root、无 shell
+├── Dockerfile                # Bun 1.4.4 + uv 侧车 venv；非 root、无 shell、tini PID 1
 └── docker-compose.yml
 ```
 

@@ -1568,6 +1568,7 @@ test('签名常量：内置公开值必须齐备、可被覆盖，且缺失即�
 test('Public 红线：凭据文件与 Python 缓存必须被 .gitignore', () => {
   assert.ok(/app\/ecloud_engine\/credentials\.json/.test(gitignoreCode), 'credentials.json 未加入 .gitignore');
   assert.ok(/__pycache__/.test(gitignoreCode), '__pycache__ 未加入 .gitignore');
+  assert.ok(/\.venv/.test(gitignoreCode), 'uv 本地 .venv 未加入 .gitignore');
 });
 
 test('三平台保活不重叠：ecloud 桥接层不得复用 ydpc / 天翼云保活实现', () => {
@@ -1701,7 +1702,7 @@ testAsync('签约常量内置：覆盖文件缺失时，侧车必须靠内置公
       h.credentials, 'loaded',
       `覆盖文件缺失时必须回落到内置公开常量（public_credentials.json）并加载成功，` +
         `实际 credentials=${h.credentials}，原因: ${(h.credentialError || h.importError || '(空)').slice(0, 200)}` +
-        `（本机如提示缺 Python 包，请 pip install -r app/ecloud_engine/requirements.txt）`
+        `（本机如提示缺 Python 包，请 uv sync --frozen --directory app/ecloud_engine）`
     );
   } finally {
     await eng.stop();
@@ -5537,6 +5538,79 @@ test('容器必须以非 root 用户启动，且入口不是 shell', () => {
   assert.ok(/ENTRYPOINT\s+\[/.test(df), '必须使用 exec 形式 ENTRYPOINT（不经 shell）');
   assert.ok(/oven\/bun:1\.4\.4/.test(df), '运行时必须基于 Bun 1.4.4 镜像');
   assert.ok(/rm -f .*\/bin\/sh/.test(df) || /distroless/.test(df), '最终镜像应去掉 shell 或使用 distroless');
+});
+
+// ============================================================================
+// 组 34 · Docker 部署红线：探活 / PID 1 / uv 锁 / 可拉取镜像 / 优雅退出
+// ----------------------------------------------------------------------------
+// 背景：容器能 `docker run` 起来 ≠ 能在 NAS / Compose 上长期值守。缺 HEALTHCHECK
+// 时编排无法识别假死；Bun 做 PID 1 时 Python 侧车退出会变僵尸；compose 写成
+// `ctyun-dashboard:latest` 这种本地-only 标签，NAS 用户 `up -d` 会去 Hub 拉一个
+// 不存在的镜像。本组把这些部署契约钉死。
+// ============================================================================
+group('组 34 · Docker 部署红线');
+
+test('Docker：无鉴权 /healthz + HEALTHCHECK + tini PID 1 + uv 锁 + 可拉取镜像名', () => {
+  const df = read('Dockerfile');
+  const compose = read('docker-compose.yml');
+
+  assert.ok(/HEALTHCHECK/.test(df), 'Dockerfile 必须定义 HEALTHCHECK，否则 NAS 编排无法探活');
+  assert.ok(/\/healthz/.test(df), 'HEALTHCHECK 必须打 /healthz');
+  assert.ok(/ENTRYPOINT \["tini"/.test(df), 'PID 1 必须是 tini，否则 Python 侧车退出会变僵尸进程');
+  assert.ok(/pyproject\.toml/.test(df) && /uv\.lock/.test(df), '镜像必须 COPY pyproject.toml 与 uv.lock，作为 uv sync 的项目与锁');
+  assert.ok(/ghcr\.io\/astral-sh\/uv:0\.13\.7/.test(df), '镜像必须钉死 uv 版本，不得 COPY latest');
+  assert.ok(/uv sync/.test(df), '镜像必须用 uv sync 安装侧车依赖（不再装 python3-pip）');
+  assert.ok(/--frozen/.test(df), 'uv sync 必须 --frozen，否则锁文件形同虚设');
+  assert.ok(!/uv pip install/.test(df), '镜像必须 uv sync 进 venv，不得退回 uv pip install --system');
+  assert.ok(!/rm -f \/usr\/local\/bin\/uv/.test(df), '运行镜像必须保留 uv，不得装完即删');
+  assert.ok(/ECLOUD_PYTHON=\/opt\/ctyun-ecloud\/\.venv\/bin\/python/.test(df), '侧车必须走 uv 创建的 venv 解释器');
+  assert.ok(!/python3-pip/.test(df), '运行镜像不得再装 python3-pip');
+  assert.ok(/PYTHONDONTWRITEBYTECODE=1/.test(df), '镜像必须禁用 Python 字节码，避免只读/降权后写不了 __pycache__');
+  assert.ok(/bun install --production --frozen-lockfile/.test(df), '构建必须 bun install --frozen-lockfile，保证 lockfile 可复现');
+
+  const pyReq = read('app/ecloud_engine/requirements.txt');
+  const pyProject = read('app/ecloud_engine/pyproject.toml');
+  const pyLock = read('app/ecloud_engine/uv.lock');
+  assert.ok(/^requests==\d+\.\d+/m.test(pyReq), 'requests 必须锁精确版本（Docker 构建不能跟 PyPI 浮动）');
+  assert.ok(/^pycryptodome==\d+\.\d+/m.test(pyReq), 'pycryptodome 必须锁精确版本');
+  assert.ok(/--hash=sha256:/.test(pyReq), 'requirements.txt 必须带 sha256 哈希，防止构建时被换包');
+  assert.ok(/requests==2\.34\.2/.test(pyProject) && /pycryptodome==3\.24\.1/.test(pyProject),
+    'pyproject.toml 必须钉死直接依赖，uv lock 不能再写成浮动包名');
+  assert.ok(/name = "pycryptodome"/.test(pyLock) && /3\.24\.1/.test(pyLock),
+    'uv.lock 必须冻结 pycryptodome 3.24.1');
+
+  assert.ok(/pathname === '\/healthz'/.test(server), 'server 必须实现 /healthz');
+  const hzStart = server.indexOf("pathname === '/healthz'");
+  assert.ok(hzStart >= 0, '未找到 /healthz 路由');
+  const hzBlock = server.slice(Math.max(0, hzStart - 240), hzStart + 360);
+  assert.ok(!/getSessionFromReq/.test(hzBlock), '/healthz 不得走登录态，否则探活会被 401');
+  assert.ok(/ok:\s*true/.test(hzBlock), '/healthz 必须返回 { ok: true }，不得泄露账号数据');
+
+  assert.ok(
+    /learycn\/ctyun-dashboard:latest/.test(compose),
+    'compose 默认镜像必须是可拉取的发布名，不能是本地-only 的 ctyun-dashboard:latest'
+  );
+  assert.ok(/stop_grace_period:\s*15s/.test(compose), 'compose 必须给 SIGTERM 留出优雅退出窗口');
+  assert.ok(/user:\s*"10001:10001"/.test(compose), 'compose 必须与镜像非 root 用户对齐');
+  assert.ok(/ADMIN_PASSWORD/.test(compose), 'compose 必须暴露 ADMIN_PASSWORD');
+  assert.ok(
+    !/public_credentials/.test(read('.dockerignore')),
+    'public_credentials.json 被 .dockerignore 命中 —— 镜像会缺内置常量'
+  );
+});
+
+test('Docker：SIGTERM 必须停保活/侧车再退出，不得直接 process.exit', () => {
+  assert.ok(/function gracefulShutdown\(/.test(server), '必须有 gracefulShutdown');
+  assert.ok(
+    /process\.on\('SIGTERM',\s*\(\)\s*=>\s*gracefulShutdown\('SIGTERM'\)\)/.test(server),
+    'SIGTERM 必须走 gracefulShutdown'
+  );
+  assert.ok(
+    /function gracefulShutdown\([\s\S]*?stopKeepAliveWorker[\s\S]*?client\.stop\(true\)/.test(server),
+    '退出路径必须停保活并停移动公众侧车'
+  );
+  const sig = server.slice(server.indexOf("process.on('SIGTERM'"), server.indexOf("process.on('SIGTERM'") + 160);
+  assert.ok(!/process\.exit\(0\)/.test(sig), 'SIGTERM 处理器不得立刻 process.exit(0)');
 });
 
 // ============================================================================

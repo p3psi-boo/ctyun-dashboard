@@ -30,7 +30,7 @@ const {
 } = require('./app/lib/task_switch');
 const { inferLogPlatform, appendLog, bootstrapLogsFromDisk } = require('./app/log_hub');
 const { sendNotification, sendAccountNotification } = require('./app/notify');
-const { getClient, initAllKeepAlive } = require('./app/clients');
+const { getClient, initAllKeepAlive, clientInstances } = require('./app/clients');
 const { CtYunClient } = require('./app/ctyun_client');
 const { handleRequest } = require('./app/http/handler');
 
@@ -59,14 +59,6 @@ process.on('exit', (code) => {
   try {
     appendLog('System', `⚠️ 主进程即将退出 (code=${code})${code === 0 ? '' : ' —— 非零退出码，请对照上一条异常/信号日志'}`, code === 0 ? 'warning' : 'error');
   } catch (e) { /* 退出路径尽力而为 */ }
-});
-process.on('SIGINT', () => {
-  try { appendLog('System', '收到 SIGINT (Ctrl+C)，主进程即将退出', 'warning'); } catch (e) { /* 同上 */ }
-  process.exit(0);
-});
-process.on('SIGTERM', () => {
-  try { appendLog('System', '收到 SIGTERM，主进程即将退出', 'warning'); } catch (e) { /* 同上 */ }
-  process.exit(0);
 });
 
 const appConfig = loadConfig();
@@ -136,6 +128,29 @@ const server = http.createServer((req, res) => {
     }
   });
 });
+
+function gracefulShutdown(signal: string) {
+  if ((gracefulShutdown as any)._once) return;
+  (gracefulShutdown as any)._once = true;
+  try { appendLog('System', `收到 ${signal}，主进程即将退出`, 'warning'); } catch (e) { /* 同上 */ }
+  try {
+    if (server.listening) server.close();
+  } catch (e) { /* 退出路径尽力而为 */ }
+  try {
+    for (const client of clientInstances.values()) {
+      try { if (typeof client.stopKeepAliveWorker === 'function') client.stopKeepAliveWorker(); } catch (e) { /* 同上 */ }
+      try {
+        if (typeof client.stop === 'function') {
+          const p = client.stop(true);
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        }
+      } catch (e) { /* 同上 */ }
+    }
+  } catch (e) { /* 同上 */ }
+  setTimeout(() => process.exit(0), 1000).unref();
+}
+process.on('SIGINT', () => gracefulShutdown('SIGINT (Ctrl+C)'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 if (require.main === module) {
   setTimeout(initAllKeepAlive, 2000);

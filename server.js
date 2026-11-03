@@ -43,14 +43,30 @@ process.on('exit', (code) => {
     appendLog('System', `⚠️ 主进程即将退出 (code=${code})${code === 0 ? '' : ' —— 非零退出码，请对照上一条异常/信号日志'}`, code === 0 ? 'warning' : 'error');
   } catch (e) { /* 退出路径尽力而为 */ }
 });
-process.on('SIGINT', () => {
-  try { appendLog('System', '收到 SIGINT (Ctrl+C)，主进程即将退出', 'warning'); } catch (e) { /* 同上 */ }
-  process.exit(0);
-});
-process.on('SIGTERM', () => {
-  try { appendLog('System', '收到 SIGTERM，主进程即将退出', 'warning'); } catch (e) { /* 同上 */ }
-  process.exit(0);
-});
+function gracefulShutdown(signal) {
+  if (gracefulShutdown._once) return;
+  gracefulShutdown._once = true;
+  try { appendLog('System', `收到 ${signal}，主进程即将退出`, 'warning'); } catch (e) { /* 同上 */ }
+  try {
+    if (typeof server !== 'undefined' && server.listening) server.close();
+  } catch (e) { /* 退出路径尽力而为 */ }
+  try {
+    if (typeof clientInstances !== 'undefined') {
+      for (const client of clientInstances.values()) {
+        try { if (typeof client.stopKeepAliveWorker === 'function') client.stopKeepAliveWorker(); } catch (e) { /* 同上 */ }
+        try {
+          if (typeof client.stop === 'function') {
+            const p = client.stop(true);
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+          }
+        } catch (e) { /* 同上 */ }
+      }
+    }
+  } catch (e) { /* 同上 */ }
+  setTimeout(() => process.exit(0), 1000).unref();
+}
+process.on('SIGINT', () => gracefulShutdown('SIGINT (Ctrl+C)'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 const PORT = process.env.PORT || 8571;
 const DATA_DIR = process.env.CTYUN_DATA_DIR || path.join(__dirname, 'data');
@@ -3499,6 +3515,12 @@ const server = http.createServer(async (req, res) => {
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
     });
     res.end();
+    return;
+  }
+
+  // Docker / 编排探活：无鉴权、不泄露账号数据。只表示 HTTP 进程已在监听。
+  if (req.method === 'GET' && (pathname === '/healthz' || pathname === '/api/healthz')) {
+    jsonResponse(res, { ok: true });
     return;
   }
 

@@ -1260,6 +1260,30 @@ const MUTATIONS = [
     to: '    ak = None',
     replaceAll: false,
   },
+  {
+    id: 'M122',
+    name: 'Docker 探活失守：HEALTHCHECK 被拿掉（NAS 无法识别假死容器）',
+    file: 'Dockerfile',
+    from: 'HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \\',
+    to: 'HEALTHNOTE --interval=30s --timeout=5s --start-period=20s --retries=3 \\',
+    replaceAll: false,
+  },
+  {
+    id: 'M123',
+    name: 'Docker 探活失守：/healthz 改成需登录或不存在的路径',
+    file: 'server.js',
+    from: "(pathname === '/healthz' || pathname === '/api/healthz')",
+    to: "(pathname === '/readyz' || pathname === '/api/readyz')",
+    replaceAll: false,
+  },
+  {
+    id: 'M124',
+    name: 'Docker PID 1 失守：去掉 tini（Python 侧车退出会变僵尸进程）',
+    file: 'Dockerfile',
+    from: 'ENTRYPOINT ["tini", "--", "/usr/local/bin/docker-entrypoint.sh"]',
+    to: 'ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]',
+    replaceAll: false,
+  },
 ];
 
 // ---------------------------------------------------------------------------

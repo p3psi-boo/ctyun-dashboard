@@ -88,6 +88,9 @@ docker run -d \
   --name ctyun-dashboard \
   -p 8571:8571 \
   -v $(pwd)/data:/app/data \
+  -e TZ=Asia/Shanghai \
+  -e PUID=$(id -u) \
+  -e PGID=$(id -g) \
   --restart unless-stopped \
   learycn/ctyun-dashboard:latest
 ```
@@ -98,9 +101,14 @@ docker run -d \
   --name ctyun-dashboard \
   -p 8571:8571 \
   -v $(pwd)/data:/app/data \
+  -e TZ=Asia/Shanghai \
+  -e PUID=$(id -u) \
+  -e PGID=$(id -g) \
   --restart unless-stopped \
   ghcr.io/muyicn/ctyun-dashboard:latest
 ```
+
+镜像已内置 `tini`（PID 1，回收移动公众 Python 侧车）与 `/healthz` 探活，NAS / Compose 会自动显示健康状态。
 
 #### 2. 使用 `docker-compose.yml` 部署：
 在任意目录下创建 `docker-compose.yml`：
@@ -112,19 +120,29 @@ services:
     image: learycn/ctyun-dashboard:latest # 或 ghcr.io/muyicn/ctyun-dashboard:latest
     container_name: ctyun-dashboard
     restart: unless-stopped
+    stop_grace_period: 15s
     ports:
       - "8571:8571"
     environment:
       - TZ=Asia/Shanghai
       - PORT=8571
       - CTYUN_DATA_DIR=/app/data
+      - PUID=1000   # 群晖/飞牛/绿联改成共享文件夹属主 uid
+      - PGID=1000
     volumes:
       - ./data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 ```
 运行启动命令：
 ```bash
 docker compose up -d
 ```
+
+若 `data` 目录出现权限问题，把 `PUID` / `PGID` 改成宿主机该目录的属主（群晖 Control Panel → User → UID），不必再 `chmod 777`。
 
 #### 3. 📡 移动公众（公众版）：开箱即用，可选覆盖
 
@@ -189,6 +207,7 @@ ctyun-dashboard/
 │   └── static/               # 前端控制台 (原生 HTML/CSS/JS，无构建步骤)
 ├── data/                     # 运行时数据目录 (配置加密落盘，建议挂载持久化)
 ├── Dockerfile
+├── docker-entrypoint.sh      # 容器入口：data 卷权限 + PUID/PGID 降权
 └── docker-compose.yml
 ```
 

@@ -5267,6 +5267,64 @@ testAsync('行为：pingCag 对 SCG 机与材料缺失机必须"返回未执行"
 });
 
 // ============================================================================
+// 组 33 · Docker 部署红线：探活 / PID 1 / 可拉取镜像 / 优雅退出
+// ----------------------------------------------------------------------------
+// 背景：容器能 `docker run` 起来 ≠ 能在 NAS / Compose 上长期值守。缺 HEALTHCHECK
+// 时编排无法识别假死；Node 做 PID 1 时 Python 侧车退出会变僵尸；compose 写成
+// `ctyun-dashboard:latest` 这种本地-only 标签，NAS 用户 `up -d` 会去 Hub 拉一个
+// 不存在的镜像。本组把这些部署契约钉死。
+// ============================================================================
+group('组 33 · Docker 部署红线');
+
+test('Docker：无鉴权 /healthz + HEALTHCHECK + tini PID 1 + 可拉取镜像名', () => {
+  const df = read('Dockerfile');
+  const compose = read('docker-compose.yml');
+  const entry = read('docker-entrypoint.sh');
+
+  assert.ok(/HEALTHCHECK/.test(df), 'Dockerfile 必须定义 HEALTHCHECK，否则 NAS 编排无法探活');
+  assert.ok(/\/healthz/.test(df), 'HEALTHCHECK 必须打 /healthz');
+  assert.ok(/ENTRYPOINT \["tini"/.test(df), 'PID 1 必须是 tini，否则 Python 侧车退出会变僵尸进程');
+  assert.ok(/docker-entrypoint\.sh/.test(df), '必须经 entrypoint 处理 data 卷权限');
+  assert.ok(/requirements\.txt/.test(df), 'Python 依赖必须以 requirements.txt 为单一真源');
+  assert.ok(/npm ci --omit=dev/.test(df), '构建必须 npm ci，保证 lockfile 可复现');
+
+  assert.ok(/pathname === '\/healthz'/.test(server), 'server 必须实现 /healthz');
+  const hzStart = server.indexOf("pathname === '/healthz'");
+  assert.ok(hzStart >= 0, '未找到 /healthz 路由');
+  const hzBlock = server.slice(Math.max(0, hzStart - 240), hzStart + 360);
+  assert.ok(!/getSessionFromReq/.test(hzBlock), '/healthz 不得走登录态，否则探活会被 401');
+  assert.ok(/ok:\s*true/.test(hzBlock), '/healthz 必须返回 { ok: true }，不得泄露账号数据');
+
+  assert.ok(
+    /learycn\/ctyun-dashboard:latest/.test(compose),
+    'compose 默认镜像必须是可拉取的发布名，不能是本地-only 的 ctyun-dashboard:latest'
+  );
+  assert.ok(/PUID/.test(compose) && /PGID/.test(compose), 'compose 必须暴露 PUID/PGID 给 NAS 用户');
+  assert.ok(/stop_grace_period:\s*15s/.test(compose), 'compose 必须给 SIGTERM 留出优雅退出窗口');
+
+  assert.ok(/setpriv/.test(entry), 'entrypoint 必须降权（setpriv）');
+  assert.ok(/PUID/.test(entry) && /PGID/.test(entry), 'entrypoint 必须支持 PUID/PGID');
+  assert.ok(
+    !/public_credentials/.test(read('.dockerignore')),
+    'public_credentials.json 被 .dockerignore 命中 —— 镜像会缺内置常量'
+  );
+});
+
+test('Docker：SIGTERM 必须停保活/侧车再退出，不得直接 process.exit', () => {
+  assert.ok(/function gracefulShutdown\(/.test(server), '必须有 gracefulShutdown');
+  assert.ok(
+    /process\.on\('SIGTERM',\s*\(\)\s*=>\s*gracefulShutdown\('SIGTERM'\)\)/.test(server),
+    'SIGTERM 必须走 gracefulShutdown'
+  );
+  assert.ok(
+    /function gracefulShutdown\([\s\S]*?stopKeepAliveWorker[\s\S]*?client\.stop\(true\)/.test(server),
+    '退出路径必须停保活并停移动公众侧车'
+  );
+  const sig = server.slice(server.indexOf("process.on('SIGTERM'"), server.indexOf("process.on('SIGTERM'") + 160);
+  assert.ok(!/process\.exit\(0\)/.test(sig), 'SIGTERM 处理器不得立刻 process.exit(0)');
+});
+
+// ============================================================================
 // 汇总输出（先跑完全部异步断言，再统一出结果）
 // ============================================================================
 (async () => {

@@ -3,21 +3,30 @@ version: '3.8'
 services:
   ctyun-dashboard:
     build: .
-    image: ctyun-dashboard:latest
+    image: learycn/ctyun-dashboard:latest
     container_name: ctyun-dashboard
     restart: unless-stopped
+    stop_grace_period: 15s
     ports:
       - "8571:8571"
     environment:
       - TZ=Asia/Shanghai
       - PORT=8571
       - CTYUN_DATA_DIR=/app/data
+      # 群晖 / 飞牛 / 绿联：改成共享文件夹属主的 uid/gid，避免 data 卷权限问题
+      - PUID=1000
+      - PGID=1000
     volumes:
       - ./data:/app/data
       # 📡 移动公众（公众版）：镜像已内置公开签名常量，默认开箱即用，无需任何额外配置。
       #    只有需要覆盖时（平台轮换 Key / 自定义凭据）才放文件，优先级：环境变量 > 覆盖文件 > 内置：
       #    - ./data/ecloud_credentials.json       → 容器内 /app/data/ecloud_credentials.json
       #    字段形状见 app/ecloud_engine/credentials.example.json。
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:

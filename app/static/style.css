@@ -2196,3 +2196,90 @@ details[open].card-collapse-box > summary::before {
     font-size: 16px;
   }
 }
+
+/* ==== Remix Icon & status indicators (no emoji icons) ===================== */
+.icon-label,
+.status-with-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+.icon-label > i,
+.status-with-text > .status-dot {
+  flex-shrink: 0;
+}
+
+.stat-icon i,
+.logo-icon i {
+  font-size: 1.15em;
+  line-height: 1;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--spectrum-gray-400);
+  flex-shrink: 0;
+}
+
+.status-dot--ok {
+  background: #16a34a;
+}
+
+.status-dot--idle {
+  background: #0284c7;
+}
+
+.status-dot--warn {
+  background: #d97706;
+}
+
+.status-dot--off {
+  background: #94a3b8;
+}
+
+.status-dot--error {
+  background: #dc2626;
+}
+
+.status-dot--unknown {
+  background: #7c3aed;
+}
+
+.avatar-btn.avatar-has-icon,
+#current-avatar-preview.avatar-has-icon,
+.account-avatar.avatar-has-icon {
+  font-size: 0;
+}
+
+.avatar-btn.avatar-has-icon i,
+#current-avatar-preview.avatar-has-icon i,
+.account-avatar.avatar-has-icon i {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.avatar-preset-btn i {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pill-icon {
+  font-size: 0.95em;
+  vertical-align: -0.08em;
+}
+
+.btn-icon-only {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.btn-icon-only i {
+  font-size: 16px;
+  line-height: 1;
+}

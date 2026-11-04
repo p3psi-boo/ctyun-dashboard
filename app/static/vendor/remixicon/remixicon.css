@@ -1,0 +1,19 @@
+/* Remix Icon v4.9.1 — self-hosted subset (woff2 only) */
+@font-face {
+  font-family: "remixicon";
+  src: url("fonts/remixicon.woff2") format("woff2");
+  font-display: swap;
+}
+
+[class^="ri-"],
+[class*=" ri-"] {
+  font-family: "remixicon" !important;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: -0.125em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

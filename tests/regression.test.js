@@ -2176,15 +2176,15 @@ test('静态：自动开机守护接线（账号级/单机双开关 + 冷却 + �
     /toggleFeature\('\$\{acc\.id\}', 'autoBoot', this\.checked\)/.test(appJs),
     '分层自动化保活开关区必须有账号级「自动开机守护」开关'
   );
-  assert.ok(/🛡️ 自动开机守护<\/span>/.test(appJs), '账号级守护文案必须是「🛡️ 自动开机守护」（无括号后缀）');
+  assert.ok(/riLabel\('shield-check-line', '自动开机守护'\)/.test(appJs), '账号级守护文案必须是「自动开机守护」且用 Remix Icon（无 emoji 图标）');
   assert.ok(!/自动开机守护（强制关机后自动拉起）/.test(appJs), '标签里的「（强制关机后自动拉起）」必须删除（用户要求）');
   // 移动公众：守护开关必须在分层区**最前面**（先于「账号级保活总开关」）
   {
     const ecStart = appJs.indexOf('分层自动化保活开关');
     const ecEnd = appJs.indexOf('account-card', ecStart) > -1 ? appJs.indexOf('account-card', ecStart) : appJs.length;
     const seg = appJs.slice(ecStart, ecStart + 4000);
-    const iGuard = seg.indexOf('🛡️ 自动开机守护');
-    const iMaster = seg.indexOf('⚡ 账号级保活总开关');
+    const iGuard = seg.indexOf("riLabel('shield-check-line', '自动开机守护')");
+    const iMaster = seg.indexOf("riLabel('flashlight-line', '账号级保活总开关')");
     assert.ok(iGuard > -1 && iMaster > -1 && iGuard < iMaster, '移动公众的守护开关必须排在「账号级保活总开关」之前（最前面）');
   }
   // 【2026-09-28 修复】移动公众开关区**不得**引用移动爱家的 _ydpcVendors：该变量只在爱家分支内
@@ -2212,8 +2212,9 @@ test('静态：自动开机守护接线（账号级/单机双开关 + 冷却 + �
     '「名下云主机」列表必须有单机守护胶囊并接线 autoBootEnabled'
   );
   assert.ok(
-    /🛡️守护: \$\{d\.autoBootEnabled !== false \? '开' : '关'\}/.test(appJs),
-    '单机守护胶囊文案必须按"默认开"口径如实反映状态'
+    /pillGuardLabel\(d\.autoBootEnabled !== false\)/.test(appJs) ||
+      /\$\{ri\('shield-check-line', 'pill-icon'\)\}守护: \$\{d\.autoBootEnabled !== false \? '开' : '关'\}/.test(appJs),
+    '单机守护胶囊文案必须按"默认开"口径如实反映状态（Remix Icon，无 emoji）'
   );
   // 移动爱家（ydpc）：默认口径按底座分叉（含 SCG 的账号默认开；纯 ZTE 保持默认关）
   const ydpcJs = stripLineComments(read('app/ydpc/ydpc_client.ts'));
@@ -2858,14 +2859,11 @@ test('两个监视板块必须可折叠，且账号级「保活在线」徽章�
     assert.ok(appJs.includes(anchor), `「${title}」板块的内容容器 ${anchor} 必须保留（折叠≠删除内容）`);
   }
 
-  // 【2026-09-25 第七轮】移动公众标题必须**恰好**是「📡 移动公众 保活监视」。
-  // 上面那句 includes(title) 太宽（带上旧后缀也照样通过），这里补"紧接 </span>"的精确结尾断言。
-  // 反向断言走 stripComments：本文件/源码里"说明这行改过什么"的注释必然含旧后缀，
-  // 不剥注释就会自己把自己判红（回归网教训 6/6b 的第三次复现）。
+  // 【2026-09-25 第七轮】移动公众标题必须**恰好**是「移动公众 保活监视」（Remix Icon 前缀，无 emoji）。
   const appCode = stripComments(appJs);
   assert.ok(
-    /📡 移动公众 保活监视<\/span>/.test(appCode),
-    '移动公众监视板块标题必须恰好以「📡 移动公众 保活监视」结尾（紧接 </span>）'
+    /riLabel\('broadcast-line', '移动公众 保活监视'\)\}<\/span>/.test(appCode),
+    '移动公众监视板块标题必须恰好以 riLabel(broadcast-line, 移动公众 保活监视) 结尾（紧接 </span>）'
   );
   assert.ok(
     !/保活监视 · 分层明细见日志/.test(appCode),
@@ -4804,7 +4802,7 @@ test('静态：数据面 / 控制面开关文案必须按底座分叉（SCG 不�
   assert.ok(appJs.includes('移动爱家 ZTEC 握手与心跳监视'), 'ZTE 侧监视板块标题必须保留');
 
   // 诚实性：ZTE 侧才允许用「真保活」；SCG 侧的文案里不得出现
-  const scgLabel = appJs.match(/'📡 数据面保活（SCG · [^']*'/);
+  const scgLabel = appJs.match(/riLabel\('broadcast-line', '数据面保活（SCG · [^']*'/);
   assert.ok(scgLabel, '未找到 SCG 数据面文案（结构已变，请同步本断言）');
   assert.ok(
     !/真保活/.test(scgLabel[0]),
@@ -4855,8 +4853,8 @@ test('静态：5 秒增量轮询按元素存在性同步（SCG 控件恢复渲�
     '不得保留 disabled 占位过滤 —— 控件已全部真实渲染，再留着它等于承认"还有一个按不动的胶囊"存在'
   );
   assert.ok(
-    /pAutoBoot\.innerText = `🛡️守护: /.test(appJs),
-    '守护胶囊（含 SCG 机）必须被 5 秒轮询同步（分叉≠把同步删掉）'
+    /pAutoBoot\.innerHTML = pillGuardLabel\(/.test(appJs),
+    '守护胶囊（含 SCG 机）必须被 5 秒轮询同步（Remix Icon 文案，无 emoji）'
   );
 });
 

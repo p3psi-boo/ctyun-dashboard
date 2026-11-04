@@ -44,7 +44,7 @@ async function authFetch(url, options = {}) {
 function updateSpectrumThemeBtn(theme) {
   const btn = document.getElementById("btn-spectrum-theme");
   if (!btn) return;
-  btn.textContent = theme === "dark" ? "🌙 深色" : "☀️ 浅色";
+  btn.innerHTML = theme === "dark" ? riLabel("moon-line", "深色") : riLabel("sun-line", "浅色");
 }
 
 function initSpectrumTheme() {
@@ -182,13 +182,13 @@ async function checkCurrentUser() {
       
       // 更新头像首字母/个性化头像和下拉菜单用户名
       const avatarText = currentUser.avatar || (currentUser.username || "A")[0].toUpperCase();
-      if (headerAvatar) headerAvatar.innerText = avatarText;
+      renderUserAvatar(headerAvatar, avatarText, (currentUser.username || "A")[0].toUpperCase());
       if (dropdownUsername) dropdownUsername.innerText = `${currentUser.username} (${isAdmin ? '管理员' : '普通用户'})`;
       if (menuAdminUsers) menuAdminUsers.classList.toggle("hidden", !isAdmin);
 
       const menuChangePwd = document.getElementById("menu-change-pwd");
       if (menuChangePwd) {
-        menuChangePwd.innerText = isAdmin ? "🔒 修改密码/用户名" : "🔒 修改密码";
+        menuChangePwd.innerHTML = isAdmin ? riLabel("lock-line", "修改密码/用户名") : riLabel("lock-line", "修改密码");
       }
 
       const settingsDropdown = document.getElementById("settings-dropdown-container");
@@ -216,7 +216,7 @@ async function checkCurrentUser() {
       currentUser = null;
       if (authBtn) {
         authBtn.classList.remove("hidden");
-        authBtn.innerText = "🔑 立即登录";
+        setButtonIconLabel(authBtn, "key-line", "立即登录");
         authBtn.onclick = openAuthModal;
       }
       
@@ -313,7 +313,7 @@ function openPointsDetailModal() {
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:8px 0; border-bottom:1px dashed var(--border);">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:14px;">${isDone ? '✅' : '⏳'}</span>
+            <span style="font-size:14px;">${isDone ? ri("checkbox-circle-line") : ri("loader-4-line")}</span>
             <span style="font-weight:600; color:var(--text-main);">${escapeHtml(t.name)}</span>
             <span style="font-size:11px; font-weight:700; color:${isDone ? '#16a34a' : '#64748b'}; background:${isDone ? '#f0fdf4' : 'var(--bg-muted)'}; padding:2px 8px; border-radius:9999px; border:1px solid ${isDone ? '#bbf7d0' : 'var(--border)'};">
               ${isDone ? `+${t.points} 积分` : `进行中 (${t.progress || '0/1'})`}
@@ -322,7 +322,7 @@ function openPointsDetailModal() {
           <div style="display:flex; align-items:center; gap:6px; font-size:12px;">
             <span style="color:var(--text-muted);">达成时间节点:</span>
             <span style="font-family:monospace; font-weight:600; color:${isDone ? '#2563eb' : '#94a3b8'}; background:${isDone ? '#eff6ff' : 'var(--bg-subtle)'}; padding:2px 8px; border-radius:4px; border:1px solid ${isDone ? '#dbeafe' : 'var(--border)'};">
-              ${isDone ? `🕒 ${escapeHtml(t.completedAt || '今日已达成')}` : '等待今日达成'}
+              ${isDone ? `${ri('time-line')} ${escapeHtml(t.completedAt || '今日已达成')}` : '等待今日达成'}
             </span>
           </div>
         </div>
@@ -331,7 +331,7 @@ function openPointsDetailModal() {
 
     item.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);">
-        <span style="font-size:14px; font-weight:700; color:var(--text-main);">🖥️ ${escapeHtml(acc.accountName)}</span>
+        <span style="font-size:14px; font-weight:700; color:var(--text-main);" class="icon-label">${ri("computer-line")}<span>${escapeHtml(acc.accountName)}</span></span>
         <span style="font-size:13px; color:#16a34a; font-weight:700;">今日获得: +${acc.todayPoints}分 (总积分: ${acc.totalPoints})</span>
       </div>
       <div style="display:flex; flex-direction:column; gap:2px;">
@@ -503,9 +503,9 @@ function buildOfficialTasksHtml(m) {
       return `
         <div style="background: var(--bg-surface); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 5px; gap: 6px;">
-            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎯 <b style="color:var(--text-main);">${t.name}</b> <span style="color:var(--accent); font-weight:600;">(+${t.points}分)</span></span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ri("focus-3-line")} <b style="color:var(--text-main);">${t.name}</b> <span style="color:var(--accent); font-weight:600;">(+${t.points}分)</span></span>
             <span style="color: ${isDone ? '#16a34a' : '#d97706'}; font-weight: 700; flex-shrink: 0; font-size: 11px;">
-              ${isDone ? '✅ 已达成' : '⏳ ' + progressText}
+              ${isDone ? riLabel('checkbox-circle-line', '已达成') : riLabel('loader-4-line', progressText)}
             </span>
           </div>
           <div style="background: var(--border); height: 5px; border-radius: 4px; overflow: hidden;">
@@ -571,9 +571,9 @@ const YDPC_TONE_COLORS = {
   off: '#94a3b8',    // 未参与/已关闭
   error: '#dc2626'   // 异常
 };
-const YDPC_TONE_DOTS = {
-  ok: '🟢', idle: '🔵', warn: '🟠', off: '⚪', error: '🔴'
-};
+function ydpcToneDot(tone) {
+  return statusDot(tone || 'off');
+}
 
 // 剩余秒数 → 人类可读（秒 / 分钟 / 小时+分）
 function formatYdpcRemainText(sec) {
@@ -605,7 +605,7 @@ function buildYdpcVmMonitorHtml(acc) {
       return `
         <div class="vm-mon-row" style="display: flex; flex-direction: column; gap: 2px; padding: 5px 0; border-top: 1px dashed var(--border);">
           <div style="display: flex; align-items: baseline; gap: 5px; overflow: hidden; white-space: nowrap; min-width: 0;">
-            <span style="flex-shrink: 0;">${running ? '🟢' : '⚪'}</span>
+            <span style="flex-shrink: 0;">${statusDot(running ? 'ok' : 'off')}</span>
             <span style="font-size: 12px; font-weight: 700; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(vmName)}</span>
           </div>
           <div style="font-size: 11.5px; color: #94a3b8; padding-left: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">当前动作: 等待后端状态同步…</div>
@@ -614,7 +614,7 @@ function buildYdpcVmMonitorHtml(acc) {
     }
 
     const toneColor = YDPC_TONE_COLORS[view.tone] || '#64748b';
-    const dot = YDPC_TONE_DOTS[view.tone] || '⚪';
+    const dot = ydpcToneDot(view.tone);
 
     // 周期文本
     const intervalSec = parseInt(view.intervalSec) || 600;
@@ -685,9 +685,9 @@ const ECLOUD_TONE_COLORS = {
   error: '#dc2626',  // 异常
   unknown: '#7c3aed' // 尚未判定
 };
-const ECLOUD_TONE_DOTS = {
-  ok: '🟢', idle: '🔵', warn: '🟠', off: '⚪', error: '🔴', unknown: '🟣'
-};
+function ecloudToneDot(tone) {
+  return statusDot(tone || 'off');
+}
 // 【2026-09-24 用户要求·第二轮】移动公众的账号头像原先单独覆写品牌色（旧紫 #7c3aed → 后改 #0369a1），
 // 而另两平台头像都沿用 style.css 的 .account-avatar 默认浅色 → 被用户判为「搞特殊」。
 // 现**不再覆写**：三平台头像统一走 .account-avatar 默认样式（原用于头像的那个强调色常量已一并移除）。
@@ -741,7 +741,7 @@ function buildEcloudDesktopMonitorHtml(acc) {
       return `
         <div class="ec-mon-row" style="display: flex; flex-direction: column; gap: 2px; padding: 5px 0; border-top: 1px dashed var(--border);">
           <div style="display: flex; align-items: baseline; gap: 5px; overflow: hidden; white-space: nowrap; min-width: 0;">
-            <span style="flex-shrink: 0;">🟣</span>
+            <span style="flex-shrink: 0;">${statusDot("unknown")}</span>
             <span style="font-size: 12px; font-weight: 700; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(name)}</span>
           </div>
           <div style="font-size: 11.5px; color: #94a3b8; padding-left: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">当前动作: 等待后端状态同步…</div>
@@ -751,7 +751,7 @@ function buildEcloudDesktopMonitorHtml(acc) {
 
     const tone = ecloudViewTone(view);
     const toneColor = ECLOUD_TONE_COLORS[tone] || '#64748b';
-    const dot = ECLOUD_TONE_DOTS[tone] || '⚪';
+    const dot = ecloudToneDot(tone);
 
     const intervalSec = parseInt(view.intervalSec) || 300;
     const intervalText = intervalSec >= 60 ? `${Math.round(intervalSec / 60)} 分钟` : `${intervalSec} 秒`;
@@ -838,16 +838,16 @@ function buildAccountCardElement(acc, slotIndex) {
 
     let ecMultiStatusBadge = '';
     if (isGlobalKeepAliveOff) {
-      ecMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">⚪ 全局保活已关闭</span>`;
+      ecMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "全局保活已关闭")}</span>`;
     } else {
       const anyKeepOn = desktops.some(d => d.keepaliveEnabled !== false);
       const allKeepOn = desktops.every(d => d.keepaliveEnabled !== false);
       if (allKeepOn && desktops.length > 1) {
-        ecMultiStatusBadge = `<span style="color: #10b981; font-weight: 600;">🟢 全量多机保活已激活</span>`;
+        ecMultiStatusBadge = `<span style="color: #10b981; font-weight: 600;">${statusWithText("ok", "全量多机保活已激活")}</span>`;
       } else if (anyKeepOn) {
-        ecMultiStatusBadge = `<span style="color: #0284c7; font-weight: 600;">🟡 按单机策略保活中</span>`;
+        ecMultiStatusBadge = `<span style="color: #0284c7; font-weight: 600;">${statusWithText("warn", "按单机策略保活中")}</span>`;
       } else {
-        ecMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">⚪ 单机保活已全关</span>`;
+        ecMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "单机保活已全关")}</span>`;
       }
     }
 
@@ -861,7 +861,7 @@ function buildAccountCardElement(acc, slotIndex) {
       desktopsHtml = `
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px;">
           <div style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between;">
-            <span>🖥️ ${desktopsCountText}</span>
+            <span class="icon-label">${ri("computer-line")}<span>${desktopsCountText}</span></span>
             <span id="acc-multi-status-${acc.id}">${ecMultiStatusBadge}</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -910,7 +910,7 @@ function buildAccountCardElement(acc, slotIndex) {
                   </div>
                   <div class="vm-device-footer">
                     <div class="pill-btn-group">
-                      <button type="button" class="pill-toggle-btn ${keepClass}" id="pill-keep-${acc.id}-${escapeHtml(iid)}" onclick="toggleVmFeature('${acc.id}', '${escapeHtml(iid)}', 'keepaliveEnabled', ${!isKeepaliveOn})" title="单台云电脑独立保活开关">⚡保活: ${keepText}</button>
+                      <button type="button" class="pill-toggle-btn ${keepClass}" id="pill-keep-${acc.id}-${escapeHtml(iid)}" onclick="toggleVmFeature('${acc.id}', '${escapeHtml(iid)}', 'keepaliveEnabled', ${!isKeepaliveOn})" title="单台云电脑独立保活开关">${ri('flashlight-line', 'pill-icon')}保活: ${keepText}</button>
                       <select class="pill-select" id="pill-interval-${acc.id}-${escapeHtml(iid)}" onchange="changeVmInterval('${acc.id}', '${escapeHtml(iid)}', this.value)" title="单台云电脑独立保活周期设置">
                         <option value="" ${!d.keepaliveInterval ? 'selected' : ''}>⏱️继承默认</option>
                         <option value="300" ${d.keepaliveInterval == 300 ? 'selected' : ''}>⏱️5分钟</option>
@@ -920,11 +920,11 @@ function buildAccountCardElement(acc, slotIndex) {
                       </select>
                       <!-- 【2026-09-28】单机自动开机守护开关：与账号级 features.autoBoot 构成双重把关
                            （沿用移动爱家设计；被平台强制关机后由守护自动拉起）。 -->
-                      <button type="button" class="pill-toggle-btn ${d.autoBootEnabled !== false ? 'pill-on-keepalive' : 'pill-off-keepalive'}" id="pill-autoboot-${acc.id}-${escapeHtml(iid)}" onclick="toggleVmFeature('${acc.id}', '${escapeHtml(iid)}', 'autoBootEnabled', ${d.autoBootEnabled === false})" title="单台云电脑独立自动开机守护（需账号级「🛡️ 自动开机守护」同时开启；被平台强制关机后自动拉起，同机 10 分钟冷却）">🛡️守护: ${d.autoBootEnabled !== false ? '开' : '关'}</button>
+                      <button type="button" class="pill-toggle-btn ${d.autoBootEnabled !== false ? 'pill-on-keepalive' : 'pill-off-keepalive'}" id="pill-autoboot-${acc.id}-${escapeHtml(iid)}" onclick="toggleVmFeature('${acc.id}', '${escapeHtml(iid)}', 'autoBootEnabled', ${d.autoBootEnabled === false})" title="单台云电脑独立自动开机守护（需账号级「🛡️ 自动开机守护」同时开启；被平台强制关机后自动拉起，同机 10 分钟冷却）">${ri('shield-check-line', 'pill-icon')}守护: ${d.autoBootEnabled !== false ? '开' : '关'}</button>
                       <!-- 【2026-09-28】开机按钮接入：真实的平台 operate=available 通道（真机验证可受理）。
                            常驻可点（能力可见）；平台认为机器在运行时点击会得到平台原话的如实拒绝
                            （"当前状态为已开机，不允许进行如下操作:开机"），不会产生任何副作用。 -->
-                      <button type="button" class="pill-toggle-btn pill-action-boot" id="pill-boot-${acc.id}-${escapeHtml(iid)}" onclick="bootEcloudDesktop('${acc.id}', '${escapeHtml(iid)}', '${escapeHtml(d.machineName || '')}')" title="${escapeHtml((view && view.powerOnHint) ? `平台开机操作提示：${view.powerOnHint}` : '通过平台官方 operate 通道开机（真机验证可受理；受理后约数十秒进入运行中）')}">🖥️ 开机</button>
+                      <button type="button" class="pill-toggle-btn pill-action-boot" id="pill-boot-${acc.id}-${escapeHtml(iid)}" onclick="bootEcloudDesktop('${acc.id}', '${escapeHtml(iid)}', '${escapeHtml(d.machineName || '')}')" title="${escapeHtml((view && view.powerOnHint) ? `平台开机操作提示：${view.powerOnHint}` : '通过平台官方 operate 通道开机（真机验证可受理；受理后约数十秒进入运行中）')}">${riLabel('computer-line', '开机')}</button>
                     </div>
                   </div>
                 </div>
@@ -949,7 +949,7 @@ function buildAccountCardElement(acc, slotIndex) {
             <div class="account-name-row">
               <span class="account-name-text ${isEditingThis ? 'hidden' : ''}" id="acc-name-text-${acc.id}" onclick="startInlineEditName('${acc.id}')" title="点击直接修改账号备注">
                 <span class="name-label" id="acc-name-val-${acc.id}">${escapeHtml(displayName)}</span>
-                <span class="name-edit-icon" title="点击直接修改备注">✏️</span>
+                <span class="name-edit-icon" title="点击直接修改备注">${ri("edit-line")}</span>
               </span>
               <input type="text" class="inline-name-input ${isEditingThis ? '' : 'hidden'}" id="acc-name-input-${acc.id}" value="${escapeHtml(displayName)}" onkeydown="handleInlineNameKey(event, '${acc.id}')" onblur="saveInlineName('${acc.id}')" maxlength="30">
             </div>
@@ -960,8 +960,8 @@ function buildAccountCardElement(acc, slotIndex) {
           </div>
         </div>
         <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0;">
-          <button class="btn btn-sm" onclick="editAccount('${acc.id}')" title="编辑移动公众账号">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteAccount('${acc.id}')" title="删除账号">🗑️</button>
+          <button class="btn btn-sm" onclick="editAccount('${acc.id}')" title="编辑移动公众账号">${ri("edit-line")}</button>
+          <button class="btn btn-sm btn-danger btn-icon-only" onclick="deleteAccount('${acc.id}')" title="删除账号">${ri("delete-bin-line")}</button>
         </div>
       </div>
 
@@ -977,7 +977,7 @@ function buildAccountCardElement(acc, slotIndex) {
            "分层明细走日志流"这条事实与实现完全不变。 -->
       <details class="features-box" ${isDetailsOpen(acc.id, 'ec-monitor') ? 'open' : ''} ontoggle="saveDetailsState('${acc.id}', 'ec-monitor', this.open)">
         <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12.5px; font-weight: 700; color: #334155; user-select: none; gap: 6px;">
-          <span style="color: #0369a1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📡 移动公众 保活监视</span>
+          <span style="color: #0369a1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${riLabel('broadcast-line', '移动公众 保活监视')}</span>
           <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;">点击收起/展开</span>
         </summary>
         <div style="color: #475569; line-height: 1.7; display: flex; flex-direction: column; gap: 3px;">
@@ -994,7 +994,7 @@ function buildAccountCardElement(acc, slotIndex) {
       <!-- ⚙️ 分层自动化保活开关（独立于另两平台的分层命名） -->
       <details class="features-box" ${isDetailsOpen(acc.id, 'features') ? 'open' : ''} ontoggle="saveDetailsState('${acc.id}', 'features', this.open)">
         <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12.5px; font-weight: 700; color: #334155; user-select: none; gap: 6px;">
-          <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">⚙️ 分层自动化保活开关</span>
+          <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${riLabel('settings-3-line', '分层自动化保活开关')}</span>
           <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;">点击收起/展开</span>
         </summary>
         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
@@ -1005,28 +1005,28 @@ function buildAccountCardElement(acc, slotIndex) {
                本区**不得**引用移动爱家的 _ydpcVendors —— 该变量只在爱家分支内声明，
                在此求值会 ReferenceError 中断整张卡片渲染（2026-09-28 修复）。 -->
           <div class="feature-row">
-            <span title="被平台强制关机后自动拉起（双开关：本开关 + 单机「🛡️守护」；同机 10 分钟冷却）。平台存在约 48 小时强制关机策略，HTTP 保活无法阻止，本守护负责自动恢复。默认开启，不需要可关闭。">🛡️ 自动开机守护</span>
+            <span title="被平台强制关机后自动拉起（双开关：本开关 + 单机「🛡️守护」；同机 10 分钟冷却）。平台存在约 48 小时强制关机策略，HTTP 保活无法阻止，本守护负责自动恢复。默认开启，不需要可关闭。">${riLabel('shield-check-line', '自动开机守护')}</span>
             <label class="switch">
               <input type="checkbox" ${f.autoBoot !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'autoBoot', this.checked)">
               <span class="slider"></span>
             </label>
           </div>
           <div class="feature-row">
-            <span title="账号级保活总开关：关闭后本账号 L1/L2 全部分层保活暂停">⚡ 账号级保活总开关</span>
+            <span title="账号级保活总开关：关闭后本账号 L1/L2 全部分层保活暂停">${riLabel('flashlight-line', '账号级保活总开关')}</span>
             <label class="switch">
               <input type="checkbox" ${f.keepAlive !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'keepAlive', this.checked)">
               <span class="slider"></span>
             </label>
           </div>
           <div class="feature-row">
-            <span title="L1 账号态保活：USER_GET_INFO / USER_GET_DEVICE_INFO / PROBE_QKK_BATCHPUSH（三态，未判定时不重登）">🧩 L1 账号态保活</span>
+            <span title="L1 账号态保活：USER_GET_INFO / USER_GET_DEVICE_INFO / PROBE_QKK_BATCHPUSH（三态，未判定时不重登）">${riLabel('puzzle-line', 'L1 账号态保活')}</span>
             <label class="switch">
               <input type="checkbox" ${f.ecloudL1AccountKeep !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'ecloudL1AccountKeep', this.checked)">
               <span class="slider"></span>
             </label>
           </div>
           <div class="feature-row">
-            <span title="L2 桌面登记保活：desktopUptime 逐台登记">🧩 L2 桌面登记保活</span>
+            <span title="L2 桌面登记保活：desktopUptime 逐台登记">${riLabel('puzzle-line', 'L2 桌面登记保活')}</span>
             <label class="switch">
               <input type="checkbox" ${f.ecloudL2DesktopReg !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'ecloudL2DesktopReg', this.checked)">
               <span class="slider"></span>
@@ -1038,9 +1038,9 @@ function buildAccountCardElement(acc, slotIndex) {
       <!-- 快捷操作区 -->
       <div class="card-actions">
         <div class="card-action-tools" style="grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));">
-          <button class="btn btn-tool" onclick="triggerEcloudKeepalive('${acc.id}')" title="立即执行一次 L1 + L2 保活巡检（与自动巡检同一条代码路径）">💓 立即保活</button>
-          <button class="btn btn-tool" onclick="syncEcloudDesktops('${acc.id}')" title="重新拉取名下云主机列表">🔄 同步桌面</button>
-          <button class="btn btn-tool" onclick="switchPlatformFilter('ecloud'); showToast('已切换到移动公众独立日志流', 'info')" title="只查看移动公众自己的日志流（与另两平台隔离）">📄 看本平台日志</button>
+          <button class="btn btn-tool" onclick="triggerEcloudKeepalive('${acc.id}')" title="立即执行一次 L1 + L2 保活巡检（与自动巡检同一条代码路径）">${riLabel('heart-pulse-line', '立即保活')}</button>
+          <button class="btn btn-tool" onclick="syncEcloudDesktops('${acc.id}')" title="重新拉取名下云主机列表">${riLabel('refresh-line', '同步桌面')}</button>
+          <button class="btn btn-tool" onclick="switchPlatformFilter('ecloud'); showToast('已切换到移动公众独立日志流', 'info')" title="只查看移动公众自己的日志流（与另两平台隔离）">${riLabel('file-text-line', '看本平台日志')}</button>
         </div>
       </div>
     `;
@@ -1098,16 +1098,16 @@ function buildAccountCardElement(acc, slotIndex) {
 
     let ydpcMultiStatusBadge = '';
     if (isGlobalKeepAliveOff) {
-      ydpcMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">⚪ 全局保活已关闭</span>`;
+      ydpcMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "全局保活已关闭")}</span>`;
     } else {
       const anyKeepOn = vms.some(v => v.keepaliveEnabled !== false);
       const allKeepOn = vms.every(v => v.keepaliveEnabled !== false);
       if (allKeepOn && vms.length > 1) {
-        ydpcMultiStatusBadge = `<span style="color: #10b981; font-weight: 600;">🟢 全量多机保活已激活</span>`;
+        ydpcMultiStatusBadge = `<span style="color: #10b981; font-weight: 600;">${statusWithText("ok", "全量多机保活已激活")}</span>`;
       } else if (anyKeepOn) {
-        ydpcMultiStatusBadge = `<span style="color: #0284c7; font-weight: 600;">🟡 按单机策略保活中</span>`;
+        ydpcMultiStatusBadge = `<span style="color: #0284c7; font-weight: 600;">${statusWithText("warn", "按单机策略保活中")}</span>`;
       } else {
-        ydpcMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">⚪ 单机保活已全关</span>`;
+        ydpcMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "单机保活已全关")}</span>`;
       }
     }
 
@@ -1117,7 +1117,7 @@ function buildAccountCardElement(acc, slotIndex) {
       vmsHtml = `
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px;">
           <div style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between;">
-            <span>🖥️ ${vmsCountText}</span>
+            <span class="icon-label">${ri("computer-line")}<span>${vmsCountText}</span></span>
             <span id="acc-multi-status-${acc.id}">${ydpcMultiStatusBadge}</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1149,12 +1149,12 @@ function buildAccountCardElement(acc, slotIndex) {
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                       <span class="badge ${isRunning ? 'badge-online' : 'badge-offline'}">${isRunning ? '运行中' : '已关机'}</span>
-                      <span style="font-size: 11.5px; font-weight: 600; color: ${vm.durationMode === 'limited' ? '#b45309' : '#059669'};">${vm.remainText || '♾️ 永久'}</span>
+                      <span style="font-size: 11.5px; font-weight: 600; color: ${vm.durationMode === 'limited' ? '#b45309' : '#059669'};">${vm.remainText || '永久'}</span>
                     </div>
                   </div>
                   <div class="vm-device-footer">
                     <div class="pill-btn-group">
-                      <button type="button" class="pill-toggle-btn ${keepClass}" id="pill-keep-${acc.id}-${usid}" onclick="toggleVmFeature('${acc.id}', '${usid}', 'keepaliveEnabled', ${!isKeepaliveOn})" title="单台云电脑独立保活开关">⚡保活: ${keepText}</button>
+                      <button type="button" class="pill-toggle-btn ${keepClass}" id="pill-keep-${acc.id}-${usid}" onclick="toggleVmFeature('${acc.id}', '${usid}', 'keepaliveEnabled', ${!isKeepaliveOn})" title="单台云电脑独立保活开关">${ri('flashlight-line', 'pill-icon')}保活: ${keepText}</button>
                       <select class="pill-select" id="pill-interval-${acc.id}-${usid}" onchange="changeVmInterval('${acc.id}', '${usid}', this.value)" title="单台云电脑独立保活周期设置">
                         <option value="" ${!vm.keepaliveInterval ? 'selected' : ''}>⏱️继承默认</option>
                         <option value="300" ${vm.keepaliveInterval == 300 ? 'selected' : ''}>⏱️5分钟</option>
@@ -1166,8 +1166,8 @@ function buildAccountCardElement(acc, slotIndex) {
                       <!-- 【2026-09-23 新增】单机自动开机守护开关：与账号级 features.autoBoot 构成双重把关 -->
                       <!-- 【2026-09-26 恢复】SCG（深信服）底座开机已真机打通（CEM 通道：getConnectInfo 触发开机
                            + readyStatus 轮询，见 app/ydpc/scg_keepalive.js 的 cemBootVm），守护/开机控件恢复渲染。 -->
-                      <button type="button" class="pill-toggle-btn ${(vm.autoBootEnabled !== undefined ? vm.autoBootEnabled !== false : _isScgVm(vm)) ? 'pill-on-keepalive' : 'pill-off-keepalive'}" id="pill-autoboot-${acc.id}-${usid}" onclick="toggleVmFeature('${acc.id}', '${usid}', 'autoBootEnabled', ${!(vm.autoBootEnabled !== undefined ? vm.autoBootEnabled !== false : _isScgVm(vm))})" title="单台云电脑独立自动开机守护（需账号级开关同时开启；SCG 机默认开、走 CEM 通道，ZTE 机默认关、走 CAG 通道）">🛡️守护: ${(vm.autoBootEnabled !== undefined ? vm.autoBootEnabled !== false : _isScgVm(vm)) ? '开' : '关'}</button>
-                      ${!isRunning ? `<button type="button" class="pill-toggle-btn pill-action-boot" id="pill-boot-${acc.id}-${usid}" onclick="bootYdpcVm('${acc.id}', '${usid}', '${escapeHtml(vm.vmName || '')}')" title="${_isScgVm(vm) ? '通过 CEM 官方通道拉起这台云电脑（深信服底座 · 已真机验证）' : '通过 CAG 官方通道拉起这台云电脑'}">🖥️开机</button>` : ''}
+                      <button type="button" class="pill-toggle-btn ${(vm.autoBootEnabled !== undefined ? vm.autoBootEnabled !== false : _isScgVm(vm)) ? 'pill-on-keepalive' : 'pill-off-keepalive'}" id="pill-autoboot-${acc.id}-${usid}" onclick="toggleVmFeature('${acc.id}', '${usid}', 'autoBootEnabled', ${!(vm.autoBootEnabled !== undefined ? vm.autoBootEnabled !== false : _isScgVm(vm))})" title="单台云电脑独立自动开机守护（需账号级开关同时开启；SCG 机默认开、走 CEM 通道，ZTE 机默认关、走 CAG 通道）">${ri('shield-check-line', 'pill-icon')}守护: ${(vm.autoBootEnabled !== undefined ? vm.autoBootEnabled !== false : _isScgVm(vm)) ? '开' : '关'}</button>
+                      ${!isRunning ? `<button type="button" class="pill-toggle-btn pill-action-boot" id="pill-boot-${acc.id}-${usid}" onclick="bootYdpcVm('${acc.id}', '${usid}', '${escapeHtml(vm.vmName || '')}')" title="${_isScgVm(vm) ? '通过 CEM 官方通道拉起这台云电脑（深信服底座 · 已真机验证）' : '通过 CAG 官方通道拉起这台云电脑'}">${riLabel('computer-line', '开机')}</button>` : ''}
                     </div>
                   </div>
                 </div>
@@ -1190,7 +1190,7 @@ function buildAccountCardElement(acc, slotIndex) {
             <div class="account-name-row">
               <span class="account-name-text ${isEditingThis ? 'hidden' : ''}" id="acc-name-text-${acc.id}" onclick="startInlineEditName('${acc.id}')" title="点击直接修改账号备注">
                 <span class="name-label" id="acc-name-val-${acc.id}">${escapeHtml(displayName)}</span>
-                <span class="name-edit-icon" title="点击直接修改备注">✏️</span>
+                <span class="name-edit-icon" title="点击直接修改备注">${ri("edit-line")}</span>
               </span>
               <input type="text" class="inline-name-input ${isEditingThis ? '' : 'hidden'}" id="acc-name-input-${acc.id}" value="${escapeHtml(displayName)}" onkeydown="handleInlineNameKey(event, '${acc.id}')" onblur="saveInlineName('${acc.id}')" maxlength="30">
             </div>
@@ -1202,8 +1202,8 @@ function buildAccountCardElement(acc, slotIndex) {
           </div>
         </div>
         <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0;">
-          <button class="btn btn-sm" onclick="editAccount('${acc.id}')" title="编辑移动爱家账号">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteAccount('${acc.id}')" title="删除账号">🗑️</button>
+          <button class="btn btn-sm" onclick="editAccount('${acc.id}')" title="编辑移动爱家账号">${ri("edit-line")}</button>
+          <button class="btn btn-sm btn-danger btn-icon-only" onclick="deleteAccount('${acc.id}')" title="删除账号">${ri("delete-bin-line")}</button>
         </div>
       </div>
 
@@ -1214,7 +1214,7 @@ function buildAccountCardElement(acc, slotIndex) {
       <!-- 【2026-09-24 用户要求·第三轮】账号级「保活在线」徽章已删除；本板块改为可点击收起/展开。 -->
       <details class="features-box" ${isDetailsOpen(acc.id, 'yd-monitor') ? 'open' : ''} ontoggle="saveDetailsState('${acc.id}', 'yd-monitor', this.open)">
         <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12.5px; font-weight: 700; color: #334155; user-select: none; gap: 6px;">
-          <span style="color: #0369a1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${_ydpcAllScg ? '📡 移动爱家 SCG 数据面监视' : '📡 移动爱家 ZTEC 握手与心跳监视'}</span>
+          <span style="color: #0369a1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${_ydpcAllScg ? riLabel('broadcast-line', '移动爱家 SCG 数据面监视') : riLabel('broadcast-line', '移动爱家 ZTEC 握手与心跳监视')}</span>
           <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;">点击收起/展开</span>
         </summary>
         <div style="color: #475569; line-height: 1.7; display: flex; flex-direction: column; gap: 3px;">
@@ -1231,7 +1231,7 @@ function buildAccountCardElement(acc, slotIndex) {
       <!-- 专属功能开关 (精致折叠设计，状态持久化) -->
       <details class="features-box" ${isDetailsOpen(acc.id, 'features') ? 'open' : ''} ontoggle="saveDetailsState('${acc.id}', 'features', this.open)">
         <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12.5px; font-weight: 700; color: #334155; user-select: none; gap: 6px;">
-          <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">⚙️ 自动化保活开关<span class="badge" style="margin-left:6px;${_ydpcBaseChipStyle}" title="${escapeHtml(_ydpcBaseNote)}">${escapeHtml(_ydpcBaseLabel)}</span></span>
+          <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${riLabel('settings-3-line', '自动化保活开关')}<span class="badge" style="margin-left:6px;${_ydpcBaseChipStyle}" title="${escapeHtml(_ydpcBaseNote)}">${escapeHtml(_ydpcBaseLabel)}</span></span>
           <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;">点击收起/展开</span>
         </summary>
         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
@@ -1243,7 +1243,7 @@ function buildAccountCardElement(acc, slotIndex) {
                getVmReadyStatus 轮询至就绪。两端共用同一套账号自有凭据与已获批 CEM 材料。
                默认开启（2026-09-28 用户拍板），不需要可显式关闭。 -->
           <div class="feature-row">
-            <span title="${escapeHtml(_ydpcMixedBase ? '检测到机器关机时自动拉起（默认开启）。本账号混挂多底座：ZTE 机走 CAG 通道，SCG 机走 CEM 通道，各自使用账号自有凭据' : '检测到机器关机时自动拉起（默认开启）。ZTE 机走 CAG 通道，SCG 机走 CEM 通道')}">${_ydpcMixedBase ? '🛡️ 自动开机守护（CAG/CEM 通道 · 按底座自动分流）' : (_ydpcAllScg ? '🛡️ 自动开机守护（CEM 通道）' : '🛡️ 自动开机守护（CAG 通道）')}</span>
+            <span title="${escapeHtml(_ydpcMixedBase ? '检测到机器关机时自动拉起（默认开启）。本账号混挂多底座：ZTE 机走 CAG 通道，SCG 机走 CEM 通道，各自使用账号自有凭据' : '检测到机器关机时自动拉起（默认开启）。ZTE 机走 CAG 通道，SCG 机走 CEM 通道')}">${_ydpcMixedBase ? riLabel('shield-check-line', '自动开机守护（CAG/CEM 通道 · 按底座自动分流）') : (_ydpcAllScg ? riLabel('shield-check-line', '自动开机守护（CEM 通道）') : riLabel('shield-check-line', '自动开机守护（CAG 通道）'))}</span>
             <!-- 【2026-09-28 修复】默认口径按底座分叉（与后端 _autoBootArmed 同源）：含 SCG 的账号默认勾选；
                  纯 ZTE 账号默认不勾（ZTE 开机走 CAG 会真实消耗限时套餐时长，需显式开启）。
                  本表达式依赖 _ydpcVendors，只能在移动爱家分支内使用。 -->
@@ -1256,7 +1256,7 @@ function buildAccountCardElement(acc, slotIndex) {
                开启后，已开启「⚡保活」的运行中机器自动改走数据面，并抑制其 SOHO 心跳/CAG 握手（冗余）。
                ⚠️ 数据面是独占桌面会话，官方 App 可能无法同时接入该机器。 -->
           <div class="feature-row">
-            <span title="${escapeHtml(_ydpcAllScg ? 'SCG 数据面保活（官方同款原生传输的另一套实现）：裸 TCP → auth 包 → 同 socket 升 TLS → trunk 帧 + SPICE 通道认证。开启后单机「⚡保活」开着的运行中机器自动改走数据面，并抑制其控制面保活。⚠️ 会占用桌面会话，官方 App 可能无法同时接入。⚠️ 本通道尚未被证明有效（显示面是否真的出图只能在真机观察）' : (_ydpcAllZte ? '官方客户端同款原生协议数据面保活（真保活）。开启后单机「⚡保活」开着的运行中机器自动改走数据面，并抑制其控制面保活。⚠️ 会占用桌面会话，官方 App 可能无法同时接入' : '原生协议数据面保活。各机按自身底座走对应通道（ZTE：raw ZTEC / TLS+SPICE；SCG：trunk+SPICE）。⚠️ 会占用桌面会话，官方 App 可能无法同时接入。⚠️ 是否真保活以实跑为准，本项目不作"保活已被证明"的声明'))}">${_ydpcAllScg ? '📡 数据面保活（SCG · trunk+SPICE）' : (_ydpcAllZte ? '📡 数据面保活（raw ZTEC / TLS+SPICE · 真保活）' : '📡 数据面保活（原生协议 · 逐台判定）')}</span>
+            <span title="${escapeHtml(_ydpcAllScg ? 'SCG 数据面保活（官方同款原生传输的另一套实现）：裸 TCP → auth 包 → 同 socket 升 TLS → trunk 帧 + SPICE 通道认证。开启后单机「⚡保活」开着的运行中机器自动改走数据面，并抑制其控制面保活。⚠️ 会占用桌面会话，官方 App 可能无法同时接入。⚠️ 本通道尚未被证明有效（显示面是否真的出图只能在真机观察）' : (_ydpcAllZte ? '官方客户端同款原生协议数据面保活（真保活）。开启后单机「⚡保活」开着的运行中机器自动改走数据面，并抑制其控制面保活。⚠️ 会占用桌面会话，官方 App 可能无法同时接入' : '原生协议数据面保活。各机按自身底座走对应通道（ZTE：raw ZTEC / TLS+SPICE；SCG：trunk+SPICE）。⚠️ 会占用桌面会话，官方 App 可能无法同时接入。⚠️ 是否真保活以实跑为准，本项目不作"保活已被证明"的声明'))}">${_ydpcAllScg ? riLabel('broadcast-line', '数据面保活（SCG · trunk+SPICE）') : (_ydpcAllZte ? riLabel('broadcast-line', '数据面保活（raw ZTEC / TLS+SPICE · 真保活）') : riLabel('broadcast-line', '数据面保活（原生协议 · 逐台判定）'))}</span>
             <label class="switch">
               <input type="checkbox" ${f.dataPlaneKeepalive !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'dataPlaneKeepalive', this.checked)">
               <span class="slider"></span>
@@ -1264,14 +1264,14 @@ function buildAccountCardElement(acc, slotIndex) {
           </div>
           <!-- 【2026-09-23 合并】ZTEC CAG 握手 与 SOHO 心跳 共用同一周期，合并为一个"控制面保活"开关 -->
           <div class="feature-row">
-            <span title="${escapeHtml(_ydpcAllScg ? 'SCG 底座**没有** CAG 握手（firm-auth 材料里只有 scgIp/scAuthCode，没有 cagIp）—— 因此本开关在 SCG 机器上只驱动 SOHO 心跳（它同时也是 SCG 会话慢平面的同一路心跳），不发起任何 CAG 握手' : 'ZTEC CAG TCP 握手 + SOHO 心跳（共用同一周期，默认 10 分钟，可单机覆盖）。⚠️ 对 SCG 底座机器只走 SOHO 心跳——SCG 没有 cagIp')}">${_ydpcAllScg ? '🔄 控制面保活（SOHO 心跳 · SCG 无 CAG 握手）' : '🔄 控制面保活（CAG 握手 + SOHO 心跳）'}</span>
+            <span title="${escapeHtml(_ydpcAllScg ? 'SCG 底座**没有** CAG 握手（firm-auth 材料里只有 scgIp/scAuthCode，没有 cagIp）—— 因此本开关在 SCG 机器上只驱动 SOHO 心跳（它同时也是 SCG 会话慢平面的同一路心跳），不发起任何 CAG 握手' : 'ZTEC CAG TCP 握手 + SOHO 心跳（共用同一周期，默认 10 分钟，可单机覆盖）。⚠️ 对 SCG 底座机器只走 SOHO 心跳——SCG 没有 cagIp')}">${_ydpcAllScg ? riLabel('refresh-line', '控制面保活（SOHO 心跳 · SCG 无 CAG 握手）') : riLabel('refresh-line', '控制面保活（CAG 握手 + SOHO 心跳）')}</span>
             <label class="switch">
               <input type="checkbox" ${f.controlPlaneKeepalive !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'controlPlaneKeepalive', this.checked)">
               <span class="slider"></span>
             </label>
           </div>
           <div class="feature-row">
-            <span>📡 官方 MQTT 3.1.1 链路长连保活</span>
+            <span>${riLabel("broadcast-line", "官方 MQTT 3.1.1 链路长连保活")}</span>
             <label class="switch">
               <input type="checkbox" ${f.mqttKeepAlive !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'mqttKeepAlive', this.checked)">
               <span class="slider"></span>
@@ -1283,9 +1283,9 @@ function buildAccountCardElement(acc, slotIndex) {
       <!-- 快捷操作区 -->
       <div class="card-actions">
         <div class="card-action-tools" style="grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));">
-          <button class="btn btn-tool" onclick="pingYdpcCag('${acc.id}')" title="立即向中兴 CAG 发起 TCP 握手保活">🔄 CAG 握手</button>
-          <button class="btn btn-tool" onclick="heartbeatYdpc('${acc.id}')" title="立即发送一次 SOHO 活跃心跳">💓 发送心跳</button>
-          <button class="btn btn-tool" onclick="verifyYdpcKeepAlive('${acc.id}')" title="用独立轮询验证保活是否真的有效（默认监控 60 秒）">🔍 独立验证</button>
+          <button class="btn btn-tool" onclick="pingYdpcCag('${acc.id}')" title="立即向中兴 CAG 发起 TCP 握手保活">${riLabel('refresh-line', 'CAG 握手')}</button>
+          <button class="btn btn-tool" onclick="heartbeatYdpc('${acc.id}')" title="立即发送一次 SOHO 活跃心跳">${riLabel('heart-pulse-line', '发送心跳')}</button>
+          <button class="btn btn-tool" onclick="verifyYdpcKeepAlive('${acc.id}')" title="用独立轮询验证保活是否真的有效（默认监控 60 秒）">${riLabel('search-line', '独立验证')}</button>
         </div>
       </div>
     `;
@@ -1298,12 +1298,12 @@ function buildAccountCardElement(acc, slotIndex) {
   // ====================================================
   let sessionBadge = '';
   if (acc.sessionExpired) {
-    sessionBadge = `<span class="badge badge-danger" style="cursor:pointer;" onclick="editAccount('${acc.id}')">${!acc.password ? '⚠️ 待扫码授权' : '⚠️ 会话失效'}</span>`;
+    sessionBadge = `<span class="badge badge-danger" style="cursor:pointer;" onclick="editAccount('${acc.id}')">${riLabel('error-warning-line', !acc.password ? '待扫码授权' : '会话失效')}</span>`;
   }
 
   const boundBadgeHtml = acc.bound
     ? `<span class="badge badge-online">已绑设备</span>`
-    : `<span class="badge badge-warning" style="cursor: pointer;" onclick="openSmsModal('${acc.id}')">⚠️ 待绑定</span>`;
+    : `<span class="badge badge-warning" style="cursor: pointer;" onclick="openSmsModal('${acc.id}')">${riLabel('error-warning-line', '待绑定')}</span>`;
 
   const officialTaskHtml = buildOfficialTasksHtml(m);
 
@@ -1319,16 +1319,16 @@ function buildAccountCardElement(acc, slotIndex) {
 
   let ctyunMultiStatusBadge = '';
   if (f.keepAlive === false) {
-    ctyunMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">⚪ 全局保活已关闭</span>`;
+    ctyunMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "全局保活已关闭")}</span>`;
   } else {
     const anyKeepOn = dList.some(d => d.keepaliveEnabled !== false);
     const allKeepOn = dList.every(d => d.keepaliveEnabled !== false);
     if (allKeepOn && dList.length > 1) {
-      ctyunMultiStatusBadge = `<span style="color: #10b981; font-weight: 600;">🟢 全量多机保活已激活</span>`;
+      ctyunMultiStatusBadge = `<span style="color: #10b981; font-weight: 600;">${statusWithText("ok", "全量多机保活已激活")}</span>`;
     } else if (anyKeepOn) {
-      ctyunMultiStatusBadge = `<span style="color: #0284c7; font-weight: 600;">🟡 按单机策略保活中</span>`;
+      ctyunMultiStatusBadge = `<span style="color: #0284c7; font-weight: 600;">${statusWithText("warn", "按单机策略保活中")}</span>`;
     } else {
-      ctyunMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">⚪ 单机保活已全关</span>`;
+      ctyunMultiStatusBadge = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "单机保活已全关")}</span>`;
     }
   }
 
@@ -1341,7 +1341,7 @@ function buildAccountCardElement(acc, slotIndex) {
     desktopsHtml = `
       <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
         <div style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between;">
-          <span>🖥️ 名下云主机 (${dList.length}台)</span>
+          <span class="icon-label">${ri("computer-line")}<span>名下云主机 (${dList.length}台)</span></span>
           <span id="acc-multi-status-${acc.id}">${ctyunMultiStatusBadge}</span>
         </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1407,13 +1407,13 @@ function buildAccountCardElement(acc, slotIndex) {
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
                       <span class="badge ${isRunning ? 'badge-online' : 'badge-offline'}">${isRunning ? '运行中' : '已关机'}</span>
-                      <button class="btn btn-sm btn-primary" style="padding: 2px 7px; font-size: 11px; flex-shrink: 0; white-space: nowrap;" onclick="launchWebDesktop('${acc.id}', '${d.desktopId || d.objId}')">🚀 打开</button>
+                      <button class="btn btn-sm btn-primary" style="padding: 2px 7px; font-size: 11px; flex-shrink: 0; white-space: nowrap;" onclick="launchWebDesktop('${acc.id}', '${d.desktopId || d.objId}')">${riLabel('rocket-line', '打开')}</button>
                     </div>
                   </div>
                   <div class="vm-device-footer">
                     <div class="pill-btn-group">
-                      <button type="button" class="pill-toggle-btn ${keepClass}" id="pill-keep-${acc.id}-${targetId}" onclick="toggleVmFeature('${acc.id}', '${targetId}', 'keepaliveEnabled', ${!isKeepaliveOn})" title="单台云电脑独立保活开关 (脉冲长连保活)">⚡保活: ${keepText}</button>
-                      <button type="button" class="pill-toggle-btn ${taskClass}" id="pill-task-${acc.id}-${targetId}" onclick="toggleVmFeature('${acc.id}', '${targetId}', 'taskEnabled', ${!isTaskOn})" title="单台云电脑独立任务开关 (控制打卡/AI对话/1小时挂机任务)">🎯任务: ${taskText}</button>
+                      <button type="button" class="pill-toggle-btn ${keepClass}" id="pill-keep-${acc.id}-${targetId}" onclick="toggleVmFeature('${acc.id}', '${targetId}', 'keepaliveEnabled', ${!isKeepaliveOn})" title="单台云电脑独立保活开关 (脉冲长连保活)">${ri('flashlight-line', 'pill-icon')}保活: ${keepText}</button>
+                      <button type="button" class="pill-toggle-btn ${taskClass}" id="pill-task-${acc.id}-${targetId}" onclick="toggleVmFeature('${acc.id}', '${targetId}', 'taskEnabled', ${!isTaskOn})" title="单台云电脑独立任务开关 (控制打卡/AI对话/1小时挂机任务)">${ri('focus-3-line', 'pill-icon')}任务: ${taskText}</button>
                       <select class="pill-select" id="pill-interval-${acc.id}-${targetId}" onchange="changeVmInterval('${acc.id}', '${targetId}', this.value)" title="单台云电脑独立脉冲周期设置">
                         <option value="" ${!d.keepaliveInterval ? 'selected' : ''}>⏱️继承默认</option>
                         <option value="15" ${d.keepaliveInterval == 15 ? 'selected' : ''}>⏱️15s脉冲</option>
@@ -1424,7 +1424,7 @@ function buildAccountCardElement(acc, slotIndex) {
                       </select>
                     </div>
                     <div style="display: flex; gap: 4px; align-items: center;">
-                      ${!isRunning ? `<button type="button" class="pill-toggle-btn pill-action-boot" onclick="bootCtyunVm('${acc.id}', '${targetId}')" title="单独对此台天翼云电脑下发开机">🖥️ 开机</button>` : ''}
+                      ${!isRunning ? `<button type="button" class="pill-toggle-btn pill-action-boot" onclick="bootCtyunVm('${acc.id}', '${targetId}')" title="单独对此台天翼云电脑下发开机">${riLabel('computer-line', '开机')}</button>` : ''}
                     </div>
                   </div>
                 </div>
@@ -1447,7 +1447,7 @@ function buildAccountCardElement(acc, slotIndex) {
           <div class="account-name-row">
             <span class="account-name-text ${isEditingThis ? 'hidden' : ''}" id="acc-name-text-${acc.id}" onclick="startInlineEditName('${acc.id}')" title="点击直接修改账号备注">
               <span class="name-label" id="acc-name-val-${acc.id}">${escapeHtml(displayName)}</span>
-              <span class="name-edit-icon" title="点击直接修改备注">✏️</span>
+              <span class="name-edit-icon" title="点击直接修改备注">${ri("edit-line")}</span>
             </span>
             <input type="text" class="inline-name-input ${isEditingThis ? '' : 'hidden'}" id="acc-name-input-${acc.id}" value="${escapeHtml(displayName)}" onkeydown="handleInlineNameKey(event, '${acc.id}')" onblur="saveInlineName('${acc.id}')" maxlength="30" placeholder="账号备注名">
           </div>
@@ -1460,8 +1460,8 @@ function buildAccountCardElement(acc, slotIndex) {
         </div>
       </div>
       <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0;">
-        <button class="btn btn-sm" onclick="editAccount('${acc.id}')" title="编辑账号与重新验证">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteAccount('${acc.id}')" title="删除账号">🗑️</button>
+        <button class="btn btn-sm" onclick="editAccount('${acc.id}')" title="编辑账号与重新验证">${ri("edit-line")}</button>
+        <button class="btn btn-sm btn-danger btn-icon-only" onclick="deleteAccount('${acc.id}')" title="删除账号">${ri("delete-bin-line")}</button>
       </div>
     </div>
 
@@ -1471,7 +1471,7 @@ function buildAccountCardElement(acc, slotIndex) {
     <!-- 📡 真实 WebSocket 保活心跳状态监视 -->
     <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 6px; flex-wrap: wrap;">
-        <span style="color: #2563eb; font-weight: 700; flex-shrink: 0;">📡 状态与心跳监视</span>
+        <span style="color: #2563eb; font-weight: 700; flex-shrink: 0;">${riLabel('broadcast-line', '状态与心跳监视')}</span>
         <span id="acc-countdown-${acc.id}" style="color: var(--text-muted); font-size: 11px; text-align: right; flex-shrink: 1;">${m.isTaskHanging ? `模式: <b style="color:#d97706;">定时挂机中</b> (剩余: <b style="color:#2563eb;">${m.cycleCountdown || 0}s</b>)` : `脉冲周期: <b>${buildIntervalOverviewText(acc)}</b> (倒计时: <b style="color:#16a34a;">${m.cycleCountdown || 30}s</b>)`}</span>
       </div>
       <div style="color: #475569; line-height: 1.7; display: flex; flex-direction: column; gap: 3px;">
@@ -1490,7 +1490,7 @@ function buildAccountCardElement(acc, slotIndex) {
     <!-- 🏆 天翼云官方真实任务看板 (精致可折叠设计，状态持久化) -->
     <details class="card-collapse-box" ${isDetailsOpen(acc.id, 'tasks') ? 'open' : ''} ontoggle="saveDetailsState('${acc.id}', 'tasks', this.open)">
       <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; user-select: none; gap: 6px;">
-        <span style="color: #b45309; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🏆 官方任务进度 (总分: <b id="acc-points-val-${acc.id}" style="color:#16a34a;">${m.userPoints || 0}</b>)</span>
+        <span style="color: #b45309; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ri("trophy-line")} 官方任务进度 (总分: <b id="acc-points-val-${acc.id}" style="color:#16a34a;">${m.userPoints || 0}</b>)</span>
         <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;">点击收起/展开</span>
       </summary>
       <div id="acc-tasks-list-${acc.id}" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
@@ -1501,26 +1501,26 @@ function buildAccountCardElement(acc, slotIndex) {
     <!-- 功能开关 (精致折叠设计，状态持久化) -->
     <details class="features-box" ${isDetailsOpen(acc.id, 'features') ? 'open' : ''} ontoggle="saveDetailsState('${acc.id}', 'features', this.open)">
       <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12.5px; font-weight: 700; color: #334155; user-select: none; gap: 6px;">
-        <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">⚙️ 自动化任务与保活开关</span>
+        <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${riLabel('settings-3-line', '自动化任务与保活开关')}</span>
         <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;">点击收起/展开</span>
       </summary>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
         <div class="feature-row">
-          <span>📡 启用云电脑保活</span>
+          <span>${riLabel('broadcast-line', '启用云电脑保活')}</span>
           <label class="switch">
             <input type="checkbox" ${f.keepAlive !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'keepAlive', this.checked)">
             <span class="slider"></span>
           </label>
         </div>
         <div class="feature-row">
-          <span>📅 每日自动签到打卡</span>
+          <span>${riLabel('calendar-line', '每日自动签到打卡')}</span>
           <label class="switch">
             <input type="checkbox" ${f.autoSign !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'autoSign', this.checked)">
             <span class="slider"></span>
           </label>
         </div>
         <div class="feature-row">
-          <span>🤖 AI 智能对话任务 (每日100分)</span>
+          <span>${riLabel('robot-2-line', 'AI 智能对话任务 (每日100分)')}</span> (每日100分)</span>
           <label class="switch">
             <input type="checkbox" ${f.aiChat !== false ? 'checked' : ''} onchange="toggleFeature('${acc.id}', 'aiChat', this.checked)">
             <span class="slider"></span>
@@ -1534,8 +1534,8 @@ function buildAccountCardElement(acc, slotIndex) {
           </label>
         </div>
         <div class="feature-row">
-          <span>🎁 自动兑换/抽奖 (${acc.redeemConfig?.enabled ? '<b style=\"color:#16a34a\">已开</b>' : '未开'})</span>
-          <button class="btn btn-sm btn-warning" onclick="openRedeemModal('${acc.id}')" style="flex-shrink:0;padding:3px 8px;font-size:11.5px;">⚙️ 奖品设置</button>
+          <span>${riLabel('gift-line', '自动兑换/抽奖')} (${acc.redeemConfig?.enabled ? '<b style=\"color:#16a34a\">已开</b>' : '未开'})</span>
+          <button class="btn btn-sm btn-warning" onclick="openRedeemModal('${acc.id}')" style="flex-shrink:0;padding:3px 8px;font-size:11.5px;">${riLabel('settings-3-line', '奖品设置')}</button>
         </div>
       </div>
     </details>
@@ -1544,16 +1544,16 @@ function buildAccountCardElement(acc, slotIndex) {
     <div class="card-actions">
       ${acc.sessionExpired ? `
         <button class="btn btn-danger btn-launch-full" onclick="editAccount('${acc.id}')" style="margin-bottom:6px;">
-          <span>${!acc.password ? '📱 重新扫码授权' : '🔑 重新验证登录'}</span>
+          <span>${!acc.password ? riLabel('smartphone-line', '重新扫码授权') : riLabel('key-line', '重新验证登录')}</span>
           <span class="btn-subtext">${!acc.password ? '手机 App 扫码一键恢复 ➔' : '输验证码恢复 ➔'}</span>
         </button>
       ` : ''}
       <div class="card-action-tools">
-        <button class="btn btn-tool" onclick="syncAccountTasks('${acc.id}')" title="一键极速执行今日全部任务 (打卡/AI对话/挂机)">🔄 一键同步任务</button>
-        <button class="btn btn-tool" onclick="openPowerModal('${acc.id}')" title="云电脑电源管理 (开机/重启/关机)">⚡ 电源管理</button>
-        <button class="btn btn-tool" onclick="openManualRedeemModal('${acc.id}')" title="根据当前积分手动兑换商品或抽奖">🎁 积分商城</button>
+        <button class="btn btn-tool" onclick="syncAccountTasks('${acc.id}')" title="一键极速执行今日全部任务 (打卡/AI对话/挂机)">${riLabel('refresh-line', '一键同步任务')}</button>
+        <button class="btn btn-tool" onclick="openPowerModal('${acc.id}')" title="云电脑电源管理 (开机/重启/关机)">${riLabel('flashlight-line', '电源管理')}</button>
+        <button class="btn btn-tool" onclick="openManualRedeemModal('${acc.id}')" title="根据当前积分手动兑换商品或抽奖">${riLabel('gift-line', '积分商城')}</button>
       </div>
-      ${!acc.bound ? `<button class="btn btn-sm btn-warning" style="width:100%;margin-top:2px;" onclick="openSmsModal('${acc.id}')">📲 短信二次安全绑定</button>` : ''}
+      ${!acc.bound ? `<button class="btn btn-sm btn-warning" style="width:100%;margin-top:2px;" onclick="openSmsModal('${acc.id}')">${riLabel('message-2-line', '短信二次安全绑定')}</button>` : ''}
     </div>
   `;
 
@@ -1608,7 +1608,7 @@ function updateAccountsInPlace(filteredAccounts) {
         if (!pAuto) continue;
         const on = d.autoBootEnabled !== false;
         pAuto.className = `pill-toggle-btn ${on ? 'pill-on-keepalive' : 'pill-off-keepalive'}`;
-        pAuto.innerText = `🛡️守护: ${on ? '开' : '关'}`;
+        pAuto.innerHTML = pillGuardLabel(on);
       }
     }
 
@@ -1652,16 +1652,16 @@ function updateAccountsInPlace(filteredAccounts) {
 
       if (multiStatusEl) {
         if (isGlobalKeepAliveOff) {
-          multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">⚪ 全局保活已关闭</span>`;
+          multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "全局保活已关闭")}</span>`;
         } else {
           const anyKeepOn = acc.vms.some(v => v.keepaliveEnabled !== false);
           const allKeepOn = acc.vms.every(v => v.keepaliveEnabled !== false);
           if (allKeepOn && acc.vms.length > 1) {
-            multiStatusEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">🟢 全量多机保活已激活</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">${statusWithText("ok", "全量多机保活已激活")}</span>`;
           } else if (anyKeepOn) {
-            multiStatusEl.innerHTML = `<span style="color: #0284c7; font-weight: 600;">🟡 按单机策略保活中</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #0284c7; font-weight: 600;">${statusWithText("warn", "按单机策略保活中")}</span>`;
           } else {
-            multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">⚪ 单机保活已全关</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "单机保活已全关")}</span>`;
           }
         }
       }
@@ -1678,7 +1678,7 @@ function updateAccountsInPlace(filteredAccounts) {
             keepText = '待命(总关)';
           }
           pKeep.className = `pill-toggle-btn ${keepClass}`;
-          pKeep.innerText = `⚡保活: ${keepText}`;
+          pKeep.innerHTML = pillKeepLabel(keepText);
         }
         const pInterval = document.getElementById(`pill-interval-${acc.id}-${usid}`);
         if (pInterval && document.activeElement !== pInterval) {
@@ -1692,7 +1692,7 @@ function updateAccountsInPlace(filteredAccounts) {
           const vmIsScg = String((vm && vm.vendor) || '').toUpperCase() === 'SCG';
           const on = vm.autoBootEnabled !== undefined ? vm.autoBootEnabled !== false : vmIsScg;
           pAutoBoot.className = `pill-toggle-btn ${on ? 'pill-on-keepalive' : 'pill-off-keepalive'}`;
-          pAutoBoot.innerText = `🛡️守护: ${on ? '开' : '关'}`;
+          pAutoBoot.innerHTML = pillGuardLabel(on);
         }
         // 【2026-09-23 新增】同步"运行中则隐藏 🖥️开机 按钮"（整卡片重绘会处理新增，这里只处理隐藏）
         const statusStr = String(vm.vmStatus || vm.vmStatusShow || '');
@@ -1709,16 +1709,16 @@ function updateAccountsInPlace(filteredAccounts) {
 
       if (multiStatusEl) {
         if (isGlobalKeepAliveOff) {
-          multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">⚪ 全局保活已关闭</span>`;
+          multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "全局保活已关闭")}</span>`;
         } else {
           const anyKeepOn = acc.desktops.some(d => d.keepaliveEnabled !== false);
           const allKeepOn = acc.desktops.every(d => d.keepaliveEnabled !== false);
           if (allKeepOn && acc.desktops.length > 1) {
-            multiStatusEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">🟢 全量多机保活已激活</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">${statusWithText("ok", "全量多机保活已激活")}</span>`;
           } else if (anyKeepOn) {
-            multiStatusEl.innerHTML = `<span style="color: #0284c7; font-weight: 600;">🟡 按单机策略保活中</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #0284c7; font-weight: 600;">${statusWithText("warn", "按单机策略保活中")}</span>`;
           } else {
-            multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">⚪ 单机保活已全关</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "单机保活已全关")}</span>`;
           }
         }
       }
@@ -1735,7 +1735,7 @@ function updateAccountsInPlace(filteredAccounts) {
             keepText = '待命(总关)';
           }
           pKeep.className = `pill-toggle-btn ${keepClass}`;
-          pKeep.innerText = `⚡保活: ${keepText}`;
+          pKeep.innerHTML = pillKeepLabel(keepText);
         }
         const pInterval = document.getElementById(`pill-interval-${acc.id}-${iid}`);
         if (pInterval && document.activeElement !== pInterval) {
@@ -1748,16 +1748,16 @@ function updateAccountsInPlace(filteredAccounts) {
 
       if (multiStatusEl) {
         if (isGlobalKeepAliveOff) {
-          multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">⚪ 全局保活已关闭</span>`;
+          multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "全局保活已关闭")}</span>`;
         } else {
           const anyKeepOn = acc.desktops.some(d => d.keepaliveEnabled !== false);
           const allKeepOn = acc.desktops.every(d => d.keepaliveEnabled !== false);
           if (allKeepOn && acc.desktops.length > 1) {
-            multiStatusEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">🟢 全量多机保活已激活</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">${statusWithText("ok", "全量多机保活已激活")}</span>`;
           } else if (anyKeepOn) {
-            multiStatusEl.innerHTML = `<span style="color: #0284c7; font-weight: 600;">🟡 按单机策略保活中</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #0284c7; font-weight: 600;">${statusWithText("warn", "按单机策略保活中")}</span>`;
           } else {
-            multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">⚪ 单机保活已全关</span>`;
+            multiStatusEl.innerHTML = `<span style="color: #94a3b8; font-weight: 600;">${statusWithText("off", "单机保活已全关")}</span>`;
           }
         }
       }
@@ -1775,7 +1775,7 @@ function updateAccountsInPlace(filteredAccounts) {
             keepText = '待命(总关)';
           }
           pKeep.className = `pill-toggle-btn ${keepClass}`;
-          pKeep.innerText = `⚡保活: ${keepText}`;
+          pKeep.innerHTML = pillKeepLabel(keepText);
         }
         const pTask = document.getElementById(`pill-task-${acc.id}-${targetId}`);
         if (pTask) {
@@ -1786,7 +1786,7 @@ function updateAccountsInPlace(filteredAccounts) {
             taskText = '待命(总关)';
           }
           pTask.className = `pill-toggle-btn ${taskClass}`;
-          pTask.innerText = `🎯任务: ${taskText}`;
+          pTask.innerHTML = pillTaskLabel(taskText);
         }
         const pInterval = document.getElementById(`pill-interval-${acc.id}-${targetId}`);
         if (pInterval && document.activeElement !== pInterval) {
@@ -1809,14 +1809,14 @@ function renderAccounts(isSilent = false) {
   if (!currentUser) {
     container.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 48px 24px; background: var(--bg-surface); border-radius: var(--radius); border: 1px dashed var(--border); box-shadow: var(--shadow);">
-        <div style="font-size: 40px; margin-bottom: 12px;">🔒</div>
+        <div style="font-size: 40px; margin-bottom: 12px;">${ri("lock-line")}</div>
         <h3 style="font-size: 17px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">请登录后查看与管理云电脑</h3>
         <p style="font-size: 13.5px; color: var(--text-muted); max-width: 500px; margin: 0 auto 20px auto;">
           为保障账号隐私安全与多用户隔离，未登录访客无法查看或添加云电脑。请登录已有账号，或免费注册新账号开启独立后台。
         </p>
         <div style="display: flex; gap: 12px; justify-content: center;">
-          <button class="btn btn-primary" onclick="openAuthModal('login')">🔑 立即登录</button>
-          <button class="btn" onclick="openAuthModal('register')">✨ 免费注册新用户</button>
+          <button class="btn btn-primary" onclick="openAuthModal('login')">${riLabel('key-line', '立即登录')}</button>
+          <button class="btn" onclick="openAuthModal('register')">${riLabel('sparkling-line', '免费注册新用户')}</button>
         </div>
       </div>
     `;
@@ -1853,7 +1853,7 @@ function renderAccounts(isSilent = false) {
     container.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-secondary); border-radius: var(--radius); border: 1px dashed var(--border);">
         <p style="font-size: 15px; margin-bottom: 12px;">当前暂未配置【${tabName}】设备</p>
-        <button class="btn btn-primary" onclick="openAddAccountModal()">➕ 立即添加云电脑</button>
+        <button class="btn btn-primary" onclick="openAddAccountModal()">${riLabel('add-line', '立即添加云电脑')}</button>
       </div>
     `;
     return;
@@ -2192,30 +2192,32 @@ async function toggleVmFeature(accId, vmKey, featureName, nextVal) {
   let prefixKey = '';
   let onClass = '';
   let offClass = '';
-  let labelPrefix = '';
   if (featureName === 'keepaliveEnabled') {
     prefixKey = 'pill-keep-';
     onClass = 'pill-on-keepalive';
     offClass = 'pill-off-keepalive';
-    labelPrefix = '⚡保活: ';
   } else if (featureName === 'taskEnabled') {
     prefixKey = 'pill-task-';
     onClass = 'pill-on-task';
     offClass = 'pill-off-task';
-    labelPrefix = '🎯任务: ';
   } else if (featureName === 'autoBootEnabled') {
     // 【2026-09-23 新增】单机自动开机守护胶囊（移动云卡片行内）
     prefixKey = 'pill-autoboot-';
     onClass = 'pill-on-keepalive';
     offClass = 'pill-off-keepalive';
-    labelPrefix = '🛡️守护: ';
   }
 
   const pillBtn = prefixKey ? document.getElementById(prefixKey + accId + '-' + vmKey) : null;
   if (pillBtn) {
     pillBtn.classList.remove(onClass, offClass);
     pillBtn.classList.add(nextVal ? onClass : offClass);
-    pillBtn.innerText = labelPrefix + (nextVal ? '开' : '关');
+    if (featureName === 'keepaliveEnabled') {
+      pillBtn.innerHTML = pillKeepLabel(nextVal ? '开' : '关');
+    } else if (featureName === 'taskEnabled') {
+      pillBtn.innerHTML = pillTaskLabel(nextVal ? '开' : '关');
+    } else if (featureName === 'autoBootEnabled') {
+      pillBtn.innerHTML = pillGuardLabel(nextVal);
+    }
     pillBtn.onclick = () => toggleVmFeature(accId, vmKey, featureName, !nextVal);
   }
 
@@ -2297,7 +2299,7 @@ async function bootCtyunVm(accId, desktopId) {
     });
     const data = await res.json();
     if (res.ok) {
-      showToast(data.msg || "🎉 开机指令下发成功，云电脑正在启动中！", "success");
+      showToast(data.msg || "开机指令下发成功，云电脑正在启动中！", "success");
       setTimeout(() => loadAccounts(true), 3000);
     } else {
       showToast(data.error || "开机指令下发失败", "error");
@@ -2399,19 +2401,19 @@ async function loadQrCodeForModal() {
           const sData = await sRes.json();
           if (sData.success) {
             if (sData.codeStatus === 'scaned') {
-              if (hintEl) { hintEl.innerText = "📱 手机端已扫描，请在手机上点击【确认登录】..."; hintEl.style.color = "#16a34a"; }
+              if (hintEl) { hintEl.innerText = "手机端已扫描，请在手机上点击【确认登录】..."; hintEl.style.color = "#16a34a"; }
             } else if (sData.codeStatus === 'authorize') {
               if (qrPollingTimer) { clearInterval(qrPollingTimer); qrPollingTimer = null; }
-              showToast(sData.isReAuth ? "🎉 官方扫码重新授权成功！已恢复在线保活！" : "🎉 官方扫码授权成功！云电脑已上线！", "success");
+              showToast(sData.isReAuth ? "官方扫码重新授权成功！已恢复在线保活！" : "官方扫码授权成功！云电脑已上线！", "success");
               closeModal("account-modal");
               loadAccounts();
             } else if (sData.codeStatus === 'expire') {
               if (qrPollingTimer) { clearInterval(qrPollingTimer); qrPollingTimer = null; }
-              if (hintEl) { hintEl.innerText = "⚠️ 二维码已失效，点击刷新重试"; hintEl.style.color = "#ef4444"; }
+              if (hintEl) { hintEl.innerText = "二维码已失效，点击刷新重试"; hintEl.style.color = "#ef4444"; }
               if (imgEl) imgEl.style.display = "none";
               if (loadingEl) {
                 loadingEl.style.display = "flex";
-                loadingEl.innerHTML = `<button class="btn btn-sm btn-primary" onclick="loadQrCodeForModal()">🔄 刷新二维码</button>`;
+                loadingEl.innerHTML = `<button class="btn btn-sm btn-primary" onclick="loadQrCodeForModal()">${riLabel('refresh-line', '刷新二维码')}</button>`;
               }
             }
           }
@@ -2605,7 +2607,7 @@ async function saveYdpcAccount() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast("🎉 移动爱家账号修改已保存！", "success");
+        showToast("移动爱家账号修改已保存！", "success");
         closeModal("account-modal");
         await loadAccounts(true);
       } else {
@@ -2627,7 +2629,7 @@ async function saveYdpcAccount() {
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast("🎉 移动爱家添加成功！已自动开启保活守护", "success");
+      showToast("移动爱家添加成功！已自动开启保活守护", "success");
       closeModal("account-modal");
       await loadAccounts(true);
     } else {
@@ -2700,7 +2702,7 @@ async function resendEcloudSmsCode() {
     if (res.ok && data.success) {
       if (data.mobile) pendingEcloudLogin.mobile = data.mobile;
       showEcloudSmsGroup({ mobile: data.mobile || pendingEcloudLogin.mobile, smsSent: true });
-      showToast("📲 验证码已重新发送，请查收", "success");
+      showToast("验证码已重新发送，请查收", "success");
     } else {
       showToast(data.error || "验证码重新发送失败", "error");
     }
@@ -2752,7 +2754,7 @@ async function saveEcloudAccount() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast("🎉 移动公众账号修改已保存！", "success");
+        showToast("移动公众账号修改已保存！", "success");
         closeModal("account-modal");
         await loadAccounts(true);
       } else {
@@ -2778,7 +2780,7 @@ async function saveEcloudAccount() {
 
     if (res.ok && data.success) {
       pendingEcloudLogin = null;
-      showToast(`🎉 移动公众添加成功！已发现 ${(data.desktops || []).length} 台云电脑并启动独立保活守护`, "success");
+      showToast(`移动公众添加成功！已发现 ${(data.desktops || []).length} 台云电脑并启动独立保活守护`, "success");
       closeModal("account-modal");
       await loadAccounts(true);
       return;
@@ -2844,7 +2846,7 @@ async function submitEcloudSmsCode() {
     if (res.ok && data.success) {
       pendingEcloudLogin = null;
       resetEcloudSmsGroup();
-      showToast(`🎉 短信验证通过！已发现 ${(data.desktops || []).length} 台云电脑并启动独立保活守护`, "success");
+      showToast(`短信验证通过！已发现 ${(data.desktops || []).length} 台云电脑并启动独立保活守护`, "success");
       closeModal("account-modal");
       await loadAccounts(true);
       return;
@@ -2893,7 +2895,7 @@ async function syncEcloudDesktops(accId) {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
-      showToast(`🔄 桌面列表已同步（${(data.desktops || []).length} 台）`, "success");
+      showToast(`桌面列表已同步（${(data.desktops || []).length} 台）`, "success");
     } else {
       showToast("同步失败: " + (data.error || `HTTP ${res.status}`), "error");
     }
@@ -2999,7 +3001,7 @@ async function bootYdpcVm(accId, userServiceId, vmName = '') {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && !data.error) {
-      showToast(data.message || data.msg || `🎉 已下发开机指令，${label}正在启动`, "success");
+      showToast(data.message || data.msg || `已下发开机指令，${label}正在启动`, "success");
     } else {
       showToast("开机失败: " + (data.error || data.message || `HTTP ${res.status}`), "error");
     }
@@ -3023,7 +3025,7 @@ async function bootEcloudDesktop(accId, instanceId, vmName = '') {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && !data.error) {
-      showToast(data.message || `🎉 已下发开机指令，${label}正在启动`, "success");
+      showToast(data.message || `已下发开机指令，${label}正在启动`, "success");
     } else {
       showToast("开机失败: " + (data.error || data.message || `HTTP ${res.status}`), "error");
     }
@@ -3054,7 +3056,7 @@ async function pingYdpcCag(accId, userServiceId) {
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast("🟢 ZTEC CAG 握手成功！网关返回 200 OK", "success");
+      showToast("ZTEC CAG 握手成功！网关返回 200 OK", "success");
       await loadAccounts(true);
     } else if (isVmOffSkipResult(data)) {
       showToast("云电脑未开机，本次未发起 CAG 握手（开机后会自动继续）", "info");
@@ -3079,9 +3081,9 @@ async function verifyYdpcKeepAlive(accId) {
       const detail = `持续 ${data.durationSeconds}s / 采样 ${data.snapshots?.length || 0} 次` +
         (data.firstOffSeconds !== null && data.firstOffSeconds !== undefined ? ` / 首次离线于 ${data.firstOffSeconds}s` : "");
       if (data.ok) {
-        showToast(`✅ 独立验证通过：机器全程在线（${detail}）`, "success");
+        showToast(`独立验证通过：机器全程在线（${detail}）`, "success");
       } else {
-        showToast(`⚠️ 独立验证未通过：${data.stopReason || "存在异常"}（${detail}）`, "error");
+        showToast(`独立验证未通过：${data.stopReason || "存在异常"}（${detail}）`, "error");
       }
       await loadAccounts(true);
     } else {
@@ -3104,7 +3106,7 @@ async function heartbeatYdpc(accId, userServiceId) {
     });
     const data = await res.json();
     if (res.ok && (data.code === 2000 || data.code === 0 || data.success)) {
-      showToast("💓 SOHO 心跳保持成功！", "success");
+      showToast("SOHO 心跳保持成功！", "success");
       await loadAccounts(true);
     } else if (isVmOffSkipResult(data)) {
       showToast("云电脑未开机，本次未发送心跳（开机后会自动继续）", "info");
@@ -3198,11 +3200,11 @@ async function saveAccount() {
     const data = await res.json();
     if (res.ok) {
       closeModal("account-modal");
-      showToast(accId ? "账号更新成功！" : "🎉 账号真实验证成功，已添加并启动保活！", "success");
+      showToast(accId ? "账号更新成功！" : "账号真实验证成功，已添加并启动保活！", "success");
       checkCurrentUser();
       loadAccounts();
     } else {
-      showToast("❌ 操作未通过: " + (data.error || "验证码或密码错误"), "error");
+      showToast("操作未通过: " + (data.error || "验证码或密码错误"), "error");
       refreshModalCaptcha();
     }
   } catch (e) {
@@ -3656,7 +3658,7 @@ async function submitManualRedeemOrder() {
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast(data.message || `🎉 成功兑换 ${prodName} x${times}！`, data.partial ? "warning" : "success");
+      showToast(data.message || `成功兑换 ${prodName} x${times}！`, data.partial ? "warning" : "success");
       closeModal("manual-redeem-modal");
       await loadAccounts();
     } else {
@@ -3759,7 +3761,7 @@ function renderPowerDesktopSelect(list, targetDesktopId) {
     opt.value = d.desktopId;
     opt.dataset.status = d.useStatusText || '运行中';
     const flavor = d.flavorName ? ` [${d.flavorName}]` : '';
-    opt.innerText = `🖥️ ${d.desktopName || '云电脑'}${flavor} - (${d.useStatusText || '运行中'})`;
+    opt.textContent = `${d.desktopName || '云电脑'}${flavor} - (${d.useStatusText || '运行中'})`;
     
     // 如果指定了 targetDesktopId，或者首项匹配
     if (targetDesktopId && String(targetDesktopId) === String(d.desktopId)) {
@@ -3783,7 +3785,7 @@ function onPowerDesktopChange() {
   if (selectedOpt && selectedOpt.dataset.status) {
     const st = selectedOpt.dataset.status;
     const isRunning = st.includes('运行');
-    statusEl.innerHTML = `<span style="color: ${isRunning ? '#16a34a' : '#d97706'}; font-weight:700;">${isRunning ? '🟢 ' : '⚪ '}${st}</span>`;
+    statusEl.innerHTML = `<span class="status-with-text" style="color: ${isRunning ? '#16a34a' : '#d97706'}; font-weight:700;">${statusDot(isRunning ? "ok" : "off")}<span>${st}</span></span>`;
   } else {
     statusEl.innerHTML = `<span style="color: #64748b;">就绪</span>`;
   }
@@ -3873,7 +3875,7 @@ async function launchWebDesktop(accId, targetDesktopId = '') {
       // 移动端：直接全屏沉浸式在新标签页/全屏视图打开，充分利用手机全部横向像素！
       const mobileWin = window.open(launchUrl, '_blank');
       if (mobileWin) {
-        showToast(`📱 正在全屏打开【${data.desktopName}】操作界面！建议将手机横屏使用以获得最佳体验。`, "success");
+        showToast(`正在全屏打开【${data.desktopName}】操作界面！建议将手机横屏使用以获得最佳体验。`, "success");
       } else {
         window.location.href = launchUrl;
       }
@@ -3924,7 +3926,7 @@ async function syncAccountTasks(accId) {
       await authFetch(`/api/accounts/${accId}/run/${t.type}`, { method: "POST" });
     }
 
-    showToast(`🎉【${acc.name || acc.user}】已开启任务（${tasksToRun.map(t=>t.name).join('/')}）已即时完成同步！`, "success");
+    showToast(`【${acc.name || acc.user}】已开启任务（${tasksToRun.map(t=>t.name).join('/')}）已即时完成同步！`, "success");
     setTimeout(() => loadAccounts(true), 1200);
   } catch (e) {
     showToast("任务同步异常: " + e.message, "error");
@@ -4197,7 +4199,7 @@ async function testUserNotify() {
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast("🎉 推送成功！已向您的专属通道发送测试卡片", "success");
+      showToast("推送成功！已向您的专属通道发送测试卡片", "success");
     } else {
       showToast(`推送失败: ${data.message || '网络无法连通或已被系统安全拦截'}`, "error");
     }
@@ -4583,7 +4585,7 @@ async function exportConfigJson() {
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
-    showToast("🎉 配置备份文件已成功下载！", "success");
+    showToast("配置备份文件已成功下载！", "success");
   } catch (e) {
     showToast("导出失败: " + e.message, "error");
   }
@@ -4872,7 +4874,7 @@ function updateAvatarPreview(text) {
   const preview = document.getElementById("current-avatar-preview");
   if (!preview) return;
   const val = (text || '').trim();
-  preview.innerText = val ? val.slice(0, 2) : ((currentUser?.username || "A")[0].toUpperCase());
+  renderUserAvatar(preview, val, (currentUser?.username || "A")[0].toUpperCase());
 }
 
 async function submitChangeAvatar() {
@@ -4892,8 +4894,8 @@ async function submitChangeAvatar() {
     if (res.ok && data.success) {
       if (currentUser) currentUser.avatar = customAvatar;
       const headerAvatar = document.getElementById("header-avatar");
-      if (headerAvatar) headerAvatar.innerText = customAvatar.slice(0, 2);
-      showToast("🎉 头像个性化设置已保存！", "success");
+      renderUserAvatar(headerAvatar, customAvatar, (currentUser?.username || "A")[0].toUpperCase());
+      showToast("头像个性化设置已保存！", "success");
     } else {
       showToast(data.error || "头像设置失败", "error");
     }

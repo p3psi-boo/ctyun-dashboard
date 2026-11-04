@@ -353,6 +353,8 @@ function rewardNeedsDesktop(prodId, prodType) {
       if (rel.endsWith('.css')) type = 'text/css; charset=utf-8';
       else if (rel.endsWith('.js')) type = 'application/javascript; charset=utf-8';
       else if (rel.endsWith('.html')) type = 'text/html; charset=utf-8';
+      else if (rel.endsWith('.woff2')) type = 'font/woff2';
+      else if (rel.endsWith('.woff')) type = 'font/woff';
       serveStatic(res, file, type);
     } else {
       const targetUrl = 'https://pc.ctyun.cn' + pathname;

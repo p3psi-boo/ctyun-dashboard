@@ -17,6 +17,7 @@
     "verify": "bun tests/syntax_check.js && tsc --noEmit && bun tests/regression.test.js && bun tests/mutation_check.js && bun analysis/smoke_check.js"
   },
   "dependencies": {
+    "remixicon": "^4.9.1",
     "ws": "^8.18.3"
   },
   "devDependencies": {

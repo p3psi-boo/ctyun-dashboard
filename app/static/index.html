@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>天翼云 / 移动爱家 保活签到中心</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/vendor/remixicon/remixicon.css">
 </head>
 <body>
   <div class="container">
     <!-- 顶部导航 -->
     <header>
       <div class="logo-group">
-        <div class="logo-icon">☁️</div>
+        <div class="logo-icon"><i class="ri-cloud-line" aria-hidden="true"></i></div>
         <div class="title-group">
           <h1 id="main-system-title">天翼云 / 移动爱家 保活签到中心</h1>
           <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">多账号长连接保活守护 · 多运营商支持 · 每日签到打卡 · 智能挂机</p>
@@ -19,22 +20,22 @@
       </div>
       <div class="header-actions">
         <!-- Adobe Spectrum 主题切换（浅色 / 深色，选择持久化在 localStorage） -->
-        <button type="button" class="btn btn-sm spectrum-theme-btn" id="btn-spectrum-theme" onclick="toggleSpectrumTheme()" title="切换 Adobe Spectrum 浅色 / 深色主题">☀️ 浅色</button>
+        <button type="button" class="btn btn-sm spectrum-theme-btn" id="btn-spectrum-theme" onclick="toggleSpectrumTheme()" title="切换 Adobe Spectrum 浅色 / 深色主题"><span class="icon-label"><i class="ri-sun-line" aria-hidden="true"></i><span>浅色</span></span></button>
         <!-- 未登录时仅显示登录/注册按钮 -->
-        <button class="btn btn-primary" id="btn-auth-action" onclick="openAuthModal()">🔑 立即登录</button>
+        <button class="btn btn-primary" id="btn-auth-action" onclick="openAuthModal()"><span class="icon-label"><i class="ri-key-line" aria-hidden="true"></i><span>立即登录</span></span></button>
 
         <!-- 登录后呈现的精简导航区：仅保留「➕ 添加云电脑」、「⚙️ 系统设置下拉」以及「头像下拉框」 -->
         <div id="logged-actions-group" class="hidden" style="display: flex; align-items: center; gap: 10px;">
-          <button class="btn btn-primary" onclick="openAddAccountModal()">➕ 添加云电脑</button>
+          <button class="btn btn-primary" onclick="openAddAccountModal()"><span class="icon-label"><i class="ri-add-line" aria-hidden="true"></i><span>添加云电脑</span></span></button>
 
           <!-- 系统管理下拉菜单栏 (仅超级管理员可见) -->
           <div class="user-dropdown hidden" id="settings-dropdown-container">
-            <button class="btn" onclick="toggleSettingsMenu()">⚙️ 系统管理 ▾</button>
+            <button class="btn" onclick="toggleSettingsMenu()"><span class="icon-label"><i class="ri-settings-3-line" aria-hidden="true"></i><span>系统管理 ▾</span></span></button>
             <div class="dropdown-menu hidden" id="settings-dropdown-menu">
-              <button class="dropdown-item" onclick="openSettingsModal(); hideSettingsMenu();">⚙️ 全局系统与平台调度</button>
-              <button class="dropdown-item" onclick="openAdminUsersModal(); hideSettingsMenu();">👥 用户与配额管理</button>
-              <button class="dropdown-item" onclick="restartKeeper(); hideSettingsMenu();">🔄 重启保活</button>
-              <button class="dropdown-item" onclick="openBackupModal(); hideSettingsMenu();">📦 备份与还原 (JSON)</button>
+              <button class="dropdown-item" onclick="openSettingsModal(); hideSettingsMenu();"><span class="icon-label"><i class="ri-settings-3-line" aria-hidden="true"></i><span>全局系统与平台调度</span></span></button>
+              <button class="dropdown-item" onclick="openAdminUsersModal(); hideSettingsMenu();"><span class="icon-label"><i class="ri-group-line" aria-hidden="true"></i><span>用户与配额管理</span></span></button>
+              <button class="dropdown-item" onclick="restartKeeper(); hideSettingsMenu();"><span class="icon-label"><i class="ri-refresh-line" aria-hidden="true"></i><span>重启保活</span></span></button>
+              <button class="dropdown-item" onclick="openBackupModal(); hideSettingsMenu();"><span class="icon-label"><i class="ri-archive-line" aria-hidden="true"></i><span>备份与还原 (JSON)</span></span></button>
             </div>
           </div>
 
@@ -45,10 +46,10 @@
               <div style="padding: 8px 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border);">
                 登录身份: <span id="dropdown-username" style="font-weight: 700; color: var(--text-main);">admin</span>
               </div>
-              <button class="dropdown-item" onclick="openUserNotifyModal(); hideUserMenu();">🔔 个人消息通知设置</button>
-              <button class="dropdown-item" id="menu-change-pwd" onclick="openChangePwdModal(); hideUserMenu();">🔒 修改密码</button>
+              <button class="dropdown-item" onclick="openUserNotifyModal(); hideUserMenu();"><span class="icon-label"><i class="ri-notification-3-line" aria-hidden="true"></i><span>个人消息通知设置</span></span></button>
+              <button class="dropdown-item" id="menu-change-pwd" onclick="openChangePwdModal(); hideUserMenu();"><span class="icon-label"><i class="ri-lock-line" aria-hidden="true"></i><span>修改密码</span></span></button>
               <div class="dropdown-divider"></div>
-              <button class="dropdown-item" onclick="logoutUser(); hideUserMenu();" style="color: var(--danger);">🚪 退出登录</button>
+              <button class="dropdown-item" onclick="logoutUser(); hideUserMenu();" style="color: var(--danger);"><span class="icon-label"><i class="ri-logout-box-r-line" aria-hidden="true"></i><span>退出登录</span></span></button>
             </div>
           </div>
         </div>
@@ -58,28 +59,28 @@
     <!-- 统计卡片 (未登录时不渲染显示) -->
     <div class="stats-grid hidden" id="main-stats-grid">
       <div class="stat-card">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon"><i class="ri-group-line" aria-hidden="true"></i></div>
         <div class="stat-info">
           <div class="stat-value" id="stat-total">0</div>
           <div class="stat-label">配置账号总数</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">📡</div>
+        <div class="stat-icon"><i class="ri-broadcast-line" aria-hidden="true"></i></div>
         <div class="stat-info">
           <div class="stat-value" id="stat-online">0</div>
           <div class="stat-label">保活在线状态</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">📅</div>
+        <div class="stat-icon"><i class="ri-calendar-line" aria-hidden="true"></i></div>
         <div class="stat-info">
           <div class="stat-value" id="stat-signed">0</div>
           <div class="stat-label">今日已签到</div>
         </div>
       </div>
       <div class="stat-card" style="cursor: pointer;" onclick="openPointsDetailModal()" title="点击查看各云电脑今日积分明细">
-        <div class="stat-icon">🎁</div>
+        <div class="stat-icon"><i class="ri-gift-line" aria-hidden="true"></i></div>
         <div class="stat-info">
           <div class="stat-value" id="stat-points" style="color: var(--success);">0</div>
           <div class="stat-label">每日已获得积分 (查看明细 ↗)</div>
@@ -90,17 +91,17 @@
     <!-- 账号列表区域 -->
     <div class="section-header hidden" id="main-section-header">
       <div class="section-title">
-        <span>📋</span> 账号管理与自动化配置
+        <span><i class="ri-file-list-3-line" aria-hidden="true"></i></span> 账号管理与自动化配置
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
         <!-- 平台视图切换 Tab (双云平台并存时自动智能呈现) -->
         <div id="account-view-tabs-group" class="spectrum-action-group" style="display: none; gap: 4px; background: var(--bg-muted); padding: 2px 4px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
-          <button class="btn btn-sm btn-primary" id="view-tab-all" onclick="switchAccountViewTab('all')">🌐 全部设备</button>
-          <button class="btn btn-sm" id="view-tab-ctyun" onclick="switchAccountViewTab('ctyun')">☁️ 天翼云电脑</button>
-          <button class="btn btn-sm" id="view-tab-ydpc" onclick="switchAccountViewTab('ydpc')">🏠 移动爱家</button>
-          <button class="btn btn-sm" id="view-tab-ecloud" onclick="switchAccountViewTab('ecloud')">📡 移动公众</button>
+          <button class="btn btn-sm btn-primary" id="view-tab-all" onclick="switchAccountViewTab('all')"><span class="icon-label"><i class="ri-global-line" aria-hidden="true"></i><span>全部设备</span></span></button>
+          <button class="btn btn-sm" id="view-tab-ctyun" onclick="switchAccountViewTab('ctyun')"><span class="icon-label"><i class="ri-cloud-line" aria-hidden="true"></i><span>天翼云电脑</span></span></button>
+          <button class="btn btn-sm" id="view-tab-ydpc" onclick="switchAccountViewTab('ydpc')"><span class="icon-label"><i class="ri-home-4-line" aria-hidden="true"></i><span>移动爱家</span></span></button>
+          <button class="btn btn-sm" id="view-tab-ecloud" onclick="switchAccountViewTab('ecloud')"><span class="icon-label"><i class="ri-broadcast-line" aria-hidden="true"></i><span>移动公众</span></span></button>
         </div>
-        <button class="btn-refresh" onclick="loadAccounts()">🔄 刷新列表</button>
+        <button class="btn-refresh" onclick="loadAccounts()"><span class="icon-label"><i class="ri-refresh-line" aria-hidden="true"></i><span>刷新列表</span></span></button>
       </div>
     </div>
 
@@ -124,17 +125,17 @@
         <div class="log-header-controls">
           <!-- 平台快速过滤子按钮 -->
           <div class="log-filter-group" id="log-platform-group">
-            <button class="btn btn-sm btn-primary" id="tab-platform-all" onclick="switchPlatformFilter('all')">🌐 全部</button>
-            <button class="btn btn-sm" id="tab-platform-ctyun" onclick="switchPlatformFilter('ctyun')">☁️ 天翼云</button>
-            <button class="btn btn-sm" id="tab-platform-ydpc" onclick="switchPlatformFilter('ydpc')">🏠 移动爱家</button>
-            <button class="btn btn-sm" id="tab-platform-ecloud" onclick="switchPlatformFilter('ecloud')">📡 移动公众</button>
+            <button class="btn btn-sm btn-primary" id="tab-platform-all" onclick="switchPlatformFilter('all')"><span class="icon-label"><i class="ri-global-line" aria-hidden="true"></i><span>全部</span></span></button>
+            <button class="btn btn-sm" id="tab-platform-ctyun" onclick="switchPlatformFilter('ctyun')"><span class="icon-label"><i class="ri-cloud-line" aria-hidden="true"></i><span>天翼云</span></span></button>
+            <button class="btn btn-sm" id="tab-platform-ydpc" onclick="switchPlatformFilter('ydpc')"><span class="icon-label"><i class="ri-home-4-line" aria-hidden="true"></i><span>移动爱家</span></span></button>
+            <button class="btn btn-sm" id="tab-platform-ecloud" onclick="switchPlatformFilter('ecloud')"><span class="icon-label"><i class="ri-broadcast-line" aria-hidden="true"></i><span>移动公众</span></span></button>
           </div>
 
           <!-- 业务事件子按钮（【2026-09-24 用户要求·第三轮】顺序 = 全部 → 心跳保活 → 任务，且默认选中「全部」） -->
           <div class="log-filter-group" id="log-event-group">
-            <button class="btn btn-sm btn-primary" id="tab-all" onclick="switchLogFilter('all')">📄 全部</button>
-            <button class="btn btn-sm" id="tab-heartbeat" onclick="switchLogFilter('heartbeat')">📡 心跳保活</button>
-            <button class="btn btn-sm" id="tab-tasks" onclick="switchLogFilter('tasks')">🎯 任务</button>
+            <button class="btn btn-sm btn-primary" id="tab-all" onclick="switchLogFilter('all')"><span class="icon-label"><i class="ri-file-text-line" aria-hidden="true"></i><span>全部</span></span></button>
+            <button class="btn btn-sm" id="tab-heartbeat" onclick="switchLogFilter('heartbeat')"><span class="icon-label"><i class="ri-broadcast-line" aria-hidden="true"></i><span>心跳保活</span></span></button>
+            <button class="btn btn-sm" id="tab-tasks" onclick="switchLogFilter('tasks')"><span class="icon-label"><i class="ri-focus-3-line" aria-hidden="true"></i><span>任务</span></span></button>
           </div>
 
           <div class="log-action-group">
@@ -161,17 +162,17 @@
         
         <!-- 平台选择 Tab (三平台并行：天翼云 / 移动爱家 / 移动公众) -->
         <div id="platform-tabs-container" class="spectrum-action-group" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; background: var(--bg-muted); padding: 4px; border-radius: var(--radius); border: 1px solid var(--border);">
-          <button type="button" class="btn btn-sm btn-primary" id="platform-tab-ctyun" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ctyun')">☁️ 天翼云电脑</button>
-          <button type="button" class="btn btn-sm" id="platform-tab-ydpc" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ydpc')">🏠 移动爱家</button>
-          <button type="button" class="btn btn-sm" id="platform-tab-ecloud" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ecloud')">📡 移动公众</button>
+          <button type="button" class="btn btn-sm btn-primary" id="platform-tab-ctyun" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ctyun')"><span class="icon-label"><i class="ri-cloud-line" aria-hidden="true"></i><span>天翼云电脑</span></span></button>
+          <button type="button" class="btn btn-sm" id="platform-tab-ydpc" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ydpc')"><span class="icon-label"><i class="ri-home-4-line" aria-hidden="true"></i><span>移动爱家</span></span></button>
+          <button type="button" class="btn btn-sm" id="platform-tab-ecloud" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ecloud')"><span class="icon-label"><i class="ri-broadcast-line" aria-hidden="true"></i><span>移动公众</span></span></button>
         </div>
 
         <!-- ================= 1. 天翼云面板 ================= -->
         <div id="panel-add-ctyun">
           <!-- 登录方式切换 Tab -->
           <div id="acc-login-tabs" style="display: flex; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-            <button type="button" class="btn btn-sm btn-primary" id="tab-btn-qrcode" onclick="switchAccountLoginTab('qrcode')">📱 手机 App 扫码一键登录 (推荐)</button>
-            <button type="button" class="btn btn-sm" id="tab-btn-pwd" onclick="switchAccountLoginTab('pwd')">🔑 手机号密码登录</button>
+            <button type="button" class="btn btn-sm btn-primary" id="tab-btn-qrcode" onclick="switchAccountLoginTab('qrcode')"><span class="icon-label"><i class="ri-smartphone-line" aria-hidden="true"></i><span>手机 App 扫码一键登录 (推荐)</span></span></button>
+            <button type="button" class="btn btn-sm" id="tab-btn-pwd" onclick="switchAccountLoginTab('pwd')"><span class="icon-label"><i class="ri-key-line" aria-hidden="true"></i><span>手机号密码登录</span></span></button>
           </div>
 
           <!-- 1.1 扫码登录视图 -->
@@ -240,8 +241,8 @@
           <div class="form-group">
             <label>账号类型 <span style="color: var(--danger);">*</span></label>
             <select class="form-control" id="ydpc-account-type">
-              <option value="main">👑 和家亲主账号 (可自动拉取名下所有子云电脑)</option>
-              <option value="sub">👤 独立分配子账号 (单台云电脑专属)</option>
+              <option value="main">和家亲主账号 (可自动拉取名下所有子云电脑)</option>
+              <option value="sub">独立分配子账号 (单台云电脑专属)</option>
             </select>
           </div>
           <div class="form-group">
@@ -281,7 +282,7 @@
         <div id="panel-add-ecloud" class="hidden">
           <!-- 【2026-09-24 用户要求】色调由紫色统一到与天翼云/移动爱家一致的冷色系（现统一取 Adobe Spectrum informative 令牌与 var(--accent) 强调边） -->
           <div class="spectrum-alert spectrum-alert-info" style="display: flex; align-items: flex-start; gap: 8px; padding: 9px 11px; margin-bottom: 10px; background: var(--spectrum-informative-subtle-bg, #e5f0ff); border: 1px solid var(--spectrum-informative-border, #9cc3ff); border-left: 4px solid var(--accent); border-radius: var(--radius-sm);">
-            <span style="font-size: 15px; line-height: 1.2;">📡</span>
+            <span style="font-size: 15px; line-height: 1.2;"><i class="ri-broadcast-line" aria-hidden="true"></i></span>
             <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
               <b>移动公众云电脑 workspace.cmecloud.cn</b><br>
               使用<b>账号 + 密码</b>登录，走后端<b>独立协议侧车</b>，登录若触发设备信任/双因素，将<b>就地进入短信验证</b>步骤。
@@ -313,7 +314,7 @@
 
           <!-- 第二段：短信验证码（仅在登录要求设备信任/双因素时出现） -->
           <div class="form-group hidden spectrum-alert spectrum-alert-notice" id="ecloud-sms-group" style="background: var(--warning-bg); border: 1px solid var(--spectrum-notice-border, #ffc670); border-left: 4px solid var(--warning); border-radius: var(--radius-sm); padding: 10px 12px;">
-            <label style="color: var(--text-main);">📲 短信验证码 <span style="color: var(--danger);">*</span></label>
+            <label style="color: var(--text-main);"><span class="icon-label"><i class="ri-message-2-line" aria-hidden="true"></i><span>短信验证码</span></span> <span style="color: var(--danger);">*</span></label>
             <div style="display: flex; gap: 8px; align-items: center;">
               <input type="text" class="form-control" id="ecloud-sms-code" placeholder="输入收到的短信验证码" maxlength="8" style="flex: 1; letter-spacing: 2px;">
               <button type="button" class="btn btn-sm btn-primary" id="btn-ecloud-sms-submit" onclick="submitEcloudSmsCode()">提交验证</button>
@@ -346,7 +347,7 @@
           由于当前设备首次登录或安全风控策略，天翼云需要向手机号验证授权。验证后将永久信任该设备码！
         </p>
         <button type="button" class="btn btn-primary" style="width: 100%; padding: 9px 12px; font-size: 13px; margin-bottom: 6px;" onclick="openQrTrustFromSms()">
-          📱 手机 App 扫码一键信任设备 (免短信 · 推荐)
+          <span class="icon-label"><i class="ri-smartphone-line" aria-hidden="true"></i><span>手机 App 扫码一键信任设备 (免短信 · 推荐)</span></span>
         </button>
         <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0 12px 0;">
           <div style="flex: 1; height: 1px; background: var(--border);"></div>
@@ -384,7 +385,7 @@
   <div class="modal-backdrop hidden" id="redeem-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3>🎁 自动兑换与抽奖配置</h3>
+        <h3><span class="icon-label"><i class="ri-gift-line" aria-hidden="true"></i><span>自动兑换与抽奖配置</span></span></h3>
         <button class="modal-close" onclick="closeModal('redeem-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -460,7 +461,7 @@
   <div class="modal-backdrop hidden" id="points-detail-modal">
     <div class="modal" style="max-width: 620px;">
       <div class="modal-header">
-        <h3>📊 每日已获得积分详细明细 (天翼云)</h3>
+        <h3><span class="icon-label"><i class="ri-bar-chart-box-line" aria-hidden="true"></i><span>每日已获得积分详细明细 (天翼云)</span></span></h3>
         <button class="modal-close" onclick="closeModal('points-detail-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -482,7 +483,7 @@
   <div class="modal-backdrop hidden" id="power-modal">
     <div class="modal" style="max-width: 480px;">
       <div class="modal-header">
-        <h3>⚡ 云电脑电源管理</h3>
+        <h3><span class="icon-label"><i class="ri-flashlight-line" aria-hidden="true"></i><span>云电脑电源管理</span></span></h3>
         <button class="modal-close" onclick="closeModal('power-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -492,7 +493,7 @@
         </p>
 
         <div class="form-group" style="margin-top: 4px;">
-          <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">🖥️ 选择操作目标云电脑</label>
+          <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary);"><span class="icon-label"><i class="ri-computer-line" aria-hidden="true"></i><span>选择操作目标云电脑</span></span></label>
           <select class="form-control" id="power-desktop-select" onchange="onPowerDesktopChange()">
             <!-- 动态填充名下云主机列表 -->
           </select>
@@ -500,13 +501,13 @@
 
         <div id="power-status-box" style="background: var(--bg-surface); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
           <span>当前运行状态:</span>
-          <span id="power-desktop-status" style="font-weight: 700; color: var(--success);">🟢 运行中</span>
+          <span id="power-desktop-status" style="font-weight: 700; color: var(--success);"><span class="status-with-text"><span class="status-dot status-dot--ok" aria-hidden="true"></span><span>运行中</span></span></span>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 6px;">
-          <button class="btn btn-success" id="power-btn-boot" onclick="executePowerAction('poweron')">🟢 开机 / 唤醒</button>
-          <button class="btn btn-warning" onclick="executePowerAction('reboot')">🔄 重启云电脑</button>
-          <button class="btn btn-danger" onclick="executePowerAction('shutdown')">🔴 关机</button>
+          <button class="btn btn-success" id="power-btn-boot" onclick="executePowerAction('poweron')"><span class="icon-label"><i class="ri-play-circle-line" aria-hidden="true"></i><span>开机 / 唤醒</span></span></button>
+          <button class="btn btn-warning" onclick="executePowerAction('reboot')"><span class="icon-label"><i class="ri-refresh-line" aria-hidden="true"></i><span>重启云电脑</span></span></button>
+          <button class="btn btn-danger" onclick="executePowerAction('shutdown')"><span class="icon-label"><i class="ri-stop-circle-line" aria-hidden="true"></i><span>关机</span></span></button>
         </div>
       </div>
       <div class="modal-footer">
@@ -519,7 +520,7 @@
   <div class="modal-backdrop hidden" id="manual-redeem-modal">
     <div class="modal" style="max-width: 540px;">
       <div class="modal-header">
-        <h3>🎁 手动积分兑换 / 幸运抽奖</h3>
+        <h3><span class="icon-label"><i class="ri-gift-line" aria-hidden="true"></i><span>手动积分兑换 / 幸运抽奖</span></span></h3>
         <button class="modal-close" onclick="closeModal('manual-redeem-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -561,11 +562,11 @@
   <div class="modal-backdrop hidden" id="settings-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3>⚙️ 全局系统与平台调度设置</h3>
+        <h3><span class="icon-label"><i class="ri-settings-3-line" aria-hidden="true"></i><span>全局系统与平台调度设置</span></span></h3>
         <button class="modal-close" onclick="closeModal('settings-modal')">&times;</button>
       </div>
       <div class="modal-body">
-        <h4 style="font-size: 14px; margin-top: 4px; color: var(--accent);">⏰ 精准时间点自动化调度 (北京时间，零空转超低功耗模式)</h4>
+        <h4 style="font-size: 14px; margin-top: 4px; color: var(--accent);"><span class="icon-label"><i class="ri-time-line" aria-hidden="true"></i><span>精准时间点自动化调度 (北京时间，零空转超低功耗模式)</span></span> (北京时间，零空转超低功耗模式)</h4>
         <div class="form-group">
           <label>每日任务准时触发时间点 (主调度中心)</label>
           <input type="text" class="form-control" id="cron-task-time" value="01:20" placeholder="01:20">
@@ -605,7 +606,7 @@
           </div>
         </details>
 
-        <h4 style="font-size: 14px; margin-top: 14px; color: var(--accent);">🏷️ 平台与品牌个性化</h4>
+        <h4 style="font-size: 14px; margin-top: 14px; color: var(--accent);"><span class="icon-label"><i class="ri-price-tag-3-line" aria-hidden="true"></i><span>平台与品牌个性化</span></span></h4>
         <div class="form-group">
           <label>控制台主标题名称</label>
           <input type="text" class="form-control" id="set-system-title" placeholder="天翼云 / 移动爱家 保活签到中心">
@@ -617,7 +618,7 @@
           <div class="form-text">自定义主标题下方的功能特性副标题，管理员修改后全局即时同步生效。</div>
         </div>
 
-        <h4 style="font-size: 14px; margin-top: 14px; color: var(--accent);">👥 多用户开放注册与默认配额</h4>
+        <h4 style="font-size: 14px; margin-top: 14px; color: var(--accent);"><span class="icon-label"><i class="ri-group-line" aria-hidden="true"></i><span>多用户开放注册与默认配额</span></span>与默认配额</h4>
         <div class="form-group">
           <div style="display: flex; align-items: center; gap: 10px;">
             <label class="switch">
@@ -644,7 +645,7 @@
   <div class="modal-backdrop hidden" id="user-notify-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3>🔔 个人消息通知推送设置</h3>
+        <h3><span class="icon-label"><i class="ri-notification-3-line" aria-hidden="true"></i><span>个人消息通知推送设置</span></span></h3>
         <button class="modal-close" onclick="closeModal('user-notify-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -692,7 +693,7 @@
           <div class="form-text">支持插值变量：<code>{title}</code>、<code>{content}</code>、<code>{account}</code>、<code>{task}</code>、<code>{status}</code>、<code>{time}</code></div>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:4px;">
-          <button class="btn btn-sm btn-success" type="button" onclick="testUserNotify()">📨 立即测试推送</button>
+          <button class="btn btn-sm btn-success" type="button" onclick="testUserNotify()"><span class="icon-label"><i class="ri-mail-send-line" aria-hidden="true"></i><span>立即测试推送</span></span></button>
         </div>
       </div>
       <div class="modal-footer">
@@ -706,20 +707,20 @@
   <div class="modal-backdrop hidden" id="backup-modal">
     <div class="modal" style="max-width: 600px;">
       <div class="modal-header">
-        <h3>📦 配置导出与备份还原</h3>
+        <h3><span class="icon-label"><i class="ri-archive-line" aria-hidden="true"></i><span>配置导出与备份还原</span></span></h3>
         <button class="modal-close" onclick="closeModal('backup-modal')">&times;</button>
       </div>
       <div class="modal-body">
         <div class="spectrum-well" style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-          <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">📥 导出配置备份 (JSON)</h4>
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;"><span class="icon-label"><i class="ri-download-line" aria-hidden="true"></i><span>导出配置备份 (JSON)</span></span></h4>
           <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;">
             一键下载当前名下所有天翼云账号、分辨率、自动兑换与系统设置的完整 JSON 备份文件。
           </p>
-          <button class="btn btn-primary" onclick="exportConfigJson()">⬇️ 导出并下载配置文件</button>
+          <button class="btn btn-primary" onclick="exportConfigJson()"><span class="icon-label"><i class="ri-download-2-line" aria-hidden="true"></i><span>导出并下载配置文件</span></span></button>
         </div>
 
         <div class="spectrum-well" style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-top: 10px;">
-          <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">📤 导入还原配置 (JSON)</h4>
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;"><span class="icon-label"><i class="ri-upload-line" aria-hidden="true"></i><span>导入还原配置 (JSON)</span></span></h4>
           <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px;">
             上传之前备份的 JSON 文件即可一键批量导入所有账号，系统将自动唤醒所有云电脑长连接保活！
           </p>
@@ -732,7 +733,7 @@
           </div>
           <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="handleFileSelected(this)">
           <div style="display: flex; gap: 10px; align-items: center;">
-            <button class="btn btn-success" onclick="document.getElementById('import-file-input').click()">📂 选择并上传 JSON 文件</button>
+            <button class="btn btn-success" onclick="document.getElementById('import-file-input').click()"><span class="icon-label"><i class="ri-folder-open-line" aria-hidden="true"></i><span>选择并上传 JSON 文件</span></span></button>
             <span id="import-file-name" style="font-size: 12.5px; color: var(--text-muted);">未选择文件</span>
           </div>
         </div>
@@ -786,7 +787,7 @@
   <div class="modal-backdrop hidden" id="change-pwd-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3>🔒 个人账号与安全设置</h3>
+        <h3><span class="icon-label"><i class="ri-lock-line" aria-hidden="true"></i><span>个人账号与安全设置</span></span></h3>
         <button class="modal-close" onclick="closeModal('change-pwd-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -805,18 +806,18 @@
             <div id="current-avatar-preview" style="width: 36px; height: 36px; border-radius: 50%; background: var(--text-main); color: var(--bg-surface); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">A</div>
           </div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;" id="avatar-presets-container">
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('👨‍💻')">👨‍💻</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('🤖')">🤖</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('👑')">👑</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('🚀')">🚀</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('⚡')">⚡</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('🐱')">🐱</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('🦊')">🦊</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('🛡️')">🛡️</button>
-            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('🌟')">🌟</button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-user-smile-line')"><i class="ri-user-smile-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-robot-2-line')"><i class="ri-robot-2-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-vip-crown-line')"><i class="ri-vip-crown-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-rocket-line')"><i class="ri-rocket-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-flashlight-line')"><i class="ri-flashlight-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-emotion-happy-line')"><i class="ri-emotion-happy-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-emotion-laugh-line')"><i class="ri-emotion-laugh-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-shield-check-line')"><i class="ri-shield-check-line" aria-hidden="true"></i></button>
+            <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('ri-star-line')"><i class="ri-star-line" aria-hidden="true"></i></button>
           </div>
           <div style="display: flex; gap: 8px;">
-            <input type="text" class="form-control" id="custom-user-avatar" placeholder="自定义文字或 Emoji (例如 🌟 或 鹏)" maxlength="6" style="flex: 1;" oninput="updateAvatarPreview(this.value)">
+            <input type="text" class="form-control" id="custom-user-avatar" placeholder="自定义文字或 Remix 图标类名 (例如 ri-star-line 或 鹏)" maxlength="6" style="flex: 1;" oninput="updateAvatarPreview(this.value)">
             <button type="button" class="btn btn-sm btn-primary" onclick="submitChangeAvatar()" style="white-space: nowrap;">保存头像</button>
           </div>
         </div>
@@ -841,7 +842,7 @@
   <div class="modal-backdrop hidden" id="admin-user-pwd-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3>🔑 修改指定用户密码</h3>
+        <h3><span class="icon-label"><i class="ri-key-line" aria-hidden="true"></i><span>修改指定用户密码</span></span></h3>
         <button class="modal-close" onclick="closeModal('admin-user-pwd-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -866,7 +867,7 @@
   <div class="modal-backdrop hidden" id="admin-users-modal">
     <div class="modal" style="max-width: 720px;">
       <div class="modal-header">
-        <h3>👥 平台用户与云电脑配额管理</h3>
+        <h3><span class="icon-label"><i class="ri-group-line" aria-hidden="true"></i><span>平台用户与云电脑配额管理</span></span></h3>
         <button class="modal-close" onclick="closeModal('admin-users-modal')">&times;</button>
       </div>
       <div class="modal-body">
@@ -901,7 +902,7 @@
       <div>云电脑可视化全功能多账号管理平台 · 纯协议超轻量架构</div>
       <div style="margin-top: 6px;" id="footer-version-container">
         <span id="footer-version-badge" style="color: var(--text-muted); cursor: default;">
-          📌 当前版本: v2.3.1
+          <span class="icon-label"><i class="ri-pushpin-line" aria-hidden="true"></i><span>当前版本: v2.3.1</span></span> v2.3.1
         </span>
       </div>
     </footer>
@@ -911,7 +912,7 @@
   <div class="modal-backdrop hidden" id="release-notes-modal">
     <div class="modal" style="max-width: 650px; max-height: 85vh; display: flex; flex-direction: column;">
       <div class="modal-header">
-        <h3>🚀 版本更新说明 (v2.3.1)</h3>
+        <h3><span class="icon-label"><i class="ri-rocket-line" aria-hidden="true"></i><span>版本更新说明 (v2.3.1)</span></span></h3>
         <button class="modal-close" onclick="closeModal('release-notes-modal')">&times;</button>
       </div>
       <div class="modal-body" style="font-size: 13px; line-height: 1.7; color: var(--text-secondary); overflow-y: auto; max-height: calc(85vh - 120px); display: flex; flex-direction: column; gap: 16px;">
@@ -1072,6 +1073,7 @@
   <!-- Toast 浮动提示容器 -->
   <div class="toast-container" id="toast-container"></div>
 
+  <script src="/static/icons.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

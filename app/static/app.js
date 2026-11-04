@@ -38,7 +38,40 @@ async function authFetch(url, options = {}) {
   return fetch(url, options);
 }
 
+// Adobe Spectrum 主题切换：
+// 主题只用一个标记 html[data-spectrum-theme]="light"|"dark" 驱动，颜色全部交给 CSS 令牌，
+// JS 里不写死任何色值；选择持久化在 localStorage，刷新后保持用户上次的偏好。
+function updateSpectrumThemeBtn(theme) {
+  const btn = document.getElementById("btn-spectrum-theme");
+  if (!btn) return;
+  btn.textContent = theme === "dark" ? "🌙 深色" : "☀️ 浅色";
+}
+
+function initSpectrumTheme() {
+  localStorage.removeItem("ctyun_spectrum_theme");
+  const saved = localStorage.getItem("ctyun_spectrum_theme_mode");
+  const theme = saved === "dark" ? "dark" : "light";
+  localStorage.setItem("ctyun_spectrum_theme_mode", theme);
+  document.documentElement.setAttribute("data-spectrum-theme", theme);
+  updateSpectrumThemeBtn(theme);
+  const btn = document.getElementById("btn-spectrum-theme");
+  if (btn && !btn.dataset.spectrumBound) {
+    btn.dataset.spectrumBound = "1";
+    btn.addEventListener("click", toggleSpectrumTheme);
+  }
+}
+
+function toggleSpectrumTheme() {
+  const next = document.documentElement.getAttribute("data-spectrum-theme") === "dark" ? "light" : "dark";
+  localStorage.setItem("ctyun_spectrum_theme_mode", next);
+  document.documentElement.setAttribute("data-spectrum-theme", next);
+  updateSpectrumThemeBtn(next);
+}
+
+initSpectrumTheme();
+
 document.addEventListener("DOMContentLoaded", () => {
+  initSpectrumTheme();
   allReceivedLogs = [];
   renderedLogLines.clear();
   const logBox = document.getElementById("log-content");
@@ -278,17 +311,17 @@ function openPointsDetailModal() {
     let taskRows = (acc.tasks || []).map(t => {
       const isDone = t.completed || t.points > 0;
       return `
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:8px 0; border-bottom:1px dashed #e2e8f0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:8px 0; border-bottom:1px dashed var(--border);">
           <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:14px;">${isDone ? '✅' : '⏳'}</span>
-            <span style="font-weight:600; color:#0f172a;">${escapeHtml(t.name)}</span>
-            <span style="font-size:11px; font-weight:700; color:${isDone ? '#16a34a' : '#64748b'}; background:${isDone ? '#f0fdf4' : '#f1f5f9'}; padding:2px 8px; border-radius:9999px; border:1px solid ${isDone ? '#bbf7d0' : '#e2e8f0'};">
+            <span style="font-weight:600; color:var(--text-main);">${escapeHtml(t.name)}</span>
+            <span style="font-size:11px; font-weight:700; color:${isDone ? '#16a34a' : '#64748b'}; background:${isDone ? '#f0fdf4' : 'var(--bg-muted)'}; padding:2px 8px; border-radius:9999px; border:1px solid ${isDone ? '#bbf7d0' : 'var(--border)'};">
               ${isDone ? `+${t.points} 积分` : `进行中 (${t.progress || '0/1'})`}
             </span>
           </div>
           <div style="display:flex; align-items:center; gap:6px; font-size:12px;">
             <span style="color:var(--text-muted);">达成时间节点:</span>
-            <span style="font-family:monospace; font-weight:600; color:${isDone ? '#2563eb' : '#94a3b8'}; background:${isDone ? '#eff6ff' : '#f8fafc'}; padding:2px 8px; border-radius:4px; border:1px solid ${isDone ? '#dbeafe' : '#f1f5f9'};">
+            <span style="font-family:monospace; font-weight:600; color:${isDone ? '#2563eb' : '#94a3b8'}; background:${isDone ? '#eff6ff' : 'var(--bg-subtle)'}; padding:2px 8px; border-radius:4px; border:1px solid ${isDone ? '#dbeafe' : 'var(--border)'};">
               ${isDone ? `🕒 ${escapeHtml(t.completedAt || '今日已达成')}` : '等待今日达成'}
             </span>
           </div>
@@ -298,7 +331,7 @@ function openPointsDetailModal() {
 
     item.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);">
-        <span style="font-size:14px; font-weight:700; color:#0f172a;">🖥️ ${escapeHtml(acc.accountName)}</span>
+        <span style="font-size:14px; font-weight:700; color:var(--text-main);">🖥️ ${escapeHtml(acc.accountName)}</span>
         <span style="font-size:13px; color:#16a34a; font-weight:700;">今日获得: +${acc.todayPoints}分 (总积分: ${acc.totalPoints})</span>
       </div>
       <div style="display:flex; flex-direction:column; gap:2px;">
@@ -468,15 +501,15 @@ function buildOfficialTasksHtml(m) {
       }
 
       return `
-        <div style="background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+        <div style="background: var(--bg-surface); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 5px; gap: 6px;">
-            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎯 <b style="color:#0f172a;">${t.name}</b> <span style="color:#2563eb; font-weight:600;">(+${t.points}分)</span></span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎯 <b style="color:var(--text-main);">${t.name}</b> <span style="color:var(--accent); font-weight:600;">(+${t.points}分)</span></span>
             <span style="color: ${isDone ? '#16a34a' : '#d97706'}; font-weight: 700; flex-shrink: 0; font-size: 11px;">
               ${isDone ? '✅ 已达成' : '⏳ ' + progressText}
             </span>
           </div>
-          <div style="background: #e2e8f0; height: 5px; border-radius: 4px; overflow: hidden;">
-            <div style="background: ${isDone ? '#16a34a' : '#2563eb'}; width: ${percent}%; height: 100%; transition: width 0.3s ease;"></div>
+          <div style="background: var(--border); height: 5px; border-radius: 4px; overflow: hidden;">
+            <div style="background: ${isDone ? 'var(--success)' : 'var(--accent)'}; width: ${percent}%; height: 100%; transition: width 0.3s ease;"></div>
           </div>
         </div>
       `;
@@ -1775,9 +1808,9 @@ function renderAccounts(isSilent = false) {
   // 如果未登录，严格阻断访客查看云电脑信息，只显示登录注册引导
   if (!currentUser) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 24px; background: var(--bg-secondary); border-radius: var(--radius); border: 1px dashed var(--border); box-shadow: var(--shadow);">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 24px; background: var(--bg-surface); border-radius: var(--radius); border: 1px dashed var(--border); box-shadow: var(--shadow);">
         <div style="font-size: 40px; margin-bottom: 12px;">🔒</div>
-        <h3 style="font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">请登录后查看与管理云电脑</h3>
+        <h3 style="font-size: 17px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">请登录后查看与管理云电脑</h3>
         <p style="font-size: 13.5px; color: var(--text-muted); max-width: 500px; margin: 0 auto 20px auto;">
           为保障账号隐私安全与多用户隔离，未登录访客无法查看或添加云电脑。请登录已有账号，或免费注册新账号开启独立后台。
         </p>
@@ -4749,7 +4782,7 @@ async function openAdminUsersModal() {
         <td style="padding: 10px 8px; white-space: nowrap;">
           <span class="badge ${isAdmin ? 'badge-online' : 'badge-offline'}">${isAdmin ? '超级管理员' : '普通用户'}</span>
         </td>
-        <td style="padding: 10px 8px; font-weight: 600; color: #38bdf8; white-space: nowrap;">${u.accountsCount || 0} 台</td>
+        <td style="padding: 10px 8px; font-weight: 600; color: var(--accent); white-space: nowrap;">${u.accountsCount || 0} 台</td>
         <td style="padding: 10px 8px; white-space: nowrap;">
           <div style="display: flex; align-items: center; gap: 6px;">
             <input type="number" class="form-control" style="width: 70px; padding: 4px 6px; font-size: 12px;" id="quota-input-${u.id}" value="${u.maxQuota || 2}" min="0">

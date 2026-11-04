@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-spectrum-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -18,6 +18,8 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- Adobe Spectrum 主题切换（浅色 / 深色，选择持久化在 localStorage） -->
+        <button type="button" class="btn btn-sm spectrum-theme-btn" id="btn-spectrum-theme" onclick="toggleSpectrumTheme()" title="切换 Adobe Spectrum 浅色 / 深色主题">☀️ 浅色</button>
         <!-- 未登录时仅显示登录/注册按钮 -->
         <button class="btn btn-primary" id="btn-auth-action" onclick="openAuthModal()">🔑 立即登录</button>
 
@@ -41,7 +43,7 @@
             <div class="avatar-btn" id="header-avatar" onclick="toggleUserMenu()" title="个人中心">U</div>
             <div class="dropdown-menu hidden" id="user-dropdown-menu">
               <div style="padding: 8px 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border);">
-                登录身份: <span id="dropdown-username" style="font-weight: 700; color: #0f172a;">admin</span>
+                登录身份: <span id="dropdown-username" style="font-weight: 700; color: var(--text-main);">admin</span>
               </div>
               <button class="dropdown-item" onclick="openUserNotifyModal(); hideUserMenu();">🔔 个人消息通知设置</button>
               <button class="dropdown-item" id="menu-change-pwd" onclick="openChangePwdModal(); hideUserMenu();">🔒 修改密码</button>
@@ -79,7 +81,7 @@
       <div class="stat-card" style="cursor: pointer;" onclick="openPointsDetailModal()" title="点击查看各云电脑今日积分明细">
         <div class="stat-icon">🎁</div>
         <div class="stat-info">
-          <div class="stat-value" id="stat-points" style="color: #16a34a;">0</div>
+          <div class="stat-value" id="stat-points" style="color: var(--success);">0</div>
           <div class="stat-label">每日已获得积分 (查看明细 ↗)</div>
         </div>
       </div>
@@ -92,7 +94,7 @@
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
         <!-- 平台视图切换 Tab (双云平台并存时自动智能呈现) -->
-        <div id="account-view-tabs-group" style="display: none; gap: 4px; background: #f1f5f9; padding: 2px 4px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+        <div id="account-view-tabs-group" class="spectrum-action-group" style="display: none; gap: 4px; background: var(--bg-muted); padding: 2px 4px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
           <button class="btn btn-sm btn-primary" id="view-tab-all" onclick="switchAccountViewTab('all')">🌐 全部设备</button>
           <button class="btn btn-sm" id="view-tab-ctyun" onclick="switchAccountViewTab('ctyun')">☁️ 天翼云电脑</button>
           <button class="btn btn-sm" id="view-tab-ydpc" onclick="switchAccountViewTab('ydpc')">🏠 移动爱家</button>
@@ -158,7 +160,7 @@
         <input type="hidden" id="acc-id">
         
         <!-- 平台选择 Tab (三平台并行：天翼云 / 移动爱家 / 移动公众) -->
-        <div id="platform-tabs-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; background: #f1f5f9; padding: 4px; border-radius: var(--radius); border: 1px solid var(--border);">
+        <div id="platform-tabs-container" class="spectrum-action-group" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; background: var(--bg-muted); padding: 4px; border-radius: var(--radius); border: 1px solid var(--border);">
           <button type="button" class="btn btn-sm btn-primary" id="platform-tab-ctyun" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ctyun')">☁️ 天翼云电脑</button>
           <button type="button" class="btn btn-sm" id="platform-tab-ydpc" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ydpc')">🏠 移动爱家</button>
           <button type="button" class="btn btn-sm" id="platform-tab-ecloud" style="flex: 1 1 30%; min-width: 96px; padding: 8px 0; font-weight: 700;" onclick="switchAddAccountPlatform('ecloud')">📡 移动公众</button>
@@ -181,13 +183,13 @@
             <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
               请使用手机 <b>天翼云电脑 App</b> 或 <b>天翼账号</b> 扫一扫授权登录，免输验证码与短信！
             </div>
-            <div id="qrcode-wrapper" style="display: inline-block; padding: 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); min-width: 170px; min-height: 170px;">
+            <div id="qrcode-wrapper" style="display: inline-block; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: 0 2px 6px rgba(0,0,0,0.05); min-width: 170px; min-height: 170px;">
               <img id="acc-qrcode-img" src="" style="width: 160px; height: 160px; display: none;">
               <div id="acc-qrcode-loading" style="width: 160px; height: 160px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-muted);">
                 正在生成官方二维码...
               </div>
             </div>
-            <div id="acc-qrcode-hint" style="margin-top: 6px; font-size: 12px; color: #2563eb; font-weight: 600;">
+            <div id="acc-qrcode-hint" style="margin-top: 6px; font-size: 12px; color: var(--accent); font-weight: 600;">
               等待扫码确认中...
             </div>
           </div>
@@ -199,18 +201,18 @@
               <input type="text" class="form-control" id="acc-name" placeholder="例如：天翼主账号 / 小号1">
             </div>
             <div class="form-group">
-              <label>手机号 / 天翼账号 <span style="color:red">*</span></label>
+              <label>手机号 / 天翼账号 <span style="color: var(--danger);">*</span></label>
               <input type="text" class="form-control" id="acc-user" placeholder="请输入天翼云绑定的手机号">
             </div>
             <div class="form-group">
-              <label>密码 <span style="color:red">*</span></label>
+              <label>密码 <span style="color: var(--danger);">*</span></label>
               <input type="password" class="form-control" id="acc-password" placeholder="请输入登录密码">
             </div>
             <div class="form-group">
-              <label>图形验证码 <span style="color:red">*</span></label>
+              <label>图形验证码 <span style="color: var(--danger);">*</span></label>
               <div style="display: flex; gap: 10px; align-items: center;">
                 <input type="text" class="form-control" id="acc-captcha-code" placeholder="输入4位验证码" maxlength="6" style="flex: 1; text-transform: uppercase;">
-                <div style="cursor: pointer; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; height: 38px; display: flex; align-items: center; background: #f8fafc;" onclick="refreshModalCaptcha()" title="点击换一张验证码">
+                <div style="cursor: pointer; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; height: 38px; display: flex; align-items: center; background: var(--bg-subtle);" onclick="refreshModalCaptcha()" title="点击换一张验证码">
                   <img id="acc-captcha-img" src="" alt="点击刷新" style="height: 38px; min-width: 85px; display: none;">
                   <span id="acc-captcha-loading" style="font-size: 12px; color: var(--text-muted); padding: 0 10px;">点击获取验证码</span>
                 </div>
@@ -236,25 +238,25 @@
             <input type="text" class="form-control" id="ydpc-name" placeholder="例如：移动家庭主号 / 子云电脑">
           </div>
           <div class="form-group">
-            <label>账号类型 <span style="color:red">*</span></label>
+            <label>账号类型 <span style="color: var(--danger);">*</span></label>
             <select class="form-control" id="ydpc-account-type">
               <option value="main">👑 和家亲主账号 (可自动拉取名下所有子云电脑)</option>
               <option value="sub">👤 独立分配子账号 (单台云电脑专属)</option>
             </select>
           </div>
           <div class="form-group">
-            <label>手机号 / 账号名 <span style="color:red">*</span></label>
+            <label>手机号 / 账号名 <span style="color: var(--danger);">*</span></label>
             <input type="text" class="form-control" id="ydpc-user" placeholder="请输入中国移动手机号">
           </div>
           <div class="form-group">
-            <label>密码 <span style="color:red">*</span></label>
+            <label>密码 <span style="color: var(--danger);">*</span></label>
             <input type="password" class="form-control" id="ydpc-password" placeholder="请输入移动爱家登录密码">
           </div>
           <div class="form-group" id="ydpc-captcha-group">
             <label>图形验证码 (若登录触发移动爱家风控时输入)</label>
             <div style="display: flex; gap: 10px; align-items: center;">
               <input type="text" class="form-control" id="ydpc-captcha-code" placeholder="输入4位图形验证码 (选填)" maxlength="6" style="flex: 1; text-transform: uppercase;">
-              <div style="cursor: pointer; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; height: 38px; display: flex; align-items: center; background: #f8fafc;" onclick="refreshYdpcModalCaptcha()" title="点击换一张验证码">
+              <div style="cursor: pointer; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; height: 38px; display: flex; align-items: center; background: var(--bg-subtle);" onclick="refreshYdpcModalCaptcha()" title="点击换一张验证码">
                 <img id="ydpc-captcha-img" src="" alt="点击刷新" style="height: 38px; min-width: 85px; display: none;">
                 <span id="ydpc-captcha-loading" style="font-size: 12px; color: var(--text-muted); padding: 0 10px;">点击获取验证码</span>
               </div>
@@ -277,10 +279,10 @@
 
         <!-- ================= 3. 移动公众面板（独立登录 UI，区别于天翼云扫码 / 移动爱家图形验证码） ================= -->
         <div id="panel-add-ecloud" class="hidden">
-          <!-- 【2026-09-24 用户要求】色调由紫色统一到与天翼云/移动爱家一致的冷色系（取移动爱家蓝 #0369a1） -->
-          <div style="display: flex; align-items: flex-start; gap: 8px; padding: 9px 11px; margin-bottom: 10px; background: #e0f2fe; border: 1px solid #bae6fd; border-left: 3px solid #0369a1; border-radius: 7px;">
+          <!-- 【2026-09-24 用户要求】色调由紫色统一到与天翼云/移动爱家一致的冷色系（现统一取 Adobe Spectrum informative 令牌与 var(--accent) 强调边） -->
+          <div class="spectrum-alert spectrum-alert-info" style="display: flex; align-items: flex-start; gap: 8px; padding: 9px 11px; margin-bottom: 10px; background: var(--spectrum-informative-subtle-bg, #e5f0ff); border: 1px solid var(--spectrum-informative-border, #9cc3ff); border-left: 4px solid var(--accent); border-radius: var(--radius-sm);">
             <span style="font-size: 15px; line-height: 1.2;">📡</span>
-            <div style="font-size: 12px; color: #0369a1; line-height: 1.6;">
+            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
               <b>移动公众云电脑 workspace.cmecloud.cn</b><br>
               使用<b>账号 + 密码</b>登录，走后端<b>独立协议侧车</b>，登录若触发设备信任/双因素，将<b>就地进入短信验证</b>步骤。
             </div>
@@ -291,11 +293,11 @@
             <input type="text" class="form-control" id="ecloud-name" placeholder="例如：公众主号 / 深圳节点">
           </div>
           <div class="form-group">
-            <label>手机号 / 账号 <span style="color:red">*</span></label>
+            <label>手机号 / 账号 <span style="color: var(--danger);">*</span></label>
             <input type="text" class="form-control" id="ecloud-user" placeholder="请输入移动公众云电脑登录账号（手机号）">
           </div>
           <div class="form-group">
-            <label>密码 <span style="color:red">*</span></label>
+            <label>密码 <span style="color: var(--danger);">*</span></label>
             <input type="password" class="form-control" id="ecloud-password" placeholder="请输入移动公众登录密码">
           </div>
           <div class="form-group">
@@ -310,8 +312,8 @@
           </div>
 
           <!-- 第二段：短信验证码（仅在登录要求设备信任/双因素时出现） -->
-          <div class="form-group hidden" id="ecloud-sms-group" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px;">
-            <label style="color: #b45309;">📲 短信验证码 <span style="color:red">*</span></label>
+          <div class="form-group hidden spectrum-alert spectrum-alert-notice" id="ecloud-sms-group" style="background: var(--warning-bg); border: 1px solid var(--spectrum-notice-border, #ffc670); border-left: 4px solid var(--warning); border-radius: var(--radius-sm); padding: 10px 12px;">
+            <label style="color: var(--text-main);">📲 短信验证码 <span style="color: var(--danger);">*</span></label>
             <div style="display: flex; gap: 8px; align-items: center;">
               <input type="text" class="form-control" id="ecloud-sms-code" placeholder="输入收到的短信验证码" maxlength="8" style="flex: 1; letter-spacing: 2px;">
               <button type="button" class="btn btn-sm btn-primary" id="btn-ecloud-sms-submit" onclick="submitEcloudSmsCode()">提交验证</button>
@@ -359,8 +361,8 @@
           <label>图形验证码 (获取短信前必填)</label>
           <div style="display: flex; gap: 10px; align-items: center;">
             <input type="text" class="form-control" id="sms-captcha-code" placeholder="请输入图中字符" maxlength="6" style="flex: 1;">
-            <img id="sms-captcha-img" src="" alt="图形验证码" title="点击刷新图形验证码" onclick="refreshSmsCaptcha()" style="height: 40px; width: 120px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; background: #f8fafc; object-fit: cover; display: none;">
-            <div id="sms-captcha-loading" style="height: 40px; width: 120px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted); background: #f8fafc; border-radius: 6px; border: 1px solid var(--border);">加载中...</div>
+            <img id="sms-captcha-img" src="" alt="图形验证码" title="点击刷新图形验证码" onclick="refreshSmsCaptcha()" style="height: 40px; width: 120px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; background: var(--bg-subtle); object-fit: cover; display: none;">
+            <div id="sms-captcha-loading" style="height: 40px; width: 120px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted); background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border);">加载中...</div>
           </div>
         </div>
         <div class="form-group">
@@ -462,9 +464,9 @@
         <button class="modal-close" onclick="closeModal('points-detail-modal')">&times;</button>
       </div>
       <div class="modal-body">
-        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(22,163,74,0.08); padding: 12px 18px; border-radius: 8px; border: 1px solid rgba(22,163,74,0.2);">
-          <span style="font-size: 13.5px; color: #1e293b;">今日名下天翼云已获总积分:</span>
-          <span style="font-size: 20px; font-weight: 700; color: #16a34a;"><b id="modal-points-sum">0</b> 分</span>
+        <div class="spectrum-alert spectrum-alert-positive" style="display: flex; justify-content: space-between; align-items: center; background: var(--success-bg); padding: 12px 18px; border-radius: var(--radius-sm); border: 1px solid var(--spectrum-positive-border, #b3e5cf); border-left: 4px solid var(--success);">
+          <span style="font-size: 13.5px; color: var(--text-secondary);">今日名下天翼云已获总积分:</span>
+          <span style="font-size: 20px; font-weight: 700; color: var(--success);"><b id="modal-points-sum">0</b> 分</span>
         </div>
         <div id="points-detail-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 6px;">
           <!-- 动态加载各云电脑今日明细 -->
@@ -490,15 +492,15 @@
         </p>
 
         <div class="form-group" style="margin-top: 4px;">
-          <label style="font-size: 13px; font-weight: 600; color: #334155;">🖥️ 选择操作目标云电脑</label>
+          <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">🖥️ 选择操作目标云电脑</label>
           <select class="form-control" id="power-desktop-select" onchange="onPowerDesktopChange()">
             <!-- 动态填充名下云主机列表 -->
           </select>
         </div>
 
-        <div id="power-status-box" style="background: var(--bg-card); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+        <div id="power-status-box" style="background: var(--bg-surface); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
           <span>当前运行状态:</span>
-          <span id="power-desktop-status" style="font-weight: 700; color: #16a34a;">🟢 运行中</span>
+          <span id="power-desktop-status" style="font-weight: 700; color: var(--success);">🟢 运行中</span>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 6px;">
@@ -522,9 +524,9 @@
       </div>
       <div class="modal-body">
         <input type="hidden" id="manual-acc-id">
-        <div style="background: rgba(37,99,235,0.06); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(37,99,235,0.2); display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 13px; color: #1e293b;">目标云电脑: <b id="manual-acc-name">--</b></span>
-          <span style="font-size: 13px; color: #16a34a; font-weight: 700;">可用积分: <b id="manual-user-points" style="font-size: 16px;">0</b></span>
+        <div class="spectrum-alert spectrum-alert-info" style="background: var(--spectrum-informative-subtle-bg, #e5f0ff); padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--spectrum-informative-border, #9cc3ff); border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 13px; color: var(--text-secondary);">目标云电脑: <b id="manual-acc-name">--</b></span>
+          <span style="font-size: 13px; color: var(--success); font-weight: 700;">可用积分: <b id="manual-user-points" style="font-size: 16px;">0</b></span>
         </div>
 
         <div class="form-group">
@@ -545,7 +547,7 @@
         <div class="form-group">
           <label>兑换数量 / 抽奖次数</label>
           <input type="number" class="form-control" id="manual-order-times" value="1" min="1" max="100" oninput="updateManualTotalCost()">
-          <div class="form-text" id="manual-cost-tip" style="font-weight: 600; color: #d97706; margin-top: 4px;">预计消耗: 500 积分</div>
+          <div class="form-text" id="manual-cost-tip" style="font-weight: 600; color: var(--warning); margin-top: 4px;">预计消耗: 500 积分</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -570,16 +572,16 @@
           <div class="form-text">【主调度兜底规则】支持设定单个或多个时间点（如 <code>01:20</code> 或 <code>01:20, 12:00</code>）。到达设定时间触发所有账号中<b>未配置分项 Cron 的任务分项</b>；已配置分项 Cron 的分项由其自身规则精准管辖，主时间点自动跳过，绝不重复执行。支持重启补跑兜底！</div>
         </div>
         <details style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; cursor: pointer;" id="details-sub-cron">
-          <summary style="font-weight: 500; color: var(--text);">高级：分项 Cron 表达式自定义 (精准管辖规则)</summary>
-          <div style="margin-top: 6px; padding: 12px; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border);">
+          <summary style="font-weight: 500; color: var(--text-main);">高级：分项 Cron 表达式自定义 (精准管辖规则)</summary>
+          <div class="spectrum-well" style="margin-top: 6px; padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed var(--border);">
-              <span style="font-size: 13px; font-weight: 600; color: #0f172a;">启用分项 Cron 独立管辖规则</span>
+              <span style="font-size: 13px; font-weight: 600; color: var(--text-main);">启用分项 Cron 独立管辖规则</span>
               <label class="switch">
                 <input type="checkbox" id="cron-enable-sub" onchange="toggleSubCronInputs(this.checked)">
                 <span class="slider"></span>
               </label>
             </div>
-            <div style="color: #475569; margin-bottom: 8px; line-height: 1.5;">
+            <div style="color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5;">
               优先级说明：未启动本开关，或启动但未填写任何具体规则时，<b>所有分项一律以上方主调度中心的时间节点为准</b>；一旦某分项填写了 Cron 表达式，<b>该分项即完全由自己的 Cron 精准管辖</b>，主调度时间点到点时自动跳过该分项，仅在 Cron 匹配的时间点独立触发，互不干扰、绝不重复执行。开机补跑同样遵循此管辖规则。
             </div>
             <div id="sub-cron-inputs-container">
@@ -708,16 +710,16 @@
         <button class="modal-close" onclick="closeModal('backup-modal')">&times;</button>
       </div>
       <div class="modal-body">
-        <div style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-          <h4 style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">📥 导出配置备份 (JSON)</h4>
+        <div class="spectrum-well" style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">📥 导出配置备份 (JSON)</h4>
           <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;">
             一键下载当前名下所有天翼云账号、分辨率、自动兑换与系统设置的完整 JSON 备份文件。
           </p>
           <button class="btn btn-primary" onclick="exportConfigJson()">⬇️ 导出并下载配置文件</button>
         </div>
 
-        <div style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-top: 10px;">
-          <h4 style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">📤 导入还原配置 (JSON)</h4>
+        <div class="spectrum-well" style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-top: 10px;">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">📤 导入还原配置 (JSON)</h4>
           <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px;">
             上传之前备份的 JSON 文件即可一键批量导入所有账号，系统将自动唤醒所有云电脑长连接保活！
           </p>
@@ -788,8 +790,8 @@
         <button class="modal-close" onclick="closeModal('change-pwd-modal')">&times;</button>
       </div>
       <div class="modal-body">
-        <div id="admin-change-username-group" class="hidden" style="background: var(--bg-card); padding: 12px 14px; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border);">
-          <label style="font-weight: 700; color: #0f172a; font-size: 13px;">修改管理员用户名</label>
+        <div id="admin-change-username-group" class="hidden" style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 8px; border: 1px solid var(--border);">
+          <label style="font-weight: 700; color: var(--text-main); font-size: 13px;">修改管理员用户名</label>
           <div style="display: flex; gap: 8px; margin-top: 6px;">
             <input type="text" class="form-control" id="new-admin-username" placeholder="输入新管理员用户名">
             <button class="btn btn-sm btn-primary" onclick="submitChangeUsername()" style="white-space: nowrap;">保存用户名</button>
@@ -797,10 +799,10 @@
         </div>
 
         <!-- 个性化头像修改 -->
-        <div class="form-group" style="background: #f8fafc; padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 8px;">
+        <div class="form-group spectrum-well" style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 8px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <label style="font-weight: 700; color: #0f172a; font-size: 13px; margin-bottom: 0;">个性化头像设置</label>
-            <div id="current-avatar-preview" style="width: 36px; height: 36px; border-radius: 50%; background: #0f172a; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">A</div>
+            <label style="font-weight: 700; color: var(--text-main); font-size: 13px; margin-bottom: 0;">个性化头像设置</label>
+            <div id="current-avatar-preview" style="width: 36px; height: 36px; border-radius: 50%; background: var(--text-main); color: var(--bg-surface); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">A</div>
           </div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;" id="avatar-presets-container">
             <button type="button" class="avatar-preset-btn" onclick="selectPresetAvatar('👨‍💻')">👨‍💻</button>
@@ -872,7 +874,7 @@
           管理员可以查看所有已注册用户，修改任何用户的云电脑添加配额（调高或调低数量限制）。
         </p>
         <div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch;">
-          <table class="responsive-table" style="width: 100%; min-width: 580px; border-collapse: collapse; font-size: 13px; text-align: left;">
+          <table class="responsive-table spectrum-table" style="width: 100%; min-width: 580px; border-collapse: collapse; font-size: 13px; text-align: left;">
             <thead>
               <tr style="border-bottom: 1px solid var(--border); color: var(--accent); white-space: nowrap;">
                 <th style="padding: 10px 8px; white-space: nowrap;">用户名</th>
@@ -912,18 +914,18 @@
         <h3>🚀 版本更新说明 (v2.3.1)</h3>
         <button class="modal-close" onclick="closeModal('release-notes-modal')">&times;</button>
       </div>
-      <div class="modal-body" style="font-size: 13px; line-height: 1.7; color: #334155; overflow-y: auto; max-height: calc(85vh - 120px); display: flex; flex-direction: column; gap: 16px;">
+      <div class="modal-body" style="font-size: 13px; line-height: 1.7; color: var(--text-secondary); overflow-y: auto; max-height: calc(85vh - 120px); display: flex; flex-direction: column; gap: 16px;">
         
         <!-- v2.3 -->
-        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #dbeafe; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #1d4ed8; font-size: 14.5px;">✨ v2.3 移动公众全量融合 · 移动爱家 SCG 底座打通与开机能力恢复 · 自动开机守护默认开启 (最新)</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-28</div>
+        <div class="spectrum-alert spectrum-alert-info" style="background: var(--spectrum-informative-subtle-bg, #e5f0ff); border: 1px solid var(--spectrum-informative-border, #9cc3ff); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--accent); font-size: 14.5px;">✨ v2.3 移动公众全量融合 · 移动爱家 SCG 底座打通与开机能力恢复 · 自动开机守护默认开启 (最新)</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-28</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
-            <li><b>📡 移动公众（中国移动云电脑 · 公众版）全量融合，三平台同台管理</b>：新增独立登录通道（账号密码）与分层保活 —— L1 账号态探针 + L2 桌面登记，配套官方协议侧车；提供云电脑<b>开机 / 关机 / 重启</b>能力；新增<b>静默会话信号</b>（<code>updateSessionStatus</code> + <code>pushConnectEventData</code>，默认执行、界面与日志均不显示）与 <b>accessToken 25 分钟主动续期</b>（平台 TTL 约 30 分钟，消除周期性 401）。开关机状态改用<b>合成判定</b>（探测证据 &gt; 平台操作能力表 &gt; 平台状态字段），平台字段滞后或失真时界面不再跟着错。<br><span style="color:#b45309;font-weight:600;">⚠️ 依赖说明：移动公众协议侧车需 Python 3（Docker 镜像已内置 python3 + requests + pycryptodome；本机直跑需自备）。天翼云与移动爱家仍为零 Python 依赖。</span></li>
-            <li><b>🖥️ 移动爱家「深信服 SCG」底座打通（含开机能力恢复）</b>：定位到 SCG「零应答」根因是缺少官方 CEM 控制面（firm-auth 的 scAuthCode 只是 OAuth 扩展授权令牌，必须经 CEM 换取会话材料）。现已实现 CEM 官方链路（<code>OAuth 扩展授权 → getConnectInfo 触发开机 → getVmReadyStatus 就绪轮询</code>），并打通 SCG 保活数据面（同 socket TLS 升级 + trunk/SPICE），真机验证：鉴权通过、会话建立并收到首帧 SPICE 数据。「名下云主机」恢复<b>『开机』与『🛡️守护』</b>控件。<br><span style="color:#b45309;font-weight:600;">⚠️ 开机全程走账号自有凭据的官方通道</span>：ZTE 走 CAG HTTPS（RSA 公钥动态获取 + 保留 TLS 证书校验），SCG 走 CEM 官方接口；不伪造客户端身份、不关闭证书校验。保活有效性仍按诚实口径标注（未被证明有效），以真机长期观察为准。</li>
-            <li><b>🛡️ 「自动开机守护」默认开启（移动公众 + 移动爱家 SCG）</b>：账号级 + 单机双开关、同机 10 分钟冷却、只对「确定关机」下发（绝不盲开）、时长耗尽熔断。移动公众一刀切默认开；移动爱家按底座分叉 —— 含 SCG 的账号默认开（CEM 通道，无额外代价），纯 ZTE 账号保持默认关（ZTE 开机走 CAG 会真实消耗限时套餐时长，需显式开启）。开关默认口径由单一判定入口驱动，界面与后端同源不漂移。<br><span style="color:#b45309;font-weight:600;">⚠️ 如实说明：平台约 48 小时强制关机无法被 HTTP 层保活阻止，守护的职责是关机后自动恢复。</span></li>
+            <li><b>📡 移动公众（中国移动云电脑 · 公众版）全量融合，三平台同台管理</b>：新增独立登录通道（账号密码）与分层保活 —— L1 账号态探针 + L2 桌面登记，配套官方协议侧车；提供云电脑<b>开机 / 关机 / 重启</b>能力；新增<b>静默会话信号</b>（<code>updateSessionStatus</code> + <code>pushConnectEventData</code>，默认执行、界面与日志均不显示）与 <b>accessToken 25 分钟主动续期</b>（平台 TTL 约 30 分钟，消除周期性 401）。开关机状态改用<b>合成判定</b>（探测证据 &gt; 平台操作能力表 &gt; 平台状态字段），平台字段滞后或失真时界面不再跟着错。<br><span style="color:var(--warning);font-weight:600;">⚠️ 依赖说明：移动公众协议侧车需 Python 3（Docker 镜像已内置 python3 + requests + pycryptodome；本机直跑需自备）。天翼云与移动爱家仍为零 Python 依赖。</span></li>
+            <li><b>🖥️ 移动爱家「深信服 SCG」底座打通（含开机能力恢复）</b>：定位到 SCG「零应答」根因是缺少官方 CEM 控制面（firm-auth 的 scAuthCode 只是 OAuth 扩展授权令牌，必须经 CEM 换取会话材料）。现已实现 CEM 官方链路（<code>OAuth 扩展授权 → getConnectInfo 触发开机 → getVmReadyStatus 就绪轮询</code>），并打通 SCG 保活数据面（同 socket TLS 升级 + trunk/SPICE），真机验证：鉴权通过、会话建立并收到首帧 SPICE 数据。「名下云主机」恢复<b>『开机』与『🛡️守护』</b>控件。<br><span style="color:var(--warning);font-weight:600;">⚠️ 开机全程走账号自有凭据的官方通道</span>：ZTE 走 CAG HTTPS（RSA 公钥动态获取 + 保留 TLS 证书校验），SCG 走 CEM 官方接口；不伪造客户端身份、不关闭证书校验。保活有效性仍按诚实口径标注（未被证明有效），以真机长期观察为准。</li>
+            <li><b>🛡️ 「自动开机守护」默认开启（移动公众 + 移动爱家 SCG）</b>：账号级 + 单机双开关、同机 10 分钟冷却、只对「确定关机」下发（绝不盲开）、时长耗尽熔断。移动公众一刀切默认开；移动爱家按底座分叉 —— 含 SCG 的账号默认开（CEM 通道，无额外代价），纯 ZTE 账号保持默认关（ZTE 开机走 CAG 会真实消耗限时套餐时长，需显式开启）。开关默认口径由单一判定入口驱动，界面与后端同源不漂移。<br><span style="color:var(--warning);font-weight:600;">⚠️ 如实说明：平台约 48 小时强制关机无法被 HTTP 层保活阻止，守护的职责是关机后自动恢复。</span></li>
             <li><b>🔑 30 天免登录</b>：登录新增「30 天内免登录」勾选（默认勾选）。勾选后无论容器重启还是关闭页面都保持登录，只有点「退出」才吊销；服务端仅持久化勾选会话（原子写、权限 0600），未勾选绝不落盘，登出即吊销、重启不复活。</li>
             <li><b>🧹 L3 层整层删除 + 日志降噪</b>：未实现的 L3 占位层按要求从界面到底层整层删除；<code>progress slow=</code> 与 SCG 材料探测等重复日志合并折叠；token 主动续期不再输出「重登成功」误导性日志；关机提示按机去重，不再刷屏。</li>
             <li><b>🩺 稳定性与自愈</b>：新增 Python 解释器真伪探测（拒绝 Windows 商店假 Python 的 9009 报错）与 10 分钟熔断退避；修复协议侧车并发启动竞态（重复拉起双进程）；面板进程新增退出取证（exit/SIGINT/SIGTERM 与未捕获异常持久化落日志），配合守护循环实现异常自动重启。</li>
@@ -932,10 +934,10 @@
         </div>
 
         <!-- v2.2.5 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #334155; font-size: 14.5px;">✨ v2.2.5 挂机中断鉴别观察窗延长至 5 分钟</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-23</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-secondary); font-size: 14.5px;">✨ v2.2.5 挂机中断鉴别观察窗延长至 5 分钟</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-23</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>🔍 挂机中断鉴别的观察窗由 90 秒延长至 5 分钟</b>：当挂机长连接被断开时，系统需要判断"是不是有真人在使用云电脑"。原实现只观察 90 秒，实测该窗口内官方挂机计时可能尚未落账变化，导致误判为"无人在用"而重新认领，从而把正在使用的用户顶下线。<br>现改为 <b>5 次采样 × 60 秒 = 总计 5 分钟</b>：<br>· 采样间隔保留 60 秒，以覆盖官方"按分钟粒度落账"的跳变边界（若只睡 5 分钟取一次，可能落在两次跳变之间而看不到增量）；<br>· 每轮采样都会记录日志（<code>🔎 鉴别采样 N/5</code>），可据此判断官方计时究竟需要多久才会变化；<br>· 判定阈值仍为 30 秒增量：<b>计时增长 → 判定有真人在用，立即让位避让；计时冻结 → 判定无人在用，允许重连续挂</b>。</li>
@@ -945,10 +947,10 @@
         </div>
 
         <!-- v2.2.4 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #334155; font-size: 14.5px;">✨ v2.2.4 结构性修复与移动云开机能力调整</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-22</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-secondary); font-size: 14.5px;">✨ v2.2.4 结构性修复与移动云开机能力调整</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-22</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>🗑️ 移动云侧开机能力下线（按用户要求）</b>：相关实现已从代码库整体移除，移动云侧当时不再提供任何「开机 / 唤醒」入口（前端按钮、后端接口、调度器自动拉起、保活看门狗均一并移除）；如需开机请在移动云官方 App 连接一次。移动云仍保留账号登录、SOHO 心跳、ZTEC CAG 握手、官方 MQTT 长连接、状态监控与官方<b>关机 / 重启</b>。<b>天翼云功能完全不受影响。</b>（后续版本已通过官方通道恢复开机能力，见 v2.3 说明）</li>
@@ -959,10 +961,10 @@
         </div>
 
         <!-- v2.2.3 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #334155; font-size: 14.5px;">✨ v2.2.3 纯积分任务模式与保活解耦加固</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-21</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-secondary); font-size: 14.5px;">✨ v2.2.3 纯积分任务模式与保活解耦加固</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-21</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>🎯 彻底解决关闭保活后仅做积分任务导致挂机失败与重试死循环 (Closes #23)</b>：彻底解耦常态长连接保活（<code>keepaliveEnabled</code> / <code>features.keepAlive</code>）与定时积分挂机任务（<code>taskEnabled</code> / <code>features.cloudHang</code>）。此前当用户关闭单机独立保活仅希望做打卡/挂机积分任务时，挂机循环误将关闭保活判定为终止意图，导致挂机会话立即退出并触发 24 次自动重试死循环；修复后挂机任务严格由单机【🎯任务】和全局【⏱️挂机1小时】开关管辖，纯任务模式下云电脑定时唤醒累加 60 分钟后安然关机，完美实现“只赚积分不上线”。</li>
@@ -972,10 +974,10 @@
         </div>
 
         <!-- v2.2.2 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #334155; font-size: 14.5px;">✨ v2.2.2 任务链路加固与真实达成严校验</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-21</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-secondary); font-size: 14.5px;">✨ v2.2.2 任务链路加固与真实达成严校验</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-21</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>🎉 彻底解决天翼云登录打卡 40050 报错与假成功漏洞 (Closes #17 & #22)</b>：重构打卡认证链路，与易触发官方风控拦截的自产自销 <code>tokenLogin</code> 彻底解耦；打卡直连视讯网关建立桌面认领会话（Type 118/112/104 握手），并引入最长 300 秒观察窗口持续保持会话与实时轮询官方任务中心，一旦官方确认达成即刻主动释放；全程以官方实时确认状态为唯一成功判定标准，彻底杜绝虚报成功日志与误发达标通知。</li>
@@ -985,10 +987,10 @@
         </div>
 
         <!-- v2.2.1 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #334155; font-size: 14.5px;">✨ v2.2.1 稳定性、链路加固与体验优化</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-20</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-secondary); font-size: 14.5px;">✨ v2.2.1 稳定性、链路加固与体验优化</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-20</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>📡 移动云官方 MQTT 字段完整适配与 8883 端口纠偏</b>：精准适配官方 <code>/system/mqttConnect/v1</code> 真实数据结构（<code>jwt</code> 鉴权令牌、<code>url</code> 协议地址与 <code>mqttKeepAlive: 30</code> 参数）；全面纠偏并锁定官方开放的标准 MQTTS 8883 端口，彻底避免误连 443 端口被防火墙丢包导致 10 秒超时。</li>
@@ -1000,10 +1002,10 @@
         </div>
 
         <!-- v2.2 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #0f172a; font-size: 14px;">✨ v2.2 重点特性与架构重构</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-14</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">✨ v2.2 重点特性与架构重构</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-14</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>🖥️ 单账号多主机精细化独立纳管（Per-VM Governance）</b>：彻底打破账号级“一刀切”控制模式，支持对名下每台云主机进行独立控制。天翼云支持单机独立「⚡保活」与「🎯任务」调度；移动云支持单机独立「⚡保活」与「🛡️守护」，彻底消除限时机（如 20h 套餐）被误开机消耗时长的痛点。</li>
@@ -1015,10 +1017,10 @@
         </div>
 
         <!-- v2.1.1 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #0f172a; font-size: 14px;">✨ v2.1.1 重点特性与优化</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-12</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">✨ v2.1.1 重点特性与优化</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-12</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>⏰ 分项 Cron 独立调度解耦</b>：分项 Cron 规则与主调度时间点彻底解耦，配置分项 Cron 后主时间点自动跳过对应分项，开机补跑按分项精准执行，绝不抢跑重复执行。</li>
@@ -1030,13 +1032,13 @@
         </div>
 
         <!-- v2.1 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #0f172a; font-size: 14px;">✨ v2.1 重点特性概览</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-11</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">✨ v2.1 重点特性概览</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-11</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
-            <li><b>📱 移动云电脑全量融合</b>：中国移动云电脑保活（SOHO REST 签名加密 + ZTEC CAG TCP 三阶段握手），零 Python 依赖，与天翼云同台统一管理、统一配额。<br><span style="color:#b45309;font-weight:600;">⚠️ 修订（2026-09-22）：原「SC/ZTE 自适应开机」能力已按用户要求移除；如需开机请在移动云官方 App 连接一次。（后续版本已通过官方通道恢复开机，见 v2.3 说明）</span></li>
+            <li><b>📱 移动云电脑全量融合</b>：中国移动云电脑保活（SOHO REST 签名加密 + ZTEC CAG TCP 三阶段握手），零 Python 依赖，与天翼云同台统一管理、统一配额。<br><span style="color:var(--warning);font-weight:600;">⚠️ 修订（2026-09-22）：原「SC/ZTE 自适应开机」能力已按用户要求移除；如需开机请在移动云官方 App 连接一次。（后续版本已通过官方通道恢复开机，见 v2.3 说明）</span></li>
             <li><b>🛡️ 多账号多机全量保活</b>：单账号名下多台云主机全部纳管保活。</li>
             <li><b>🧩 网格自由排版</b>：账号卡片支持拖拽排序与行内留白放置（允许空位、不产生多余空行），布局状态按用户与平台视图持久化，刷新不走样。</li>
             <li><b>🚫 无感刷新与滚动锁定</b>：全面重构为原地增量数据更新（In-Place Update），后台轮询不再整页重绘，彻底消除"刷着刷着跳回顶部"与操作被打断的问题。</li>
@@ -1046,10 +1048,10 @@
         </div>
 
         <!-- v2.0.2 -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-            <div style="font-weight: 700; color: #0f172a; font-size: 14px;">✨ v2.0.2 重点特性概览</div>
-            <div style="color: #64748b; font-size: 12px;">发布时间：2026-09-09</div>
+        <div class="spectrum-well" style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+            <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">✨ v2.0.2 重点特性概览</div>
+            <div style="color: var(--text-muted); font-size: 12px;">发布时间：2026-09-09</div>
           </div>
           <ul style="padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
             <li><b>🛡️ 三位一体防冲突引擎</b>：全面升级握手前置拦截与 Type 119/120 信令监听。当你在 PC 或手机 App 打开云电脑时，后台 10ms 内极速主动避让，绝不互踢！</li>

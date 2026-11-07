@@ -7,11 +7,11 @@
   - **严禁使用任何 Emoji 充当界面图标**，统一使用本地 `remixicon`（`ri-*-line` / `ri-*-fill`）。
   - 交互控件优先采用自解释分段选择器与内联状态反馈，避免悬停 Tooltip 绑架与冗余确认弹窗。
 
-## 2. 双栈监听、双远端同步与 GitOps 部署
-- **双栈监听**：容器与服务端默认绑定 `HOST=::`、`PORT=8787`，兼容 `eql12` k3s 双栈 `ClusterIP Service`（内网域名 `http://ctyun.internal`）。
-- **双远端仓库**：
-  - Forgejo 主发布仓：`https://git.jinpeng.boo/bubu/ctyun-dashboard.git`（触发阿里云 ACR 镜像构建，联动 `~/nixcfg` 的 `gitops/releases/ctyun-dashboard.nix` 与 `hosts/eql12/services/ctyun-dashboard.nix`）。
-  - GitHub 镜像仓：`git@github.com:p3psi-boo/ctyun-dashboard.git`。
+## 2. 双栈监听、远端发布与 GitOps 部署
+- **双栈监听**：容器与服务端默认绑定 `HOST=::`、`PORT=8787`，兼容 `cmcc-services` k3s 双栈 `ClusterIP Service`（内网域名 `http://ctyun.internal`）。
+- **代码仓与镜像发布**：
+  - 唯一远端：`https://github.com/p3psi-boo/ctyun-dashboard.git`（本机推送命令：`git -c credential.helper='!gh auth git-credential' push https://github.com/p3psi-boo/ctyun-dashboard.git main`）。
+  - GitHub Actions 构建发布 `ghcr.io/p3psi-boo/ctyun-dashboard`，联动 `~/nixcfg` 的 `gitops/releases/ctyun-dashboard.nix` 与 `hosts/cmcc-services/services/ctyun-dashboard.nix`。
 
 ## 3. 验证与交付门禁
 本机 NixOS 下运行测试与门禁需显式传入 `app/ecloud_engine/.venv` 的 Python 解释器（若缺失先执行 `uv sync --frozen --directory app/ecloud_engine`）：
